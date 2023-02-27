@@ -1,0 +1,8 @@
+{
+  "name": "codesets-infra",
+  "main": "index.ts",
+  "dependencies": {
+    "@pulumi/aws": "^5.30.0",
+    "@pulumi/pulumi": "^3.55.0"
+  }
+}

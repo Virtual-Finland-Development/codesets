@@ -1,0 +1,26 @@
+{
+  "name": "codesets",
+  "version": "1.0.0",
+  "description": "A shared codesets / resources router for virtual finland projects",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Virtual-Finland-Development/codesets.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Virtual-Finland-Development/codesets/issues"
+  },
+  "homepage": "https://github.com/Virtual-Finland-Development/codesets#readme",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.111",
+    "@types/node": "^18.14.2",
+    "eslint": "^8.35.0",
+    "prettier": "^2.8.4",
+    "typescript": "^4.9.5"
+  }
+}
