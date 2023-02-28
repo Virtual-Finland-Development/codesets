@@ -27,9 +27,6 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
         status: "400",
         statusDescription: "Bad Request",
         body: "Bad Request",
-        headers: {
-            "content-type": [{ key: "Content-Type", value: "text/plain" }],
-        },
     };
 }
 

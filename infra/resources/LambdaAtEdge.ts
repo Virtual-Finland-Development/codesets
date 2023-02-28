@@ -43,7 +43,6 @@ export default function createLambdaAtEdgeFunction(setup: ISetup, cloudFrontDist
         }),
     });
     
-
     const lambdaAtEdgeFunctionConfig = setup.getResourceConfig('LambdaAtEdge');
     const lambdaAtEdgeFunction = new aws.lambda.Function(lambdaAtEdgeFunctionConfig.name, {
         code: new pulumi.asset.FileArchive('../dist'),
