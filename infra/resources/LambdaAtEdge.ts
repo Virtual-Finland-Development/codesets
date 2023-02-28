@@ -45,7 +45,7 @@ export default function createLambdaAtEdgeFunction(setup: ISetup) {
     
     const lambdaAtEdgeFunctionConfig = setup.getResourceConfig('LambdaAtEdge');
     const lambdaAtEdgeFunction = new aws.lambda.Function(lambdaAtEdgeFunctionConfig.name, {
-        code: new pulumi.asset.FileArchive('../dist'),
+        code: new pulumi.asset.FileArchive('./build'),
         handler: 'app.handler',
         runtime: 'nodejs18.x',
         memorySize: 128,

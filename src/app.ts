@@ -1,28 +1,36 @@
 import { CloudFrontRequestEvent, CloudFrontRequestResult } from "aws-lambda";
-import { getExternalResourceURI } from "./utils/settings";
+import { getResource, listResources } from "./utils/ResourceRepository";
 
 async function handleResourceEvent(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
     const request = event.Records[0].cf.request;
     
-    if (request.uri.startsWith("/resource/")) {
-        const resourceName = request.uri.replace("/resource/", "").split("?")[0];
-        const resourceURI = getExternalResourceURI(resourceName);
-
-        if (resourceURI) {
-            console.log("Resource URI: ", resourceURI);
-            const resourceData = await fetch(resourceURI).then((response) => response.text());
+    if (request.uri.startsWith("/resources")) {
+        const uriParts = request.uri.replace("/resources", "").split("?");
+        const resourceName = uriParts[0].replace("/", ""); // First occurence of "/" is removed
+        if (!resourceName) {
             return {
                 status: "200",
-                statusDescription: "Resource found",
+                statusDescription: "OK: list of resources",
+                body: JSON.stringify(listResources()),
+            };
+        }
+
+        const resource = getResource(resourceName);
+        if (resource) {
+            console.log("Resource: ", resource.name);
+            const resourceData = await resource.retrieve();
+            return {
+                status: "200",
+                statusDescription: "OK: resource found",
                 body: resourceData,
             };
         }
     }
     
     return {
-        status: "400",
-        statusDescription: "Bad Request",
-        body: JSON.stringify({ message: "Bad Request" }),
+        status: "404",
+        statusDescription: "Not found",
+        body: JSON.stringify({ message: "Not found" }),
     };
 }
 
@@ -31,7 +39,7 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
         console.log("Event: ", JSON.stringify(event, null, 2));
         return await handleResourceEvent(event);
     } catch (error: any) {
-        console.log("Error: ", error?.message, error?.stack);
+        console.error(error?.message, error?.stack);
         return {
             status: "500",
             statusDescription: "Internal Server Error",

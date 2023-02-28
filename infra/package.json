@@ -4,5 +4,9 @@
   "dependencies": {
     "@pulumi/aws": "^5.30.0",
     "@pulumi/pulumi": "^3.55.0"
+  },
+  "scripts": {
+    "prebuild": "rm -rf ./build && mkdir ./build",
+    "build": "cp -r ../dist/* ./build/ && cp ../package.json ./build/ && cp ../package-lock.json ./build/ && npm install --prefix ./build --omit=dev"
   }
 }
