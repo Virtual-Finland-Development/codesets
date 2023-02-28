@@ -43,7 +43,7 @@ export function createCloudFrontDistribution(setup: ISetup, bucket: aws.s3.Bucke
         },
       ],
       defaultCacheBehavior: {
-        allowedMethods: ['GET', 'HEAD'],
+        allowedMethods: ['GET', 'HEAD', 'OPTIONS'],
         cachedMethods: ['GET', 'HEAD'],
         targetOriginId: bucket.arn,
         viewerProtocolPolicy: 'redirect-to-https',
@@ -58,8 +58,9 @@ export function createCloudFrontDistribution(setup: ISetup, bucket: aws.s3.Bucke
         maxTtl: 86400,
         lambdaFunctionAssociations: [
             {
-                eventType: 'origin-response',
-                lambdaArn: pulumi.interpolate `${lambdaAtEdgeFunction.arn}:${lambdaAtEdgeFunction.version}`,
+              eventType: 'origin-request',
+              lambdaArn: pulumi.interpolate `${lambdaAtEdgeFunction.arn}:${lambdaAtEdgeFunction.version}`,
+              includeBody: true,
             },
         ],
       },
@@ -80,9 +81,6 @@ export function createCloudFrontDistribution(setup: ISetup, bucket: aws.s3.Bucke
       enabled: true,
       retainOnDelete: false,
       tags: cloudFrontDistributionConfig.tags,
-    },
-    {
-      protect: true,
     }
   );
 

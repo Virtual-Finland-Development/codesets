@@ -53,7 +53,9 @@ export default function createLambdaAtEdgeFunction(setup: ISetup) {
         role: lambdaAtEdgeRole.arn,
         tags: lambdaAtEdgeFunctionConfig.tags,
         publish: true,
-    });
+    }); 
+    // { provider: new aws.Provider("us-east-1", { region: "us-east-1"} ) }
+    // Lambda@Edge functions must be in us-east-1
 
     return lambdaAtEdgeFunction;
 }
