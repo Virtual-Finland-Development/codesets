@@ -2,7 +2,7 @@ import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 import { ISetup } from '../tools/Setup';
 
-export default function createLambdaAtEdgeFunction(setup: ISetup, cloudFrontDistribution: aws.cloudfront.Distribution) {
+export default function createLambdaAtEdgeFunction(setup: ISetup) {
 
     const lambdaAtEdgeRoleConfig = setup.getResourceConfig('LambdaAtEdgeRole');
     const lambdaAtEdgeRole = new aws.iam.Role(lambdaAtEdgeRoleConfig.name, {
@@ -52,14 +52,7 @@ export default function createLambdaAtEdgeFunction(setup: ISetup, cloudFrontDist
         timeout: 10,
         role: lambdaAtEdgeRole.arn,
         tags: lambdaAtEdgeFunctionConfig.tags,
-    });
-
-    const LambdaAtEdgePermissionConfig = setup.getResourceConfig('LambdaAtEdgePermission');
-    new aws.lambda.Permission(LambdaAtEdgePermissionConfig.name, {
-        action: 'lambda:GetFunction',
-        function: lambdaAtEdgeFunction.name,
-        principal: 'edgelambda.amazonaws.com',
-        sourceArn: cloudFrontDistribution.arn,
+        publish: true,
     });
 
     return lambdaAtEdgeFunction;

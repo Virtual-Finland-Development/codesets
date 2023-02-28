@@ -23,10 +23,7 @@ export default function createS3Bucket(setup: ISetup, originAccessIdentity: aws.
       ),
   });
 
-  return {
-    bucket: s3bucket,
-    bucketPolicy,
-  }
+  return s3bucket
 }
 
 function publicReadPolicyForBucket(

@@ -1,4 +1,5 @@
 import * as aws from '@pulumi/aws';
+import * as pulumi from '@pulumi/pulumi';
 import { ISetup } from '../tools/Setup';
 
 export function createOriginAccessIdentity(setup: ISetup) {
@@ -11,10 +12,10 @@ export function createOriginAccessIdentity(setup: ISetup) {
   );
 }
 
-export function createCloudFrontDistribution(setup: ISetup, bucket: aws.s3.Bucket, originAccessIdentity: aws.cloudfront.OriginAccessIdentity) {
+export function createCloudFrontDistribution(setup: ISetup, bucket: aws.s3.Bucket, originAccessIdentity: aws.cloudfront.OriginAccessIdentity, lambdaAtEdgeFunction: aws.lambda.Function, ) {
   const cloudFrontDistributionConfig = setup.getResourceConfig('CloudFrontDistribution');
   
-  return new aws.cloudfront.Distribution(
+  const cloudFrontDistribution = new aws.cloudfront.Distribution(
     cloudFrontDistributionConfig.name,
     {
       origins: [
@@ -55,6 +56,12 @@ export function createCloudFrontDistribution(setup: ISetup, bucket: aws.s3.Bucke
         minTtl: 0,
         defaultTtl: 3600,
         maxTtl: 86400,
+        lambdaFunctionAssociations: [
+            {
+                eventType: 'origin-response',
+                lambdaArn: pulumi.interpolate `${lambdaAtEdgeFunction.arn}:${lambdaAtEdgeFunction.version}`,
+            },
+        ],
       },
       viewerCertificate: {
         cloudfrontDefaultCertificate: true,
@@ -78,4 +85,15 @@ export function createCloudFrontDistribution(setup: ISetup, bucket: aws.s3.Bucke
       protect: true,
     }
   );
+
+  // Permissions for Lambda@Edge
+  const LambdaAtEdgePermissionConfig = setup.getResourceConfig('LambdaAtEdgePermission');
+  new aws.lambda.Permission(LambdaAtEdgePermissionConfig.name, {
+      action: 'lambda:GetFunction',
+      function: lambdaAtEdgeFunction.name,
+      principal: 'edgelambda.amazonaws.com',
+      sourceArn: cloudFrontDistribution.arn,
+  });
+  
+  return cloudFrontDistribution;
 }

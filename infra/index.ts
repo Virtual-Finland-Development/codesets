@@ -6,8 +6,8 @@ import { getSetup } from './tools/Setup';
 
 const setup = getSetup();
 const originAccessIdentity = createOriginAccessIdentity(setup);
-const bucketInfo = createS3Bucket(setup, originAccessIdentity);
-const cloudFrontDistribution = createCloudFrontDistribution(setup, bucketInfo.bucket, originAccessIdentity);
-createLambdaAtEdgeFunction(setup, cloudFrontDistribution);
+const s3bucket = createS3Bucket(setup, originAccessIdentity);
+const edgeLambda = createLambdaAtEdgeFunction(setup);
+const cloudFrontDistribution = createCloudFrontDistribution(setup, s3bucket, originAccessIdentity, edgeLambda);
 
 export const url = pulumi.interpolate`http://${cloudFrontDistribution.domainName}`;
