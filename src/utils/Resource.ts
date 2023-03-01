@@ -1,7 +1,7 @@
 export interface IResource {
     uri: string;
     name: string;
-    retrieve(queryParams?: string): Promise<any>;
+    retrieve(queryParams?: string): Promise<string>;
 }
 
 export type ResourceData = Response | string | ReadableStream<Uint8Array> | null;
@@ -27,7 +27,7 @@ export default class Resource implements IResource {
         return this._uri;
     }
 
-    public async retrieve(): Promise<any> {
+    public async retrieve(): Promise<string> {
         try {
             return await this._engage(this.uri);
         } catch (error) {
@@ -36,16 +36,16 @@ export default class Resource implements IResource {
         }
     }
 
-    protected async _engage(uri: string): Promise<any> {
+    protected async _engage(uri: string): Promise<string> {
         const data = await this._getData(uri);
         return this._transform(data);
     }
 
-    protected  async _transform(data: ResourceData) {
+    protected  async _transform(data: ResourceData): Promise<string> {
         if (typeof this._transformer === "function") {
             return await this._transformer(data);
         }
-        return Promise.resolve(typeof data === "string" ? data : data !== null ? data.toString() : null);
+        return typeof data === "string" ? data : data !== null ? data.toString() : "";
     }
 
     protected async _getData(uri: string): Promise<ResourceData> {
