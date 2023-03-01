@@ -12,7 +12,7 @@ async function handleResourceUri(uri: string): Promise<CloudFrontRequestResult> 
             body: JSON.stringify(listResources()),
         };
     }
-
+    
     const resource = getResource(resourceName);
     if (resource) {
         const resourceData = await resource.retrieve();
@@ -22,6 +22,12 @@ async function handleResourceUri(uri: string): Promise<CloudFrontRequestResult> 
             body: resourceData,
         };
     }
+
+    return {
+        status: "404",
+        statusDescription: "Not found",
+        body: JSON.stringify({ message: "Resource not found" }),
+    };
 }
 
 async function engageRouter(uri: string): Promise<CloudFrontRequestResult> {
