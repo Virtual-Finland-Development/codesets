@@ -1,7 +1,7 @@
-import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2, CloudFrontRequestEvent, CloudFrontRequestResult } from "aws-lambda";
+import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2, CloudFrontRequestEvent, CloudFrontRequestResult, CloudFrontResultResponse } from "aws-lambda";
 import { getResource, listResources } from "./utils/ResourceRepository";
 
-async function handleResourceUri(uri: string): Promise<CloudFrontRequestResult> {
+async function handleResourceUri(uri: string): Promise<CloudFrontResultResponse> {
     
     const uriParts = uri.replace("/resources", "").split("?");
     const resourceName = uriParts[0].replace("/", ""); // First occurence of "/" is removed
@@ -15,6 +15,7 @@ async function handleResourceUri(uri: string): Promise<CloudFrontRequestResult> 
     
     const resource = getResource(resourceName);
     if (resource) {
+        console.log("Resource: ", resource.name);
         const resourceData = await resource.retrieve();
         return {
             status: "200",
@@ -30,10 +31,10 @@ async function handleResourceUri(uri: string): Promise<CloudFrontRequestResult> 
     };
 }
 
-async function engageRouter(uri: string): Promise<CloudFrontRequestResult> {
+async function engageRouter(uri: string): Promise<CloudFrontResultResponse> {
     
     if (uri.startsWith("/resources")) {
-        return await handleResourceUri(uri);
+        return handleResourceUri(uri);
     }
     
     return {

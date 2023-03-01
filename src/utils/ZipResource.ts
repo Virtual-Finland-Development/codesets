@@ -19,6 +19,10 @@ export default class ZipResource extends Resource {
     }
 
     protected async _getData(uri: string): Promise<ResourceData> {
-        return await fetch(uri);
+        const response =  await fetch(uri);
+        if (response.status !== 200) {
+            throw new Error(`Failed to fetch resource: ${response.status} ${response.statusText}`);
+        }
+        return response;
     }
 }
