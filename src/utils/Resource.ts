@@ -4,13 +4,15 @@ export interface IResource {
     retrieve(queryParams?: string): Promise<any>;
 }
 
+export type ResourceData = Response | string | ReadableStream<Uint8Array> | null;
+
 export default class Resource implements IResource {
     protected _uri: string;
-    protected _transformer: (body: string) => string;
+    protected _transformer: ((data: ResourceData) => Promise<string>) | undefined;
 
-    constructor({ uri, transformer }: { uri: string, transformer?: (body: string) => string }) {
+    constructor({ uri, transformer }: { uri: string, transformer?: (data: ResourceData) => Promise<string> }) {
         this._uri = uri;
-        this._transformer = typeof transformer === 'function' ? transformer : (body: string) => body;
+        this._transformer = transformer;
     }
 
     public get name() {
@@ -29,9 +31,20 @@ export default class Resource implements IResource {
         return await this._engage(this.uri);
     }
 
-    private async _engage(uri: string): Promise<any> {
+    protected async _engage(uri: string): Promise<any> {
+        const data = await this._getData(uri);
+        return this._transform(data);
+    }
+
+    protected  async _transform(data: ResourceData) {
+        if (typeof this._transformer === "function") {
+            return await this._transformer(data);
+        }
+        return Promise.resolve(typeof data === "string" ? data : data !== null ? data.toString() : null);
+    }
+
+    protected async _getData(uri: string): Promise<ResourceData> {
         const response = await fetch(uri);
-        const body = await response.text();
-        return this._transformer(body);
+        return await response.text();
     }
 }

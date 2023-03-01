@@ -1,0 +1,24 @@
+service: codesets-offline
+
+configValidationMode: off
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    host: 0.0.0.0
+    httpPort: 3166
+
+provider:
+  name: "offline"
+  stage: offline
+  timeout: 10
+
+functions:
+  codesets:
+    handler: dist/app.offlineHandler
+    events:
+      - httpApi:
+          method: any
+          path: /{proxy+}

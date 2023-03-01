@@ -9,6 +9,8 @@
     "clean": "rimraf dist",
     "predeploy": "npm run build && npm run build:infra",
     "deploy": "pulumi -C infra up --yes",
+    "start": "nodemon --delay 80ms --watch 'src' -e 'ts'  --exec \"npm run build && npm run serve\"",
+    "serve": "serverless offline --config ./serverless-offline.yml",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -25,11 +27,14 @@
     "@types/aws-lambda": "^8.10.111",
     "@types/node": "^18.14.2",
     "eslint": "^8.35.0",
+    "nodemon": "^2.0.20",
     "prettier": "^2.8.4",
     "rimraf": "^4.1.2",
+    "serverless-offline": "^12.0.4",
     "typescript": "^4.9.5"
   },
   "dependencies": {
+    "@transcend-io/conflux": "^4.0.3",
     "directory-import": "^2.3.1"
   }
 }
