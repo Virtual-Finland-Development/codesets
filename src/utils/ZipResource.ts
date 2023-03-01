@@ -11,8 +11,8 @@ export default class ZipResource extends Resource {
         
         const zip = await data.blob();
         const entry = await Reader(zip).next();
-        if (entry) {
-            return await entry.text();
+        if (entry && entry.value) {
+            return await entry.value.text();
         }
 
         throw new Error("Could not find file in zip");

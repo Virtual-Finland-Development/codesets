@@ -28,7 +28,12 @@ export default class Resource implements IResource {
     }
 
     public async retrieve(): Promise<any> {
-        return await this._engage(this.uri);
+        try {
+            return await this._engage(this.uri);
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
     }
 
     protected async _engage(uri: string): Promise<any> {
