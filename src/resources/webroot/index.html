@@ -22,7 +22,7 @@
             resourcesList.forEach(function (resource) {
                 var resourceElement = document.createElement('li');
                 const resourceURI = `${window.location.origin}/resources/${resource}`;
-                resourceElement.innerHTML = `- <b class='is-grey'>${resource}:</b>  <a href="${resourceURI}">${resourceURI}</a>`;
+                resourceElement.innerHTML = `<b class='is-grey'>${resource}:</b> <a href="${resourceURI}" target="_blank">${resourceURI}</a>`;
                 resourcesListElement.appendChild(resourceElement);
             });
         }
@@ -112,7 +112,11 @@
         }
 
         .is-grey {
-            color: #ffffff59;
+            color: #565656;
+        }
+
+        a {
+            float: right;
         }
     </style>
 </body>
