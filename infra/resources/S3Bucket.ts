@@ -4,7 +4,7 @@ import * as pulumi from '@pulumi/pulumi';
 import * as fs from 'fs';
 import * as mime from 'mime';
 import * as path from 'path';
-import { ISetup } from '../tools/Setup';
+import { ISetup } from '../utils/Setup';
 
 export default function createS3Bucket(setup: ISetup) {
   const bucketConfig = setup.getResourceConfig("S3Bucket");

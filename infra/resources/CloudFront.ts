@@ -1,6 +1,6 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
-import { ISetup } from '../tools/Setup';
+import { ISetup } from '../utils/Setup';
 
 export function createOriginAccessIdentity(setup: ISetup) {
   const originAccessIdentityConfig = setup.getResourceConfig('OriginAccessIdentity');

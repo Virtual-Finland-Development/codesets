@@ -1,9 +1,8 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
-import * as fs from 'fs';
-import { ISetup } from '../tools/Setup';
+import { ISetup } from '../utils/Setup';
 
-export default function createLambdaAtEdgeFunction(setup: ISetup, s3bucket: aws.s3.Bucket) {
+export default function createLambdaAtEdgeFunction(setup: ISetup) {
 
     const lambdaAtEdgeRoleConfig = setup.getResourceConfig('LambdaAtEdgeRole');
     const lambdaAtEdgeRole = new aws.iam.Role(lambdaAtEdgeRoleConfig.name, {
@@ -44,16 +43,14 @@ export default function createLambdaAtEdgeFunction(setup: ISetup, s3bucket: aws.
         }),
     });
     
-    // Write bucket name to file
-    const bucketName = pulumi.interpolate`${s3bucket.bucket}`;
-    fs.writeFileSync('./dist/build/bucket-info.json', JSON.stringify({ bucketName }));
-
     const lambdaAtEdgeFunctionConfig = setup.getResourceConfig('LambdaAtEdge');
     const lambdaAtEdgeFunction = new aws.lambda.Function(lambdaAtEdgeFunctionConfig.name, {
-        code: new pulumi.asset.FileArchive('./dist'),
+        code: new pulumi.asset.AssetArchive({
+            ".": new pulumi.asset.FileArchive("./dist"),
+        }),
         handler: 'app.handler',
         runtime: 'nodejs18.x',
-        memorySize: 512,
+        memorySize: 256,
         timeout: 30,
         role: lambdaAtEdgeRole.arn,
         tags: lambdaAtEdgeFunctionConfig.tags,
@@ -67,3 +64,5 @@ export default function createLambdaAtEdgeFunction(setup: ISetup, s3bucket: aws.
         lambdaAtEdgeRole,
     };
 }
+
+// 

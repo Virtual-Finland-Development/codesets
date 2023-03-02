@@ -7,26 +7,16 @@ export interface IResource {
 export type ResourceData = Response | string | ReadableStream<Uint8Array> | null;
 
 export default class Resource implements IResource {
-    protected _name: string;
-    protected _uri: string;
+    public name: string;
+    public uri: string;
+    protected _mime: string | undefined;
     protected _transformer: ((data: ResourceData) => Promise<string>) | undefined;
 
-    constructor({ name, uri, transformer }: { name: string, uri: string, transformer?: (data: ResourceData) => Promise<string> }) {
-        this._name = name;
-        this._uri = uri;
+    constructor({ name, uri, mime, transformer }: { name: string, uri: string, mime?: string, transformer?: (data: ResourceData) => Promise<string> }) {
+        this.name = name;
+        this.uri = uri;
+        this._mime = mime;
         this._transformer = transformer;
-    }
-
-    public get name() {
-        return this._name;
-    }
-
-    public get uri(): string {
-        const resourceName = this.name; // Name of the class, e.g. "OccupationsFlatURL"
-        if (typeof process.env[`Resources:${resourceName}`] === "string") {
-            return process.env[`Resources:${resourceName}`] as string;
-        }
-        return this._uri;
     }
 
     public async retrieve(): Promise<{ data: string, mime: string; size: number }> {
@@ -36,7 +26,7 @@ export default class Resource implements IResource {
             const transformedData = await this._transform(data);
             return {
                 data: transformedData,
-                mime: response.mime,
+                mime: this._mime || response.mime,
                 size: Buffer.byteLength(transformedData, 'utf8'),
             };
         } catch (error) {
@@ -53,7 +43,7 @@ export default class Resource implements IResource {
         
         return {
             response: response,
-            mime: response.headers.get("content-type") || "text/plain",
+            mime: response.headers.get("content-type") || "application/json; charset=utf-8",
         };
     }
 
