@@ -4,6 +4,6 @@ A shared codesets / resources router for virtual finland projects
 
 # Resources
 
-## Deploymnet
+## Deployment
 
 - [lambda-at-edge-example](https://github.com/simonschoof/lambda-at-edge-example)
