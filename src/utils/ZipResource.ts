@@ -18,11 +18,7 @@ export default class ZipResource extends Resource {
         throw new Error("Could not find file in zip");
     }
 
-    protected async _getData(uri: string): Promise<ResourceData> {
-        const response =  await fetch(uri);
-        if (response.status !== 200) {
-            throw new Error(`Failed to fetch resource: ${response.status} ${response.statusText}`);
-        }
+    protected async _resolveData(response: Response): Promise<ResourceData> {
         return response;
     }
 }

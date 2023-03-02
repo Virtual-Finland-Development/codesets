@@ -5,7 +5,7 @@
   "scripts": {
     "prebuild": "npm i && npm run clean",
     "build": "tsc",
-    "postbuild": "ts-node src/scripts/prepare-dist.ts",
+    "postbuild": "ts-node src/build/finalize-build.ts",
     "build:infra": "npm -C infra install && npm -C infra run build",
     "clean": "rimraf dist",
     "predeploy": "npm run build && npm run build:infra",

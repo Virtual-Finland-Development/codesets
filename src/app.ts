@@ -1,6 +1,7 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2, CloudFrontRequestEvent, CloudFrontRequestResult, CloudFrontResultResponse } from "aws-lambda";
 import { InternalResources } from "./resources/index";
 import { getResource, listResources } from "./utils/ResourceRepository";
+import { cutTooLongString } from "./utils/strings";
 
 async function engageResourcesRouter(resourceURI: string): Promise<CloudFrontResultResponse | undefined> {
     const uriParts = resourceURI.split("?");
@@ -16,14 +17,29 @@ async function engageResourcesRouter(resourceURI: string): Promise<CloudFrontRes
     const resource = getResource(resourceName);
     if (resource) {
         console.log("Resource: ", resource.name);
-        const resourceData = await resource.retrieve();
+        const resourceResponse = await resource.retrieve();
+
+        // If resource size is larger than 1MB, return a redirect to the resource / bybass cf cache
+        // This is a workaround to avoid CloudFront cache limit
+        // @see: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-functions-restrictions.html#lambda-at-edge-function-restrictions
+        console.log("Size: ", resourceResponse.size, "bytes");
+        if (resourceResponse.size > 1024 * 1024) {
+            return {
+                status: "302",
+                statusDescription: "Found: resource found",
+                headers: {
+                    location: [ { key: "Location", value: resource.uri } ],
+                }
+            };
+        }
+
         return {
             status: "200",
             statusDescription: "OK: resource found",
-            body: resourceData,
+            body: resourceResponse.data,
             bodyEncoding: "text",
             headers: {
-                "content-type": [ { key: "Content-Type", value: "application/json; charset=utf-8" } ],
+                "content-type": [ { key: "Content-Type", value: resourceResponse.mime } ],
             }
         };
     }
@@ -40,11 +56,14 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
             uri = uri.replace("/resources", "");
             const response = await engageResourcesRouter(uri);
             if (response) {
-                console.log("Response: ", response.status, response.statusDescription);
+                console.log("Response: ", {
+                    ...response,
+                    body: cutTooLongString(response.body, 250),
+                });
                 return response;
             }
         }
-        console.log("DEBUB", uri);
+        
         request.uri = uri; // Pass through to origin
         return request; 
     } catch (error: any) {

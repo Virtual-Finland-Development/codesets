@@ -1,7 +1,7 @@
 export interface IResource {
     uri: string;
     name: string;
-    retrieve(queryParams?: string): Promise<string>;
+    retrieve(): Promise<{ data: string, mime: string; size: number }>;
 }
 
 export type ResourceData = Response | string | ReadableStream<Uint8Array> | null;
@@ -29,32 +29,42 @@ export default class Resource implements IResource {
         return this._uri;
     }
 
-    public async retrieve(): Promise<string> {
+    public async retrieve(): Promise<{ data: string, mime: string; size: number }> {
         try {
-            return await this._engage(this.uri);
+            const response = await this._fetchData(this.uri);
+            const data = await this._resolveData(response.response);
+            const transformedData = await this._transform(data);
+            return {
+                data: transformedData,
+                mime: response.mime,
+                size: Buffer.byteLength(transformedData, 'utf8'),
+            };
         } catch (error) {
             console.error(error);
             throw error;
         }
     }
 
-    protected async _engage(uri: string): Promise<string> {
-        const data = await this._getData(uri);
-        return await this._transform(data);
+    protected async _fetchData(uri: string): Promise<{ response: Response, mime: string }> {
+        const response = await fetch(uri);
+        if (response.status !== 200) {
+            throw new Error(`Failed to fetch resource: ${response.status} ${response.statusText}`);
+        }
+        
+        return {
+            response: response,
+            mime: response.headers.get("content-type") || "text/plain",
+        };
     }
 
+    protected async _resolveData(response: Response): Promise<ResourceData> {
+        return await response.text();
+    }
+    
     protected  async _transform(data: ResourceData): Promise<string> {
         if (typeof this._transformer === "function") {
             return await this._transformer(data);
         }
         return typeof data === "string" ? data : data !== null ? data.toString() : "";
-    }
-
-    protected async _getData(uri: string): Promise<ResourceData> {
-        const response = await fetch(uri);
-        if (response.status !== 200) {
-            throw new Error(`Failed to fetch resource: ${response.status} ${response.statusText}`);
-        }
-        return await response.text();
     }
 }
