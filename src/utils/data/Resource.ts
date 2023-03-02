@@ -30,7 +30,7 @@ export default class Resource implements IResource {
                 size: Buffer.byteLength(transformedData, 'utf8'),
             };
         } catch (error) {
-            console.error(error);
+            console.log(error);
             throw error;
         }
     }

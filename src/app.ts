@@ -103,7 +103,7 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
         request.uri = uri; // Pass through to origin
         return request; 
     } catch (error: any) {
-        console.error(error?.message, error?.stack);
+        console.log(error?.message, error?.stack);
         return {
             status: "500",
             statusDescription: "Internal Server Error",
@@ -127,7 +127,7 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
             const routerResponse: any = await engageResourcesRouter(uri);
             if (routerResponse.response) {
                 return {
-                    statusCode: routerResponse.response.status,
+                    statusCode: parseInt(routerResponse.response.status),
                     body: routerResponse.response.body,
                 }
             }
@@ -161,7 +161,7 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
             body: JSON.stringify({ message: "Not found" }),
         }
     } catch (error: any) {
-        console.error(error?.message, error?.stack);
+        console.log(error?.message, error?.stack);
         return {
             statusCode: 500,
             body: JSON.stringify({ message: error?.message }),

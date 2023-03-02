@@ -31,9 +31,7 @@ export const InternalResources = {
                 body: await fs.promises.readFile(filePath, 'utf8'),
                 mime: mime.getType(filePath),
             };
-        } catch (error) {
-            console.error("Error while retrieving internal resource", error);
-        }
+        } catch (error) {}
         return;
     }
 }
