@@ -6,7 +6,7 @@ import * as mime from 'mime';
 import * as path from 'path';
 import { ISetup } from '../tools/Setup';
 
-export default function createS3Bucket(setup: ISetup, originAccessIdentity: aws.cloudfront.OriginAccessIdentity) {
+export default function createS3Bucket(setup: ISetup) {
   const bucketConfig = setup.getResourceConfig("S3Bucket");
   const s3bucket = new aws.s3.Bucket(bucketConfig.name, {
     website: {
@@ -16,22 +16,26 @@ export default function createS3Bucket(setup: ISetup, originAccessIdentity: aws.
     tags: bucketConfig.tags,
   });
 
+  return s3bucket
+}
+
+export function createS3BucketPermissions(setup: ISetup, s3bucket: aws.s3.Bucket, originAccessIdentity: aws.cloudfront.OriginAccessIdentity, edgeLambdaExecRole: aws.iam.Role) {
   const bucketPolicyConfig = setup.getResourceConfig("S3BucketPolicy");
   new aws.s3.BucketPolicy(bucketPolicyConfig.name, {
     bucket: s3bucket.bucket,
     policy: pulumi
-      .all([s3bucket.bucket, originAccessIdentity.iamArn])
-      .apply(([bucketName, originAccessArn]) =>
-        publicReadPolicyForBucket(bucketName, originAccessArn)
+      .all([s3bucket.bucket, originAccessIdentity.iamArn, edgeLambdaExecRole.arn])
+      .apply(([bucketName, originAccessArn, lambdaExecArn]) =>
+        publicReadPolicyForBucket(bucketName, originAccessArn, lambdaExecArn)
       ),
   });
-
-  return s3bucket
 }
+
 
 function publicReadPolicyForBucket(
   bucketName: string,
-  originAccessArn: string
+  originAccessArn: string,
+  lambdaExecArn: string,
 ): string {
   return JSON.stringify({
     Version: '2012-10-17',
@@ -49,7 +53,7 @@ function publicReadPolicyForBucket(
         Sid: 'WriteAccess',
         Effect: 'Allow',
         Principal: {
-          AWS: [`${originAccessArn}`],
+          AWS: [`${lambdaExecArn}`],
         },
         Action: 's3:PutObject',
         Resource: `arn:aws:s3:::${bucketName}/*`,

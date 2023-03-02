@@ -1,8 +1,9 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
+import * as fs from 'fs';
 import { ISetup } from '../tools/Setup';
 
-export default function createLambdaAtEdgeFunction(setup: ISetup) {
+export default function createLambdaAtEdgeFunction(setup: ISetup, s3bucket: aws.s3.Bucket) {
 
     const lambdaAtEdgeRoleConfig = setup.getResourceConfig('LambdaAtEdgeRole');
     const lambdaAtEdgeRole = new aws.iam.Role(lambdaAtEdgeRoleConfig.name, {
@@ -43,6 +44,10 @@ export default function createLambdaAtEdgeFunction(setup: ISetup) {
         }),
     });
     
+    // Write bucket name to file
+    const bucketName = s3bucket.bucket;
+    fs.writeFileSync('./dist/build/bucket-info.json', JSON.stringify({ bucketName }));
+
     const lambdaAtEdgeFunctionConfig = setup.getResourceConfig('LambdaAtEdge');
     const lambdaAtEdgeFunction = new aws.lambda.Function(lambdaAtEdgeFunctionConfig.name, {
         code: new pulumi.asset.FileArchive('./dist'),
@@ -57,5 +62,8 @@ export default function createLambdaAtEdgeFunction(setup: ISetup) {
     // { provider: new aws.Provider("us-east-1", { region: "us-east-1"} ) }
     // Lambda@Edge functions must be in us-east-1
 
-    return lambdaAtEdgeFunction;
+    return {
+        lambdaAtEdgeFunction,
+        lambdaAtEdgeRole,
+    };
 }

@@ -1,14 +1,15 @@
 import * as pulumi from '@pulumi/pulumi';
 import { createCloudFrontDistribution, createOriginAccessIdentity } from './resources/CloudFront';
 import createLambdaAtEdgeFunction from "./resources/LambdaAtEdge";
-import createS3Bucket, { uploadAssetsToBucket } from "./resources/S3Bucket";
+import createS3Bucket, { createS3BucketPermissions, uploadAssetsToBucket } from "./resources/S3Bucket";
 import { getSetup } from './tools/Setup';
 
 const setup = getSetup();
 const originAccessIdentity = createOriginAccessIdentity(setup);
-const s3bucket = createS3Bucket(setup, originAccessIdentity);
-const edgeLambda = createLambdaAtEdgeFunction(setup);
-const cloudFrontDistribution = createCloudFrontDistribution(setup, s3bucket, originAccessIdentity, edgeLambda);
+const s3bucket = createS3Bucket(setup);
+const edgeLambdaPackage = createLambdaAtEdgeFunction(setup, s3bucket);
+createS3BucketPermissions(setup, s3bucket, originAccessIdentity, edgeLambdaPackage.lambdaAtEdgeRole);
+const cloudFrontDistribution = createCloudFrontDistribution(setup, s3bucket, originAccessIdentity, edgeLambdaPackage.lambdaAtEdgeFunction);
 
 uploadAssetsToBucket(s3bucket);
 

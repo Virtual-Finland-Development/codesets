@@ -1,4 +1,5 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2, CloudFrontRequestEvent, CloudFrontRequestResult, CloudFrontResultResponse } from "aws-lambda";
+import bucketInfo from "./build/bucket-info.json";
 import { InternalResources } from "./resources/index";
 import { getResource, listResources } from "./utils/data/ResourceRepository";
 import { storeToS3 } from "./utils/lib/S3Bucket";
@@ -84,7 +85,7 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
 
             if (routerResponse.cacheable) {
                 console.log("Cacheable: ", routerResponse.cacheable.cacheFilename);
-                const bucketName = "codesets-s3bucket-dev-11c0bc6"; // @TODO
+                const bucketName = bucketInfo.bucketName;
                 await storeToS3(bucketName, routerResponse.cacheable.cacheFilename, routerResponse.cacheable.data);
                 uri = `/${routerResponse.cacheable.cacheFilename}`;
             }
