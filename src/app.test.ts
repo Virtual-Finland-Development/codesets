@@ -1,12 +1,11 @@
 import { test } from '@jest/globals';
-import { CloudFrontRequestEvent, CloudFrontResultResponse } from 'aws-lambda';
-import { handler } from './app';
+import { offlineHandler } from './app';
 
 jest.mock('node:fetch');
 
 
 test('Basic router test', async () => {
-    const event = {
+    /* const event = {
         Records: [
             {
                 cf: {
@@ -17,9 +16,13 @@ test('Basic router test', async () => {
             },
         ],
     } as CloudFrontRequestEvent;
+    */
+    const event = { 
+        rawPath: "/resources/bazz",
+    } as any;
 
-    const result = await handler(event) as CloudFrontResultResponse;
+    const result = await offlineHandler(event) as any;
 
-    expect(result.status).toBe("404");
+    expect(result.statusCode).toBe(404);
     expect(result.body).toBeDefined();
   })
