@@ -3,30 +3,31 @@ import { InternalResources } from "./resources/index";
 import { getResource, listResources } from "./utils/ResourceRepository";
 
 async function engageResourcesRouter(uri: string): Promise<CloudFrontResultResponse | undefined> {
-    
-    const uriParts = uri.split("?");
-    const resourceName = uriParts[0].replace("/", ""); // First occurence of "/" is removed
-    if (!resourceName) {
-        return {
-            status: "200",
-            statusDescription: "OK: list of resources",
-            body: JSON.stringify([...listResources(), ...InternalResources.listResources()]),
-        };
-    }
-    
-    const resource = getResource(resourceName);
-    if (resource) {
-        console.log("Resource: ", resource.name);
-        const resourceData = await resource.retrieve();
-        return {
-            status: "200",
-            statusDescription: "OK: resource found",
-            body: resourceData,
-            bodyEncoding: "text",
-            headers: {
-                "Content-Type": [ { key: "Content-Type", value: "application/json; charset=utf-8" } ],
-            }
-        };
+    if (uri.startsWith("/resources")) {
+        const uriParts = uri.replace("/resources", "").split("?");
+        const resourceName = uriParts[0].replace("/", ""); // First occurence of "/" is removed
+        if (!resourceName) {
+            return {
+                status: "200",
+                statusDescription: "OK: list of resources",
+                body: JSON.stringify([...listResources(), ...InternalResources.listResources()]),
+            };
+        }
+        
+        const resource = getResource(resourceName);
+        if (resource) {
+            console.log("Resource: ", resource.name);
+            const resourceData = await resource.retrieve();
+            return {
+                status: "200",
+                statusDescription: "OK: resource found",
+                body: resourceData,
+                bodyEncoding: "text",
+                headers: {
+                    "Content-Type": [ { key: "Content-Type", value: "application/json; charset=utf-8" } ],
+                }
+            };
+        }
     }
     return;
 }
@@ -56,7 +57,7 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
 
 export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
     try {
-        const uri = event.rawPath;
+        let uri = event.rawPath;
         console.log("URI: ", uri);
         const response: any = await engageResourcesRouter(uri);
         if (response) {
@@ -66,6 +67,10 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
             }
         }
         
+        // Simulate CloudFront pass through
+        if (uri === "/") {
+            uri = "/index.html";
+        }
         const resource = await InternalResources.getResourcePassThrough(uri);
         if (resource) {
             return {

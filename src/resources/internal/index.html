@@ -16,13 +16,13 @@
             resourcesListElement.innerHTML = '';
             resourcesList.forEach(function (resource) {
                 var resourceElement = document.createElement('li');
-                const resourceURI = `${window.location.origin}/${resource}`;
+                const resourceURI = `${window.location.origin}/resources/${resource}`;
                 resourceElement.innerHTML = `<a href="${resourceURI}">${resourceURI}</a>`;
                 resourcesListElement.appendChild(resourceElement);
             });
         }
 
-        fetch('/').then(function (response) {
+        fetch('/resources').then(function (response) {
             return response.json();
         }).then(function (resourcesList) {
             drawResourcesList(resourcesList);
