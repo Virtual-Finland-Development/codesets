@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
+import * as fs from 'fs';
+import * as mime from 'mime';
+import * as path from 'path';
 import { ISetup } from '../tools/Setup';
 
 export default function createS3Bucket(setup: ISetup, originAccessIdentity: aws.cloudfront.OriginAccessIdentity) {
@@ -46,13 +49,10 @@ function publicReadPolicyForBucket(
   });
 }
 
-
-/* 
-
 export function uploadAssetsToBucket(bucketResource: aws.s3.Bucket) {
-  process.chdir('../'); // navigate to root folder where build folder for react app is located
-  const buildDir = `${process.cwd()}/build`;
-  uploadToS3(buildDir, bucketResource);
+  process.chdir('../'); // navigate to project root folder
+  const resourcesDir = `${process.cwd()}/src/resources/internal`;
+  uploadToS3(resourcesDir, bucketResource);
 }
 
 function uploadToS3(
@@ -79,4 +79,4 @@ function uploadToS3(
       });
     }
   }
-} */
+}

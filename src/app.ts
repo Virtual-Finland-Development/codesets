@@ -1,7 +1,8 @@
-import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2, CloudFrontRequestEvent, CloudFrontRequestResult, CloudFrontResultResponse } from "aws-lambda";
+import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2, CloudFrontRequestEvent, CloudFrontRequestResult } from "aws-lambda";
+import { getLocalModeResourcePassThrough } from "./resources/index";
 import { getResource, listResources } from "./utils/ResourceRepository";
 
-async function handleResourceUri(uri: string): Promise<CloudFrontResultResponse> {
+async function handleResourceUri(uri: string): Promise<CloudFrontRequestResult> {
     
     const uriParts = uri.replace("/resources", "").split("?");
     const resourceName = uriParts[0].replace("/", ""); // First occurence of "/" is removed
@@ -21,27 +22,19 @@ async function handleResourceUri(uri: string): Promise<CloudFrontResultResponse>
             status: "200",
             statusDescription: "OK: resource found",
             body: resourceData,
+            headers: {
+                "Content-Type": [ { key: "Content-Type", value: "application/json; charset=utf-8" } ],
+            }
         };
     }
-
-    return {
-        status: "404",
-        statusDescription: "Not found",
-        body: JSON.stringify({ message: "Resource not found" }),
-    };
+    return;
 }
 
-async function engageRouter(uri: string): Promise<CloudFrontResultResponse> {
-    
+async function engageRouter(uri: string): Promise<CloudFrontRequestResult> {
     if (uri.startsWith("/resources")) {
         return handleResourceUri(uri);
     }
-    
-    return {
-        status: "404",
-        statusDescription: "Not found",
-        body: JSON.stringify({ message: "Not found" }),
-    };
+    return;
 }
 
 
@@ -49,7 +42,13 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
     try {
         const uri = event.Records[0].cf.request.uri;
         console.log("URI: ", uri);
-        return await engageRouter(uri);
+        
+        const response = await engageRouter(uri);
+        if (response) {
+            return response;
+        }
+
+        return event.Records[0].cf.request; // Pass through to origin
     } catch (error: any) {
         console.error(error?.message, error?.stack);
         return {
@@ -65,9 +64,23 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
         const uri = event.rawPath;
         console.log("URI: ", uri);
         const response: any = await engageRouter(uri);
+        if (response) {
+            return {
+                statusCode: response.status,
+                body: response.body,
+            }
+        }
+        
+        const resource = await getLocalModeResourcePassThrough(uri);
+        if (resource) {
+            return {
+                statusCode: 200,
+                body: resource,
+            }
+        }
         return {
-            statusCode: response.status,
-            body: response.body,
+            statusCode: 404,
+            body: JSON.stringify({ message: "Not found" }),
         }
     } catch (error: any) {
         console.error(error?.message, error?.stack);
