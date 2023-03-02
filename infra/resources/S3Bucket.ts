@@ -64,27 +64,35 @@ function publicReadPolicyForBucket(
 
 export function uploadAssetsToBucket(bucketResource: aws.s3.Bucket) {
   process.chdir('../'); // navigate to project root folder
-  uploadToS3(`${process.cwd()}/src/resources/internal`, bucketResource);
-  uploadToS3(`${process.cwd()}/src/resources/webroot`, bucketResource);
+  uploadDirToS3(`${process.cwd()}/src/resources/internal`, bucketResource, '', 'resources');
+  uploadDirToS3(`${process.cwd()}/src/resources/webroot`, bucketResource);
 }
 
-function uploadToS3(
+export function uploadDirToS3(
   buildDir: string,
   bucket: aws.s3.Bucket,
-  subDir: string = ''
+  subDir: string = '',
+  bucketSubDir: string = '' // if provided, all subdir(s) files concatenated to this 
 ) {
-  for (let item of fs.readdirSync(`${buildDir}${subDir}`)) {
+  for (const item of fs.readdirSync(`${buildDir}${subDir}`)) {
     const filePath = path.join(buildDir, subDir, item);
 
     if (fs.statSync(filePath).isDirectory()) {
-      uploadToS3(buildDir, bucket, `${subDir}/${item}`);
+      // eg. /resources/internal
+      uploadDirToS3(buildDir, bucket, `${subDir}/${item}`, bucketSubDir);
     } else {
+      // eg. /resources/internal/file.txt -> /file.txt
+      // eg. /resources/internal/bazz/file.txt -> /bazz/file.txt
       const file = subDir.length > 0 ? `${subDir.slice(1)}/${item}` : item;
-      new aws.s3.BucketObject(file, {
+      // eg. /resources/internal/file.txt -> /alt/file.txt
+      // eg. /resources/internal/bazz/file.txt -> /alt/bazz/file.txt
+      const bucketFile = bucketSubDir.length > 0 ? `${bucketSubDir}/${item}` : file;
+      
+      new aws.s3.BucketObject(bucketFile, {
         bucket: bucket,
         source: new pulumi.asset.FileAsset(filePath),
         contentType: mime.getType(filePath) || undefined,
-        // https://create-react-app.dev/docs/production-build/#static-file-caching
+        // @see: https://create-react-app.dev/docs/production-build/#static-file-caching
         cacheControl:
           subDir.length > 0
             ? 'max-age=31536000'

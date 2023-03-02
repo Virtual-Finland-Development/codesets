@@ -6,10 +6,10 @@ import { getResource, listResources } from "./utils/data/ResourceRepository";
 import { storeToS3 } from "./utils/lib/S3Bucket";
 import { cutTooLongString } from "./utils/strings";
 
-async function engageResourcesRouter(resourceURI: string): Promise<{ response: CloudFrontResultResponse | undefined, cacheable?: { cacheFilename: string, data: string, mime: string }}> {
+async function engageResourcesRouter(resourceURI: string): Promise<{ response: CloudFrontResultResponse | undefined, cacheable?: { filename: string, data: string, mime: string }}> {
 
     const uriParts = resourceURI.split("?");
-    const resourceName = uriParts[0].replace("/", ""); // First occurence of "/" is removed
+    const resourceName = uriParts[0].replace("/resources", "").replace("/", ""); // First occurence of "/" is removed
     if (!resourceName) {
         return {
             response: {
@@ -36,7 +36,7 @@ async function engageResourcesRouter(resourceURI: string): Promise<{ response: C
             return {
                 response: undefined,
                 cacheable: {
-                    cacheFilename: cachedName,
+                    filename: cachedName,
                     data: resourceResponse.data,
                     mime: resourceResponse.mime,
                 }
@@ -74,8 +74,6 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
         console.log("URI: ", uri);
         
         if (uri.startsWith("/resources")) {
-            uri = uri.replace("/resources", "");
-
             const routerResponse = await engageResourcesRouter(uri);
             if (routerResponse.response) {
                 console.log("Response: ", {
@@ -86,10 +84,10 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
             }
 
             if (routerResponse.cacheable) {
-                console.log("Cacheable: ", routerResponse.cacheable.cacheFilename);
+                console.log("Cacheable: ", routerResponse.cacheable.filename);
                 const bucketName = bucketInfo.bucketName;
-                await storeToS3(bucketName, routerResponse.cacheable.cacheFilename, routerResponse.cacheable.data, routerResponse.cacheable.mime);
-                uri = `/${routerResponse.cacheable.cacheFilename}`;
+                await storeToS3(bucketName, routerResponse.cacheable.filename, routerResponse.cacheable.data, routerResponse.cacheable.mime);
+                uri = `/resources/${routerResponse.cacheable.filename}`; // pass through to s3 origin
             }
         }
         
@@ -116,9 +114,7 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
         let uri = event.rawPath;
         console.log("URI: ", uri);
 
-        if (uri.startsWith("/resources")) {
-            uri = uri.replace("/resources", "");
-            
+        if (uri.startsWith("/resources")) {            
             const routerResponse: any = await engageResourcesRouter(uri);
             if (routerResponse.response) {
                 return {
@@ -128,7 +124,7 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
             }
 
             if (routerResponse.cacheable) {
-                console.log("Cacheable: ", routerResponse.cacheable.cacheFilename);
+                console.log("Cacheable: ", routerResponse.cacheable.filename);
                 return {
                     statusCode: 200,
                     body: routerResponse.cacheable.data,

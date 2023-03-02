@@ -17,18 +17,23 @@ const externalResources = Object.keys(externalResourcesImport).reduce((acc, key)
 
 export const InternalResources = {
     localResourcesPath: './src/resources/internal',
+    localWebPath: './src/resources/webroot',
     listResources(): string[] {
         return BuiltInternalResourcesList.length > 0 ? BuiltInternalResourcesList : fs.readdirSync(this.localResourcesPath);
     },
     async getResourcePassThrough(resourceURI: string): Promise<{ body: string, mime: string | null } | undefined> {
         try {
-            const resourceFilename = resourceURI.replace('/', '');
-            const filePath = `${this.localResourcesPath}/${resourceFilename}`;
+            const resourceFilename = resourceURI.replace('/resources/', '').replace('/', '');
+            const resourcePath = resourceFilename.endsWith(".html") ? this.localWebPath : this.localResourcesPath;
+            const filePath = `${resourcePath}/${resourceFilename}`;
+
             return {
                 body: await fs.promises.readFile(filePath, 'utf8'),
                 mime: mime.getType(filePath),
             };
-        } catch (error) {}
+        } catch (error) {
+            console.error("Error while retrieving internal resource", error);
+        }
         return;
     }
 }
