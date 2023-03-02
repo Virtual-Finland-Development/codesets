@@ -16,7 +16,7 @@ export const InternalResources = {
     resourcesPath: './src/resources/internal',
     resourcesList: fs.readdirSync('./src/resources/internal'),
     listResources() {
-        return this.resourcesList;
+        return this.resourcesList.filter((resourceFilename) => resourceFilename !== 'index.html');
     },
     async getResourcePassThrough(resourceFilename: string): Promise<string | undefined> {
         try {

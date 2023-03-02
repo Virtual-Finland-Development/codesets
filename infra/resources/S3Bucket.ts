@@ -17,7 +17,7 @@ export default function createS3Bucket(setup: ISetup, originAccessIdentity: aws.
   });
 
   const bucketPolicyConfig = setup.getResourceConfig("S3BucketPolicy");
-  const bucketPolicy = new aws.s3.BucketPolicy(bucketPolicyConfig.name, {
+  new aws.s3.BucketPolicy(bucketPolicyConfig.name, {
     bucket: s3bucket.bucket,
     policy: pulumi
       .all([s3bucket.bucket, originAccessIdentity.iamArn])
