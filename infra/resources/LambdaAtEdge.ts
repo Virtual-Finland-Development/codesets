@@ -45,7 +45,7 @@ export default function createLambdaAtEdgeFunction(setup: ISetup, s3bucket: aws.
     });
     
     // Write bucket name to file
-    const bucketName = s3bucket.bucket;
+    const bucketName = pulumi.interpolate`${s3bucket.bucket}`;
     fs.writeFileSync('./dist/build/bucket-info.json', JSON.stringify({ bucketName }));
 
     const lambdaAtEdgeFunctionConfig = setup.getResourceConfig('LambdaAtEdge');
