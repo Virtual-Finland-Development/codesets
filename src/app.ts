@@ -70,7 +70,10 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
         if (resource) {
             return {
                 statusCode: 200,
-                body: resource,
+                body: resource.body,
+                headers: {
+                    "Content-Type": resource.mime || "application/json; charset=utf-8",
+                }
             }
         }
         return {

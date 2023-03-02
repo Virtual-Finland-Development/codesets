@@ -1,4 +1,6 @@
 import * as fs from 'fs';
+import * as mime from 'mime';
+
 const importDir = require('directory-import');
 const externalResourcesImport = importDir({ directoryPath: './external' });
 
@@ -18,9 +20,13 @@ export const InternalResources = {
     listResources() {
         return this.resourcesList.filter((resourceFilename) => resourceFilename !== 'index.html');
     },
-    async getResourcePassThrough(resourceFilename: string): Promise<string | undefined> {
+    async getResourcePassThrough(resourceFilename: string): Promise<{ body: string, mime: string | null } | undefined> {
         try {
-            return await fs.promises.readFile(`${this.resourcesPath}/${resourceFilename}`, 'utf8');
+            const filePath = `${this.resourcesPath}/${resourceFilename}`;
+            return {
+                body: await fs.promises.readFile(filePath, 'utf8'),
+                mime: mime.getType(filePath),
+            };
         } catch (error) {}
         return;
     }
