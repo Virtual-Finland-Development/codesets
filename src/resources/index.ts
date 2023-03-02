@@ -12,14 +12,18 @@ const externalResources = Object.keys(externalResourcesImport).reduce((acc, key)
     };
 }, {});
 
-export async function getLocalModeResourcePassThrough(uri: string): Promise<string | undefined> {
-    const resourceKey = uri.replace('/resources/', '');
-    try {
-        return await fs.promises.readFile(`./src/resources/internal/${resourceKey}`, 'utf8');
-    } catch (error) {
-        
+export const InternalResources = {
+    resourcesPath: './src/resources/internal',
+    resourcesList: fs.readdirSync('./src/resources/internal'),
+    listResources() {
+        return this.resourcesList;
+    },
+    async getResourcePassThrough(resourceFilename: string): Promise<string | undefined> {
+        try {
+            return await fs.promises.readFile(`${this.resourcesPath}/${resourceFilename}`, 'utf8');
+        } catch (error) {}
+        return;
     }
-    return;
 }
 
 export default {

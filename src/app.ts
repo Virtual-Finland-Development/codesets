@@ -1,16 +1,16 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2, CloudFrontRequestEvent, CloudFrontRequestResult, CloudFrontResultResponse } from "aws-lambda";
-import { getLocalModeResourcePassThrough } from "./resources/index";
+import { InternalResources } from "./resources/index";
 import { getResource, listResources } from "./utils/ResourceRepository";
 
-async function handleResourceUri(uri: string): Promise<CloudFrontResultResponse | undefined> {
+async function engageResourcesRouter(uri: string): Promise<CloudFrontResultResponse | undefined> {
     
-    const uriParts = uri.replace("/resources", "").split("?");
+    const uriParts = uri.split("?");
     const resourceName = uriParts[0].replace("/", ""); // First occurence of "/" is removed
     if (!resourceName) {
         return {
             status: "200",
             statusDescription: "OK: list of resources",
-            body: JSON.stringify(listResources()),
+            body: JSON.stringify([...listResources(), ...InternalResources.listResources()]),
         };
     }
     
@@ -31,26 +31,19 @@ async function handleResourceUri(uri: string): Promise<CloudFrontResultResponse 
     return;
 }
 
-async function engageRouter(uri: string): Promise<CloudFrontResultResponse | undefined> {
-    if (uri.startsWith("/resources")) {
-        return handleResourceUri(uri);
-    }
-    return;
-}
-
-
 export async function handler(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
     try {
-        const uri = event.Records[0].cf.request.uri;
+        const request = event.Records[0].cf.request;
+        const uri = request.uri;
         console.log("URI: ", uri);
         
-        const response = await engageRouter(uri);
+        const response = await engageResourcesRouter(uri);
         if (response) {
             console.log("Response: ", response.status, response.statusDescription);
             return response;
         }
 
-        return event.Records[0].cf.request; // Pass through to origin
+        return request; // Pass through to origin
     } catch (error: any) {
         console.error(error?.message, error?.stack);
         return {
@@ -65,7 +58,7 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
     try {
         const uri = event.rawPath;
         console.log("URI: ", uri);
-        const response: any = await engageRouter(uri);
+        const response: any = await engageResourcesRouter(uri);
         if (response) {
             return {
                 statusCode: response.status,
@@ -73,7 +66,7 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
             }
         }
         
-        const resource = await getLocalModeResourcePassThrough(uri);
+        const resource = await InternalResources.getResourcePassThrough(uri);
         if (resource) {
             return {
                 statusCode: 200,
