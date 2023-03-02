@@ -58,7 +58,11 @@ async function engageResourcesRouter(resourceURI: string): Promise<{ response: C
     }
 
     return {
-        response: undefined,
+        response: {
+            status: "404",
+            statusDescription: "Not Found: resource not found",
+            body: JSON.stringify({ message: "Resource not found" }),
+        },
     };
 }
 
