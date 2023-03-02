@@ -43,7 +43,7 @@ export default class Resource implements IResource {
         
         return {
             response: response,
-            mime: response.headers.get("content-type") || "application/json; charset=utf-8",
+            mime: response.headers.get("content-type") || "application/json",
         };
     }
 

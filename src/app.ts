@@ -89,7 +89,11 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
             }
 
             if (routerResponse.cacheable) {
-                console.log("Cacheable: ", routerResponse.cacheable.filepath);
+                console.log("Cacheable: ", {
+                    filepath: routerResponse.cacheable.filepath,
+                    data: cutTooLongString(routerResponse.cacheable.data, 250),
+                    mime: routerResponse.cacheable.mime,
+                });
                 const bucketName = bucketInfo.bucketName;
                 await storeToS3(bucketName, routerResponse.cacheable.filepath, routerResponse.cacheable.data, routerResponse.cacheable.mime);
                 uri = routerResponse.cacheable.filepath; // pass through to s3 origin
@@ -148,7 +152,7 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
                 statusCode: 200,
                 body: resource.body,
                 headers: {
-                    "Content-Type": resource.mime || "application/json; charset=utf-8",
+                    "Content-Type": resource.mime || "application/json",
                 }
             }
         }
