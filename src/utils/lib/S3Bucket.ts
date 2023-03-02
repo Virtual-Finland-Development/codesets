@@ -1,12 +1,13 @@
 
 import aws from 'aws-sdk';
+import { leftTrimSlash } from '../strings';
 
 export async function storeToS3(bucketName: string, key: string, data: string, mime: string) {
     try {
         const s3 = new aws.S3();
         const params = {
             Bucket: bucketName,
-            Key: key,
+            Key: leftTrimSlash(key),
             Body: data,
             ContentType: mime,
         };
