@@ -24,8 +24,9 @@ export const InternalResources = {
         }
         return resourcesList.filter((resourceFilename: string) => resourceFilename !== 'index.html');
     },
-    async getResourcePassThrough(resourceFilename: string): Promise<{ body: string, mime: string | null } | undefined> {
+    async getResourcePassThrough(resourceURI: string): Promise<{ body: string, mime: string | null } | undefined> {
         try {
+            const resourceFilename = resourceURI.replace('/', '');
             const filePath = `${this.localResourcesPath}/${resourceFilename}`;
             return {
                 body: await fs.promises.readFile(filePath, 'utf8'),

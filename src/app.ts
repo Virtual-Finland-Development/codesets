@@ -2,32 +2,30 @@ import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2, CloudFrontRe
 import { InternalResources } from "./resources/index";
 import { getResource, listResources } from "./utils/ResourceRepository";
 
-async function engageResourcesRouter(uri: string): Promise<CloudFrontResultResponse | undefined> {
-    if (uri.startsWith("/resources")) {
-        const uriParts = uri.replace("/resources", "").split("?");
-        const resourceName = uriParts[0].replace("/", ""); // First occurence of "/" is removed
-        if (!resourceName) {
-            return {
-                status: "200",
-                statusDescription: "OK: list of resources",
-                body: JSON.stringify([...listResources(), ...InternalResources.listResources()]),
-            };
-        }
-        
-        const resource = getResource(resourceName);
-        if (resource) {
-            console.log("Resource: ", resource.name);
-            const resourceData = await resource.retrieve();
-            return {
-                status: "200",
-                statusDescription: "OK: resource found",
-                body: resourceData,
-                bodyEncoding: "text",
-                headers: {
-                    "Content-Type": [ { key: "Content-Type", value: "application/json; charset=utf-8" } ],
-                }
-            };
-        }
+async function engageResourcesRouter(resourceURI: string): Promise<CloudFrontResultResponse | undefined> {
+    const uriParts = resourceURI.split("?");
+    const resourceName = uriParts[0].replace("/", ""); // First occurence of "/" is removed
+    if (!resourceName) {
+        return {
+            status: "200",
+            statusDescription: "OK: list of resources",
+            body: JSON.stringify([...listResources(), ...InternalResources.listResources()]),
+        };
+    }
+    
+    const resource = getResource(resourceName);
+    if (resource) {
+        console.log("Resource: ", resource.name);
+        const resourceData = await resource.retrieve();
+        return {
+            status: "200",
+            statusDescription: "OK: resource found",
+            body: resourceData,
+            bodyEncoding: "text",
+            headers: {
+                "Content-Type": [ { key: "Content-Type", value: "application/json; charset=utf-8" } ],
+            }
+        };
     }
     return;
 }
@@ -35,16 +33,20 @@ async function engageResourcesRouter(uri: string): Promise<CloudFrontResultRespo
 export async function handler(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
     try {
         const request = event.Records[0].cf.request;
-        const uri = request.uri;
+        let uri = request.uri;
         console.log("URI: ", uri);
         
-        const response = await engageResourcesRouter(uri);
-        if (response) {
-            console.log("Response: ", response.status, response.statusDescription);
-            return response;
+        if (uri.startsWith("/resources")) {
+            uri = uri.replace("/resources", "");
+            const response = await engageResourcesRouter(uri);
+            if (response) {
+                console.log("Response: ", response.status, response.statusDescription);
+                return response;
+            }
         }
-
-        return request; // Pass through to origin
+        console.log("DEBUB", uri);
+        request.uri = uri; // Pass through to origin
+        return request; 
     } catch (error: any) {
         console.error(error?.message, error?.stack);
         return {
@@ -59,11 +61,16 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
     try {
         let uri = event.rawPath;
         console.log("URI: ", uri);
-        const response: any = await engageResourcesRouter(uri);
-        if (response) {
-            return {
-                statusCode: response.status,
-                body: response.body,
+
+        if (uri.startsWith("/resources")) {
+            uri = uri.replace("/resources", "");
+
+            const response: any = await engageResourcesRouter(uri);
+            if (response) {
+                return {
+                    statusCode: response.status,
+                    body: response.body,
+                }
             }
         }
         
@@ -71,6 +78,7 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
         if (uri === "/") {
             uri = "/index.html";
         }
+        
         const resource = await InternalResources.getResourcePassThrough(uri);
         if (resource) {
             return {
