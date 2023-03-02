@@ -5,10 +5,15 @@
 </head>
 
 <body>
-    <h1>VFD Resources</h1>
-    <ul id="resources-list">
-        <li>Loading...</li>
-    </ul>
+    <div id="app">
+        <h1>Virtual Finland Development</h1>
+        <h2>VFD Resources / codesets</h2>
+        <div class="box">
+            <ul id="resources-list">
+                <li>Loading...</li>
+            </ul>
+        </div>
+    </div>
 
     <script type="text/javascript">
         function drawResourcesList(resourcesList) {
@@ -17,7 +22,7 @@
             resourcesList.forEach(function (resource) {
                 var resourceElement = document.createElement('li');
                 const resourceURI = `${window.location.origin}/resources/${resource}`;
-                resourceElement.innerHTML = `<a href="${resourceURI}">${resourceURI}</a>`;
+                resourceElement.innerHTML = `- <b class='is-grey'>${resource}:</b>  <a href="${resourceURI}">${resourceURI}</a>`;
                 resourcesListElement.appendChild(resourceElement);
             });
         }
@@ -28,6 +33,88 @@
             drawResourcesList(resourcesList);
         });
     </script>
+
+    <style>
+        :root {
+            font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            line-height: 24px;
+            font-weight: 400;
+            color-scheme: light dark;
+            color: #ffffffde;
+            background-color: #a7a7a7;
+            font-synthesis: none;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            -webkit-text-size-adjust: 100%;
+            box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+            border: 2vh solid rgb(95, 95, 95);
+            overflow: hidden;
+            max-height: 100%
+        }
+
+        a {
+            font-weight: 500;
+            color: #fff;
+            text-decoration: inherit
+        }
+
+        a:hover {
+            color: #002F6C
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            place-items: center;
+            min-width: 320px;
+            min-height: 100vh
+        }
+
+        h1 {
+            font-size: 3.2em;
+            line-height: 1.1
+        }
+
+        h2 {
+            font-size: 2.4em;
+            line-height: 1.1
+        }
+
+        #app {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 2rem;
+            text-align: center
+        }
+
+        .box {
+            background-color: #949494;
+            border: 1px solid transparent
+        }
+
+        ul#resources-list {
+            list-style: none;
+            padding: 0
+        }
+
+        ul#resources-list li {
+            padding-left: 0.5rem;
+            border-bottom: 1px solid #ffffff59;
+            text-align: left;
+        }
+
+        ul#resources-list li:last-child {
+            border-bottom: none;
+        }
+
+        .is-grey {
+            color: #ffffff59;
+        }
+    </style>
 </body>
 
 </html>
