@@ -56,6 +56,7 @@ export function createCloudFrontDistribution(setup: ISetup, bucket: aws.s3.Bucke
         minTtl: 0,
         defaultTtl: 3600,
         maxTtl: 86400,
+        compress: true,
         lambdaFunctionAssociations: [
             {
               eventType: 'origin-request',

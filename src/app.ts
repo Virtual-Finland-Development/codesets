@@ -23,7 +23,7 @@ async function engageResourcesRouter(resourceURI: string): Promise<CloudFrontRes
             body: resourceData,
             bodyEncoding: "text",
             headers: {
-                "Content-Type": [ { key: "Content-Type", value: "application/json; charset=utf-8" } ],
+                "content-type": [ { key: "Content-Type", value: "application/json; charset=utf-8" } ],
             }
         };
     }
