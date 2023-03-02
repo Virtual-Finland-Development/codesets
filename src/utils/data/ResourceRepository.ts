@@ -1,4 +1,4 @@
-import * as resources from '../resources';
+import * as resources from '../../resources/index';
 import { IResource } from './Resource';
 const _resourses = resources.default;
 

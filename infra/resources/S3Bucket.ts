@@ -45,6 +45,15 @@ function publicReadPolicyForBucket(
         Action: 's3:GetObject',
         Resource: `arn:aws:s3:::${bucketName}/*`,
       },
+      {
+        Sid: 'WriteAccess',
+        Effect: 'Allow',
+        Principal: {
+          AWS: [`${originAccessArn}`],
+        },
+        Action: 's3:PutObject',
+        Resource: `arn:aws:s3:::${bucketName}/*`,
+      },
     ],
   });
 }

@@ -1,4 +1,4 @@
-import ExternalResource from "../../utils/Resource";
+import ExternalResource from "../../utils/data/Resource";
 
 export default new ExternalResource({ 
     name: "ISO3166CountriesURL",

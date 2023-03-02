@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "@transcend-io/conflux": "^4.0.3",
+    "aws-sdk": "^2.1326.0",
     "directory-import": "^2.3.1",
     "mime": "^3.0.0"
   }

@@ -1,4 +1,4 @@
-import ZipResource from "../../utils/ZipResource";
+import ZipResource from "../../utils/data/ZipResource";
 
 export default new ZipResource({ 
     name: "OccupationsFlatURL",
