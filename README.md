@@ -5,7 +5,7 @@ A shared codesets / resources router for virtual finland projects
 
 ### Docker requirements
 
-If using docker compose, the following network must be created: `vfd-network`.Create the network with command:
+If using docker compose, the following network must be created: `vfd-network`. Create the network with command:
 
 ```
 docker network create vfd-network
