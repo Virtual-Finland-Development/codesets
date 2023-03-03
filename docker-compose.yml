@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  app:
+  codesets:
     image: node:18-alpine
     user: node
     command: sh -c "npm install && npm run start"
@@ -14,6 +14,8 @@ services:
       - 3166:3166
     networks:
       - vfd-network
+    labels:
+      - traefik.http.routers.codesets.rule=Host(`codesets.localhost`)
 
 networks:
   vfd-network:
