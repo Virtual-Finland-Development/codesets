@@ -1,12 +1,30 @@
 # codesets
 A shared codesets / resources router for virtual finland projects
 
+## Requirements
+
+### Docker requirements
+
+If using docker compose, the following network must be created: `vfd-network`.
+
+Create the network with the following command:
+
+```
+docker network create vfd-network
+```
+
 ## Usage
 
-Start up the service with docker compose
+Start up the service with docker compose:
 
 ```
 docker compose up
+```
+
+Natively with nodejs:
+
+```
+npm install && npm run start
 ```
 
 View the available codeset resources at [http://localhost:3166](http://localhost:3166)
