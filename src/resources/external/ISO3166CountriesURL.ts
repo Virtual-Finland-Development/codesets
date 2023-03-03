@@ -2,5 +2,6 @@ import ExternalResource from "../../utils/data/Resource";
 
 export default new ExternalResource({ 
     name: "ISO3166CountriesURL",
-    uri: "https://github.com/mledoze/countries/blob/master/countries.json?raw=true" 
+    uri: "https://github.com/mledoze/countries/blob/master/countries.json?raw=true",
+    mime: "application/json; charset=utf-8",
 });

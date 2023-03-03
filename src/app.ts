@@ -57,11 +57,20 @@ async function engageResourcesRouter(resourceURI: string): Promise<{ response: C
         };
     }
 
+    if (InternalResources.hasResource(resourceName)) {
+        return {
+            response: undefined, // pass the request to the cloudfront origin
+        }
+    }
+
     return {
         response: {
             status: "404",
             statusDescription: "Not Found: resource not found",
             body: JSON.stringify({ message: "Resource not found" }),
+            headers: {
+                "content-type": [ { key: "Content-Type", value: "application/json" } ],
+            }
         },
     };
 }

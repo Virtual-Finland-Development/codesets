@@ -21,6 +21,9 @@ export const InternalResources = {
     listResources(): string[] {
         return BuiltInternalResourcesList.length > 0 ? BuiltInternalResourcesList : fs.readdirSync(this.localResourcesPath);
     },
+    hasResource(resourceName: string): boolean {
+        return this.listResources().includes(resourceName);
+    },
     async getResourcePassThrough(resourceURI: string): Promise<{ body: string, mime: string | null } | undefined> {
         try {
             const resourceFilename = resourceURI.replace('/resources/', '').replace('/', '');
