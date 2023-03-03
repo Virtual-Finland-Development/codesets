@@ -28,20 +28,7 @@ export function createCloudFrontDistribution(setup: ISetup, bucket: aws.s3.Bucke
           },
         },
       ],
-      customErrorResponses: [
-        {
-          errorCachingMinTtl: 300,
-          errorCode: 404,
-          responseCode: 200,
-          responsePagePath: '/index.html',
-        },
-        {
-          errorCachingMinTtl: 300,
-          errorCode: 403,
-          responseCode: 200,
-          responsePagePath: '/index.html',
-        },
-      ],
+      customErrorResponses: [],
       defaultCacheBehavior: {
         allowedMethods: ['GET', 'HEAD', 'OPTIONS'],
         cachedMethods: ['GET', 'HEAD'],

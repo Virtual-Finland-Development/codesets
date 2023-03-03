@@ -7,8 +7,9 @@ import * as path from 'path';
 import { ISetup } from '../utils/Setup';
 
 export default function createS3Bucket(setup: ISetup) {
-  const bucketConfig = setup.getResourceConfig("S3Bucket");
+  const bucketConfig = setup.getResourceConfig("s3bucket");
   const s3bucket = new aws.s3.Bucket(bucketConfig.name, {
+    bucket: bucketConfig.name, // Need a static bucket name for lambda@edge does not support the passing of environment variables
     website: {
       indexDocument: 'index.html',
       errorDocument: 'index.html',
@@ -16,7 +17,10 @@ export default function createS3Bucket(setup: ISetup) {
     tags: bucketConfig.tags,
   });
 
-  return s3bucket
+  return {
+    bucket: s3bucket,
+    name: bucketConfig.name, // Pass the bucket name to the lambda@edge function, without the pulumi future promise mayhem
+  }
 }
 
 export function createS3BucketPermissions(setup: ISetup, s3bucket: aws.s3.Bucket, originAccessIdentity: aws.cloudfront.OriginAccessIdentity, edgeLambdaExecRole: aws.iam.Role) {
@@ -68,7 +72,7 @@ export function uploadAssetsToBucket(bucketResource: aws.s3.Bucket) {
   uploadDirToS3(`${process.cwd()}/src/resources/webroot`, bucketResource);
 }
 
-export function uploadDirToS3(
+function uploadDirToS3(
   buildDir: string,
   bucket: aws.s3.Bucket,
   subDir: string = '',

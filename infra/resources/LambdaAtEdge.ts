@@ -1,8 +1,8 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
+import * as fs from 'fs';
 import { ISetup } from '../utils/Setup';
-
-export default function createLambdaAtEdgeFunction(setup: ISetup) {
+export default function createLambdaAtEdgeFunction(setup: ISetup, bucketName: string) {
 
     const lambdaAtEdgeRoleConfig = setup.getResourceConfig('LambdaAtEdgeRole');
     const lambdaAtEdgeRole = new aws.iam.Role(lambdaAtEdgeRoleConfig.name, {
@@ -42,12 +42,14 @@ export default function createLambdaAtEdgeFunction(setup: ISetup) {
             ],
         }),
     });
+
+    // pass the bucket name to the lambda function dist folder
+    fs.writeFileSync('./dist/build/bucket-info.json', JSON.stringify({ bucketName }));
+    console.log("Wrote bucket info to dist folder");
     
     const lambdaAtEdgeFunctionConfig = setup.getResourceConfig('LambdaAtEdge');
     const lambdaAtEdgeFunction = new aws.lambda.Function(lambdaAtEdgeFunctionConfig.name, {
-        code: new pulumi.asset.AssetArchive({
-            ".": new pulumi.asset.FileArchive("./dist"),
-        }),
+        code: new pulumi.asset.FileArchive('./dist'),
         handler: 'app.handler',
         runtime: 'nodejs18.x',
         memorySize: 256,

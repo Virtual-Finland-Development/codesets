@@ -6,11 +6,11 @@ import { getSetup } from './utils/Setup';
 
 const setup = getSetup();
 const originAccessIdentity = createOriginAccessIdentity(setup);
-const s3bucket = createS3Bucket(setup);
-const edgeLambdaPackage = createLambdaAtEdgeFunction(setup);
-createS3BucketPermissions(setup, s3bucket, originAccessIdentity, edgeLambdaPackage.lambdaAtEdgeRole);
-const cloudFrontDistribution = createCloudFrontDistribution(setup, s3bucket, originAccessIdentity, edgeLambdaPackage.lambdaAtEdgeFunction);
-uploadAssetsToBucket(s3bucket);
+const s3bucketSetup = createS3Bucket(setup);
+const edgeLambdaPackage = createLambdaAtEdgeFunction(setup, s3bucketSetup.name);
+createS3BucketPermissions(setup, s3bucketSetup.bucket, originAccessIdentity, edgeLambdaPackage.lambdaAtEdgeRole);
+const cloudFrontDistribution = createCloudFrontDistribution(setup, s3bucketSetup.bucket, originAccessIdentity, edgeLambdaPackage.lambdaAtEdgeFunction);
+uploadAssetsToBucket(s3bucketSetup.bucket);
 
 export const url = pulumi.interpolate`http://${cloudFrontDistribution.domainName}`;
-export const bucketName = s3bucket.bucket;
+export const bucketName = s3bucketSetup.bucket.bucket;
