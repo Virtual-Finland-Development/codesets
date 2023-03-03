@@ -37,7 +37,7 @@ Codesets are defined in [src/resources/internal](./src/resources/internal) and [
 - external: resources that are resolved programmatically from external sources (e.g. github), cached and then served from the codeset services backend
     - external resources are defined as [Resource](./src/utils/data/Resource.ts) or [ZipResource](./src/utils/data/ZipResource.ts) class which at minimum requires an `uri` and `name` property. The `uri` is used to resolve the resource and the `name` is used to identify the resource in the codeset service.
 
-# Resources
+# References
 
 ## Deployment
 
