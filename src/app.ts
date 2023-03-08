@@ -26,22 +26,24 @@ async function engageResourcesRouter(resourceURI: string): Promise<{ response: C
         console.log("Resource: ", resource.name);
         const resourceResponse = await resource.retrieve();
 
-        // If resource size is larger than 1MB, store it in S3 and redirect to it instead
-        // This is a workaround to avoid CloudFront cache limit
-        // @see: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-functions-restrictions.html#lambda-at-edge-function-restrictions
-        console.log("Size: ", resourceResponse.size, "bytes");
-        if (resourceResponse.size > 1024 * 1024) {
-            const extension = mime.getExtension(resourceResponse.mime);
-            const cachedName = `/resources/${resource.name}.${extension}`;
+        if (resource.type === "external") {
+            // If resource size is larger than 1MB, store it in S3 and redirect to it instead
+            // This is a workaround to avoid CloudFront cache limit
+            // @see: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-functions-restrictions.html#lambda-at-edge-function-restrictions
+            console.log("Size: ", resourceResponse.size, "bytes");
+            if (resourceResponse.size > 1024 * 1024) {
+                const extension = mime.getExtension(resourceResponse.mime);
+                const cachedName = `/resources/${resource.name}.${extension}`;
 
-            return {
-                response: undefined,
-                cacheable: {
-                    filepath: cachedName,
-                    data: resourceResponse.data,
-                    mime: resourceResponse.mime,
-                }
-            };
+                return {
+                    response: undefined,
+                    cacheable: {
+                        filepath: cachedName,
+                        data: resourceResponse.data,
+                        mime: resourceResponse.mime,
+                    }
+                };
+            }
         }
 
         return {

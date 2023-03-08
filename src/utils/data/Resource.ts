@@ -1,6 +1,7 @@
 export interface IResource {
     uri: string;
     name: string;
+    type: string;
     retrieve(): Promise<{ data: string, mime: string; size: number }>;
 }
 
@@ -9,30 +10,49 @@ export type ResourceData = Response | string | ReadableStream<Uint8Array> | null
 export default class Resource implements IResource {
     public name: string;
     public uri: string;
+    public type: string = "external";
     protected _mime: string | undefined;
     protected _transformer: ((data: ResourceData) => Promise<string>) | undefined;
+    protected _dataGetter: (() => Promise<{ data: ResourceData, mime: string }>) | undefined;
 
-    constructor({ name, uri, mime, transformer }: { name: string, uri: string, mime?: string, transformer?: (data: ResourceData) => Promise<string> }) {
+    constructor({ name, uri, mime, transformer, type, dataGetter }: { name: string, type?: 'external' | 'library', uri?: string, mime?: string, transformer?: (data: ResourceData) => Promise<string>, dataGetter?: () => Promise<{ data: ResourceData, mime: string }> }) {
         this.name = name;
-        this.uri = uri;
+        this.uri = uri || "";
+        this.type = type || this.type;
         this._mime = mime;
         this._transformer = transformer;
+        this._dataGetter = dataGetter;
+
+        if (this.type === "external" && !this.uri) {
+            throw new Error("External resources must have a URI");
+        }
     }
 
     public async retrieve(): Promise<{ data: string, mime: string; size: number }> {
         try {
-            const response = await this._fetchData(this.uri);
-            const data = await this._resolveData(response.response);
-            const transformedData = await this._transform(data);
+            const dataPackage = await this._retrieveDataPackage();
+            const transformedData = await this._transform(dataPackage.data);
             return {
                 data: transformedData,
-                mime: this._mime || response.mime,
+                mime: this._mime || dataPackage.mime,
                 size: Buffer.byteLength(transformedData, 'utf8'),
             };
         } catch (error) {
             console.log(error);
             throw error;
         }
+    }
+
+    protected async _retrieveDataPackage(): Promise<{ data: ResourceData, mime: string }> {
+        if (typeof this._dataGetter === "function") {
+            return await this._dataGetter();
+        }
+
+        const response = await this._fetchData(this.uri);
+        return {
+            data: await this._resolveData(response.response),
+            mime: response.mime,
+        };
     }
 
     protected async _fetchData(uri: string): Promise<{ response: Response, mime: string }> {
