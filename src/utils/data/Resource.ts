@@ -12,10 +12,10 @@ export default class Resource implements IResource {
     public uri: string;
     public type: string = "external";
     protected _mime: string | undefined;
-    protected _transformer: ((data: ResourceData) => Promise<string>) | undefined;
-    protected _dataGetter: (() => Promise<{ data: ResourceData, mime: string }>) | undefined;
+    protected _transformer: ((data: string) => Promise<string>) | undefined;
+    protected _dataGetter: (() => Promise<{ data: string, mime: string }>) | undefined;
 
-    constructor({ name, uri, mime, transformer, type, dataGetter }: { name: string, type?: 'external' | 'library', uri?: string, mime?: string, transformer?: (data: ResourceData) => Promise<string>, dataGetter?: () => Promise<{ data: ResourceData, mime: string }> }) {
+    constructor({ name, uri, mime, transformer, type, dataGetter }: { name: string, type?: 'external' | 'library', uri?: string, mime?: string, transformer?: (data: string) => Promise<string>, dataGetter?: () => Promise<{ data: string, mime: string }> }) {
         this.name = name;
         this.uri = uri || "";
         this.type = type || this.type;
@@ -43,14 +43,16 @@ export default class Resource implements IResource {
         }
     }
 
-    protected async _retrieveDataPackage(): Promise<{ data: ResourceData, mime: string }> {
+    protected async _retrieveDataPackage(): Promise<{ data: string, mime: string }> {
         if (typeof this._dataGetter === "function") {
             return await this._dataGetter();
         }
 
         const response = await this._fetchData(this.uri);
+        const resolved = await this._resolveDataResponse(response.response);
+        const parsed = await this._parseResponseData(resolved);
         return {
-            data: await this._resolveData(response.response),
+            data: parsed,
             mime: response.mime,
         };
     }
@@ -67,14 +69,18 @@ export default class Resource implements IResource {
         };
     }
 
-    protected async _resolveData(response: Response): Promise<ResourceData> {
+    protected async _resolveDataResponse(response: Response): Promise<ResourceData> {
         return await response.text();
     }
     
-    protected  async _transform(data: ResourceData): Promise<string> {
+    protected  async _parseResponseData(data: ResourceData): Promise<string> {
+        return typeof data === "string" ? data : data !== null ? data.toString() : "";
+    }
+
+    protected  async _transform(data: string): Promise<string> {
         if (typeof this._transformer === "function") {
             return await this._transformer(data);
         }
-        return typeof data === "string" ? data : data !== null ? data.toString() : "";
+        return data;
     }
 }
