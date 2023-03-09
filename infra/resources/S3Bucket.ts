@@ -15,6 +15,16 @@ export default function createS3Bucket(setup: ISetup) {
       errorDocument: 'index.html',
     },
     tags: bucketConfig.tags,
+    corsRules: [{
+      allowedHeaders: ["*"],
+      allowedMethods: [
+        "GET",
+      ],
+      allowedOrigins: ["*"],
+      exposeHeaders: ["ETag"],
+      maxAgeSeconds: 3000,
+  }],
+    
   });
 
   return {

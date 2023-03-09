@@ -54,6 +54,7 @@ async function engageResourcesRouter(resourceURI: string): Promise<{ response: C
                 bodyEncoding: "text",
                 headers: {
                     "content-type": [ { key: "Content-Type", value: resourceResponse.mime } ],
+                    "access-control-allow-origin": [ { key: "Access-Control-Allow-Origin", value: "*" } ],
                 }
             }
         };
