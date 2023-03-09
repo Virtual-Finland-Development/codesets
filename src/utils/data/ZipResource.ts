@@ -4,7 +4,7 @@ import Resource, { ResourceData } from "./Resource";
 
 export default class ZipResource extends Resource {
     
-    protected async _transform(data: ResourceData) {
+    protected async _parseResponseData(data: ResourceData) {
         if (!(data instanceof Response)) {
             throw new Error("Unable to retrieve data");
         }
@@ -18,7 +18,7 @@ export default class ZipResource extends Resource {
         throw new Error("Could not find file in zip");
     }
 
-    protected async _resolveData(response: Response): Promise<ResourceData> {
+    protected async _resolveDataResponse(response: Response): Promise<ResourceData> {
         return response;
     }
 }
