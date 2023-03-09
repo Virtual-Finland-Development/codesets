@@ -8,7 +8,7 @@ const externalResourcesImport = importDir({ directoryPath: './external' });
 const libraryResourcesImport = importDir({ directoryPath: './library' });
 
 const externalResources = Object.keys(externalResourcesImport).reduce((acc, key) => { 
-    const resourceKey = key.replace('/', '').replace(/\.js$/, '');
+    const resourceKey: string = key.replace('/', '').replace(/\.js$/, '');
     const resource = externalResourcesImport[key].default;
     
     return {
@@ -18,7 +18,7 @@ const externalResources = Object.keys(externalResourcesImport).reduce((acc, key)
 }, {});
 
 const libraryResources = Object.keys(libraryResourcesImport).reduce((acc, key) => { 
-    const resourceKey = key.replace('/', '').replace(/\.js$/, '');
+    const resourceKey: string = key.replace('/', '').replace(/\.js$/, '');
     const resource = libraryResourcesImport[key].default;
     
     return {
