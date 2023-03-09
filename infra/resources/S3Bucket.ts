@@ -21,8 +21,6 @@ export default function createS3Bucket(setup: ISetup) {
         "GET",
       ],
       allowedOrigins: ["*"],
-      exposeHeaders: ["ETag"],
-      maxAgeSeconds: 3000,
   }],
     
   });
