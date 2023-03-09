@@ -1,0 +1,18 @@
+[
+    {
+        "id": 1,
+        "displayName": "Female"
+    },
+    {
+        "id": 2,
+        "displayName": "Male"
+    },
+    {
+        "id": 3,
+        "displayName": "Other"
+    },
+    {
+        "id": 4,
+        "displayName": "Prefer not to say"
+    }
+]
