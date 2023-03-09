@@ -12,5 +12,5 @@ createS3BucketPermissions(setup, s3bucketSetup.bucket, originAccessIdentity, edg
 const cloudFrontDistribution = createCloudFrontDistribution(setup, s3bucketSetup.bucket, originAccessIdentity, edgeLambdaPackage.lambdaAtEdgeFunction);
 uploadAssetsToBucket(s3bucketSetup.bucket);
 
-export const url = pulumi.interpolate`http://${cloudFrontDistribution.domainName}`;
+export const url = pulumi.interpolate`https://${cloudFrontDistribution.domainName}`;
 export const bucketName = s3bucketSetup.bucket.bucket;
