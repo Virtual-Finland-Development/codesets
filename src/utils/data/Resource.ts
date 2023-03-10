@@ -1,3 +1,5 @@
+import typia from "typia";
+
 export interface IResource {
     uri: string;
     name: string;
@@ -7,15 +9,15 @@ export interface IResource {
 
 export type ResourceData = Response | string | ReadableStream<Uint8Array> | null;
 
-export default class Resource implements IResource {
+export default class Resource<Output = string, Input = any> implements IResource {
     public name: string;
     public uri: string;
     public type: string = "external";
     protected _mime: string | undefined;
-    protected _transformer: ((data: string) => Promise<string>) | undefined;
+    protected _transformer: ((data: Input) => Promise<Output>) | undefined;
     protected _dataGetter: (() => Promise<{ data: string, mime: string }>) | undefined;
 
-    constructor({ name, uri, mime, transformer, type, dataGetter }: { name: string, type?: 'external' | 'library', uri?: string, mime?: string, transformer?: (data: string) => Promise<string>, dataGetter?: () => Promise<{ data: string, mime: string }> }) {
+    constructor({ name, uri, mime, transformer, type, dataGetter }: { name: string, type?: 'external' | 'library', uri?: string, mime?: string, transformer?: (data: Input) => Promise<Output>, dataGetter?: () => Promise<{ data: string, mime: string }> }) {
         this.name = name;
         this.uri = uri || "";
         this.type = type || this.type;
@@ -31,11 +33,11 @@ export default class Resource implements IResource {
     public async retrieve(): Promise<{ data: string, mime: string; size: number }> {
         try {
             const dataPackage = await this._retrieveDataPackage();
-            const transformedData = await this._transform(dataPackage.data);
+            const finalData = await this._parseRawData(dataPackage.data);
             return {
-                data: transformedData,
+                data: finalData,
                 mime: this._mime || dataPackage.mime,
-                size: Buffer.byteLength(transformedData, 'utf8'),
+                size: Buffer.byteLength(finalData, 'utf8'),
             };
         } catch (error) {
             console.log(error);
@@ -50,9 +52,9 @@ export default class Resource implements IResource {
 
         const response = await this._fetchData(this.uri);
         const resolved = await this._resolveDataResponse(response.response);
-        const parsed = await this._parseResponseData(resolved);
+        const rawData = await this._parseResponseRawData(resolved);
         return {
-            data: parsed,
+            data: rawData,
             mime: response.mime,
         };
     }
@@ -73,14 +75,21 @@ export default class Resource implements IResource {
         return await response.text();
     }
     
-    protected  async _parseResponseData(data: ResourceData): Promise<string> {
+    protected  async _parseResponseRawData(data: ResourceData): Promise<string> {
         return typeof data === "string" ? data : data !== null ? data.toString() : "";
     }
 
-    protected  async _transform(data: string): Promise<string> {
-        if (typeof this._transformer === "function") {
-            return await this._transformer(data);
+    protected  async _parseRawData(data: string): Promise<string> {
+        let rawData: any = data;
+
+       if (this._mime?.startsWith("application/json")) {
+            rawData = typia.assertParse<Input>(rawData);
         }
-        return data;
+
+        if (typeof this._transformer === "function") {
+            rawData = await this._transformer(rawData);
+        }
+
+        return typia.assertStringify<Output>(rawData);
     }
 }

@@ -1,23 +1,20 @@
-import typia from "typia";
-import ExternalResource from "../../utils/data/Resource";
+import Resource from "../../utils/data/Resource";
 
-type Country = {
+interface  Country {
     id: string;
     displayName: string;
     englishName: string;
     nativeName: string;
     twoLetterISORegionName: string;
     threeLetterISORegionName: string;
-};
+}
 
-export default new ExternalResource({ 
+export default new Resource<Country>({ 
     name: "ISO3166CountriesURL",
     uri: "https://github.com/mledoze/countries/blob/master/countries.json?raw=true",
     mime: "application/json; charset=utf-8",
-    async transformer(data: string) {
-        
-        const countriesRaw = JSON.parse(data);
-        const countries = countriesRaw.map((countryData: any) => {
+    async transformer(countriesRaw: any) {
+        return countriesRaw.map((countryData: any) => {
             return {
                 "id": countryData.cca2,
                 "displayName": countryData.name.common,
@@ -27,7 +24,5 @@ export default new ExternalResource({
                 "threeLetterISORegionName": countryData.cca3
             };
         });
-
-        return typia.assertStringify<Country[]>(countries);
     },
 });
