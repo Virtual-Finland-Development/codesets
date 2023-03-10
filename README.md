@@ -99,7 +99,15 @@ interface MyDataOutputInterface {
     }
 ```
 
+Working example:
+
+-   [src/resources/external/ISO3166CountriesURL.ts](./src/resources/external/ISO3166CountriesURL.ts)
+
 # References
+
+## Input/Output data validation tools
+
+-   [typia](https://github.com/samchon/typia)
 
 ## Deployment
 
