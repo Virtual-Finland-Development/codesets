@@ -1,5 +1,5 @@
 import Resource from '../../utils/data/models/Resource';
-import { Output } from '../../utils/data/parsers';
+import { getOutput } from '../../utils/data/parsers';
 
 interface Country {
     id: string;
@@ -16,7 +16,7 @@ export default new Resource({
     mime: 'application/json; charset=utf-8',
     parsers: {
         output(data: any) {
-            return Output()<Country[]>(data);
+            return getOutput()<Country[]>(data);
         },
         async transform(countriesRaw: any) {
             return countriesRaw.map((countryData: any) => {

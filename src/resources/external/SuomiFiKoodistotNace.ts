@@ -1,5 +1,5 @@
 import Resource from '../../utils/data/models/Resource';
-import { Output } from '../../utils/data/parsers';
+import { getOutput } from '../../utils/data/parsers';
 
 interface Nace {
     codeValue: string;
@@ -24,7 +24,7 @@ export default new Resource({
     uri: 'https://koodistot.suomi.fi/codelist-api/api/v1/coderegistries/jhs/codeschemes/toimiala_1_20080101/?format=json&embedCodes=true&embedExtensions=true&embedMembers=true&expand=extension,member,codeScheme,code,memberValue,codeRegistry,organization,valueType,externalReference,propertyType&downloadFile=false&pretty',
     parsers: {
         output(data: any) {
-            return Output()<Nace[]>(data);
+            return getOutput()<Nace[]>(data);
         },
         async transform(naceResponse: any) {
             return naceResponse['codes'];

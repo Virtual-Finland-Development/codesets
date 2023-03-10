@@ -1,5 +1,5 @@
 import ZipResource from '../../utils/data/models/ZipResource';
-import { Output } from '../../utils/data/parsers';
+import { getOutput } from '../../utils/data/parsers';
 
 type ISCO = {
     uri: string;
@@ -23,7 +23,7 @@ export default new ZipResource({
     mime: 'application/json; charset=utf-8',
     parsers: {
         output(data: any) {
-            return Output()<ISCO[]>(data);
+            return getOutput()<ISCO[]>(data);
         },
         async transform(occupationsRaw: any) {
             return occupationsRaw.filter((occupation: any) => Boolean(occupation.notation));

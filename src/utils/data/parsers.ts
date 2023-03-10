@@ -1,9 +1,9 @@
 import typia from 'typia';
 
-export function Input() {
+export function getInput() {
     return typia.assertParse;
 }
 
-export function Output() {
+export function getOutput() {
     return typia.assertStringify;
 }
