@@ -62,10 +62,11 @@ export default class BaseResource implements IResource {
     }> {
         try {
             const dataPackage = await this._retrieveDataPackage();
-            const finalData = await this._parseRawData(dataPackage.data);
+            const mime = this._mime || dataPackage.mime;
+            const finalData = await this._parseRawData(dataPackage.data, mime);
             return {
                 data: finalData,
-                mime: this._mime || dataPackage.mime,
+                mime: mime,
                 size: Buffer.byteLength(finalData, 'utf8'),
             };
         } catch (error) {
@@ -111,12 +112,12 @@ export default class BaseResource implements IResource {
         return typeof data === 'string' ? data : data !== null ? data.toString() : '';
     }
 
-    protected async _parseRawData(data: string): Promise<string> {
+    protected async _parseRawData(data: string, mime: string): Promise<string> {
         let rawData: any = data;
 
         if (typeof this._parsers.input === 'function') {
             rawData = this._parsers.input(rawData);
-        } else if (this._mime?.startsWith('application/json')) {
+        } else if (mime.startsWith('application/json')) {
             rawData = JSON.parse(rawData);
         }
 
@@ -126,7 +127,7 @@ export default class BaseResource implements IResource {
 
         if (typeof this._parsers.output === 'function') {
             return this._parsers.output(rawData);
-        } else if (this._mime?.startsWith('application/json')) {
+        } else if (mime.startsWith('application/json')) {
             return JSON.stringify(rawData);
         }
         return rawData;
