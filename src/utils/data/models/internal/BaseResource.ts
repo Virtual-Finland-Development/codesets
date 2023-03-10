@@ -15,18 +15,19 @@ export default class BaseResource implements IResource {
     public uri: string;
     public type = 'external';
     protected _mime: string | undefined;
-    protected _transformer: ((data: unknown) => Promise<unknown>) | undefined;
+
     protected _parsers: {
         input?: (data: string) => unknown;
+        transform?: (data: unknown) => Promise<unknown>;
         output?: (data: unknown) => string;
     } = {};
+
     protected _dataGetter: (() => Promise<{ data: string; mime: string }>) | undefined;
 
     constructor({
         name,
         uri,
         mime,
-        transformer,
         type,
         dataGetter,
         parsers,
@@ -35,18 +36,17 @@ export default class BaseResource implements IResource {
         type?: 'external' | 'library';
         uri?: string;
         mime?: string;
-        transformer?: (data: unknown) => Promise<unknown>;
         dataGetter?: () => Promise<{ data: string; mime: string }>;
         parsers?: {
-            input?: (data: string) => unknown;
-            output?: (data: unknown) => string;
+            input?: (data: string) => unknown; // Raw data intake -> data
+            transform?: (data: unknown) => Promise<unknown>; // Data intake -> transformed data
+            output?: (data: unknown) => string; // Transformed data intake -> raw output data
         };
     }) {
         this.name = name;
         this.uri = uri || '';
         this.type = type || this.type;
         this._mime = mime;
-        this._transformer = transformer;
         this._dataGetter = dataGetter;
         this._parsers = parsers || {};
 
@@ -120,8 +120,8 @@ export default class BaseResource implements IResource {
             rawData = JSON.parse(rawData);
         }
 
-        if (typeof this._transformer === 'function') {
-            rawData = await this._transformer(rawData);
+        if (typeof this._parsers.transform === 'function') {
+            rawData = await this._parsers.transform(rawData);
         }
 
         if (typeof this._parsers.output === 'function') {

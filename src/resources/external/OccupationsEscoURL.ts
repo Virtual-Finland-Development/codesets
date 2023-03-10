@@ -1,4 +1,5 @@
 import Resource from '../../utils/data/models/Resource';
+import { Output } from '../../utils/data/parsers';
 
 type ISCO = {
     uri: string;
@@ -21,4 +22,9 @@ type ISCO = {
 export default new Resource({
     name: 'OccupationsEscoURL',
     uri: 'https://tyomarkkinatori.fi/api/codes/v1/isco',
+    parsers: {
+        output(data: any) {
+            return Output()<ISCO[]>(data);
+        },
+    },
 });
