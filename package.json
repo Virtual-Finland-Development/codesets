@@ -12,7 +12,9 @@
     "deploy": "pulumi -C infra up --yes",
     "start": "nodemon --delay 80ms --watch 'src' -e 'ts'  --exec \"npm run build && npm run serve\"",
     "serve": "serverless offline --config ./serverless-offline.yml",
-    "test": "jest"
+    "test": "jest",
+    "format": "prettier --write \"./**/*.ts\"",
+    "lint": "eslint --ext .ts ."
   },
   "repository": {
     "type": "git",
@@ -29,7 +31,10 @@
     "@types/jest": "^29.4.0",
     "@types/mime": "^3.0.1",
     "@types/node": "^18.14.6",
+    "@typescript-eslint/eslint-plugin": "^5.54.1",
+    "@typescript-eslint/parser": "^5.54.1",
     "eslint": "^8.35.0",
+    "eslint-config-prettier": "^8.7.0",
     "jest": "^29.4.3",
     "nodemon": "^2.0.20",
     "prettier": "^2.8.4",
