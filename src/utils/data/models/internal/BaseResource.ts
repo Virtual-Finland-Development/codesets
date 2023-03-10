@@ -2,17 +2,20 @@ export interface IResource {
     uri: string;
     name: string;
     type: string;
+    /**
+     * Retrieve the data from the resource
+     */
     retrieve(): Promise<{ data: string; mime: string; size: number }>;
 }
 
 export type ResourceData = Response | string | ReadableStream<Uint8Array> | null;
 
-export default class BaseResource<Output = string, Input = unknown> implements IResource {
+export default class BaseResource implements IResource {
     public name: string;
     public uri: string;
     public type = 'external';
     protected _mime: string | undefined;
-    protected _transformer: ((data: Input) => Promise<Output>) | undefined;
+    protected _transformer: ((data: unknown) => Promise<unknown>) | undefined;
     protected _parsers: {
         input?: (data: string) => unknown;
         output?: (data: unknown) => string;
@@ -32,7 +35,7 @@ export default class BaseResource<Output = string, Input = unknown> implements I
         type?: 'external' | 'library';
         uri?: string;
         mime?: string;
-        transformer?: (data: Input) => Promise<Output>;
+        transformer?: (data: unknown) => Promise<unknown>;
         dataGetter?: () => Promise<{ data: string; mime: string }>;
         parsers?: {
             input?: (data: string) => unknown;

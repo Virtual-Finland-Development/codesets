@@ -9,7 +9,7 @@ interface Country {
     threeLetterISORegionName: string;
 }
 
-export default new Resource<Country>({
+export default new Resource({
     name: 'ISO3166CountriesURL',
     uri: 'https://github.com/mledoze/countries/blob/master/countries.json?raw=true',
     mime: 'application/json; charset=utf-8',

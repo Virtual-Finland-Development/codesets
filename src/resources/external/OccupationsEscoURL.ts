@@ -18,7 +18,7 @@ type ISCO = {
     narrower?: ISCO[];
 };
 
-export default new Resource<ISCO[]>({
+export default new Resource({
     name: 'OccupationsEscoURL',
     uri: 'https://tyomarkkinatori.fi/api/codes/v1/isco',
 });
