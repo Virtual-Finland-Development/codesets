@@ -22,11 +22,11 @@ export default new ZipResource({
     uri: 'https://tyomarkkinatori.fi/dam/jcr:42efb1fc-93f3-4146-a46f-71c2f9f5eb9b/occupations.json.zip',
     mime: 'application/json; charset=utf-8',
     parsers: {
-        output(data: any) {
-            return getOutput()<ISCO[]>(data);
-        },
         async transform(occupationsRaw: any) {
             return occupationsRaw.filter((occupation: any) => Boolean(occupation.notation));
+        },
+        output(data: any) {
+            return getOutput()<ISCO[]>(data);
         },
     },
 });

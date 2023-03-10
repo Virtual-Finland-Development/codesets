@@ -15,9 +15,6 @@ export default new Resource({
     uri: 'https://github.com/mledoze/countries/blob/master/countries.json?raw=true',
     mime: 'application/json; charset=utf-8',
     parsers: {
-        output(data: any) {
-            return getOutput()<Country[]>(data);
-        },
         async transform(countriesRaw: any) {
             return countriesRaw.map((countryData: any) => {
                 return {
@@ -29,6 +26,9 @@ export default new Resource({
                     threeLetterISORegionName: countryData.cca3,
                 };
             });
+        },
+        output(data: any) {
+            return getOutput()<Country[]>(data); // Parse and stringify
         },
     },
 });
