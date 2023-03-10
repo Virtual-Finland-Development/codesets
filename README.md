@@ -58,17 +58,20 @@ The external resource parsers can be defined using the `parsers` attribute of th
 By default for the JSON-type resource the `input` and `output` parsers are defined as follows:
 
 ```typescript
-{
+parsers: {
     input: (data: string) => JSON.parse(data),
     output: (data: unknown) => JSON.stringify(data)
 }
 ```
+
+````
 
 #### I/O and validation helpers
 
 For the external resource data validation there is helper functions for the input/ouput parsers:
 
 ```typescript
+// resources/external/Test.ts
 import { getInput, getOutput } from '../../utils/data/parsers';
 
 interface MyDataInputInterface {
@@ -97,11 +100,9 @@ interface MyDataOutputInterface {
             return getOutput()<MyDataOutputInterface>(data); // Parse/validate output model and stringify
         },
     }
-```
+````
 
-Working example:
-
--   [src/resources/external/ISO3166CountriesURL.ts](./src/resources/external/ISO3166CountriesURL.ts)
+Working example: [src/resources/external/ISO3166CountriesURL.ts](./src/resources/external/ISO3166CountriesURL.ts)
 
 # References
 
