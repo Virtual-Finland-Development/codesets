@@ -32,12 +32,12 @@ View the available codeset resources at [http://localhost:3166](http://localhost
 
 ## Adding a codeset resource
 
-Codesets are defined in [src/resources/internal](./src/resources/internal) and [src/resources/extrenal](./src/resources/external) folders:
+Codesets are defined in [src/resources/internal](./src/resources/internal), [src/resources/library](./src/resources/library) and [src/resources/extrenal](./src/resources/external) folders:
 
 -   interal: raw resource files that are served directly from the codeset services backend (S3-bucket / cloudfront)
+-   library: resources that are built to the codeset service as a library: nodejs module with default export
 -   external: resources that are resolved programmatically from external sources (e.g. github), cached and then served from the codeset services backend
     -   external resources are defined as [Resource](./src/utils/data/models/Resource.ts) or [ZipResource](./src/utils/data/models/ZipResource.ts) class which at minimum requires an `uri` and `name` property. The `uri` is used to resolve the resource and the `name` is used to identify the resource in the codeset service.
--   library: resources that are built to the codeset service as a library: nodejs module with default export
 
 ### External resource data parsing and transformation
 
