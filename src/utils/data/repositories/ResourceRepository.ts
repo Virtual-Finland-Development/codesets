@@ -1,5 +1,5 @@
-import * as resources from '../../resources/index';
-import { IResource } from './Resource';
+import * as resources from '../../../resources/index';
+import { IResource } from '../models/internal/BaseResource';
 const _resourses = resources.default;
 
 export function getResource(resourceName: string): IResource {
