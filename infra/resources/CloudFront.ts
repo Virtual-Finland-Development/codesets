@@ -88,7 +88,7 @@ export function createCacheInvalidation(setup: ISetup, distribution: aws.cloudfr
   new local.Command(
     cacheInvalidationConfig.name,
     {
-      create: pulumi.interpolate`aws cloudfront create-invalidation --distribution-id ${distribution.id} --paths resources/*`,
+      create: pulumi.interpolate`aws cloudfront create-invalidation --distribution-id ${distribution.id} --paths "/*"`,
     },
     { deleteBeforeReplace: true }
   );
