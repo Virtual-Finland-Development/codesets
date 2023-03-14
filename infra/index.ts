@@ -1,5 +1,9 @@
 import * as pulumi from '@pulumi/pulumi';
-import { createCloudFrontDistribution, createOriginAccessIdentity } from './resources/CloudFront';
+import {
+    createCacheInvalidation,
+    createCloudFrontDistribution,
+    createOriginAccessIdentity,
+} from './resources/CloudFront';
 import createLambdaAtEdgeFunction from './resources/LambdaAtEdge';
 import createS3Bucket, { createS3BucketPermissions, uploadAssetsToBucket } from './resources/S3Bucket';
 import { getSetup } from './utils/Setup';
@@ -16,6 +20,7 @@ const cloudFrontDistribution = createCloudFrontDistribution(
     edgeLambdaPackage.lambdaAtEdgeFunction
 );
 uploadAssetsToBucket(s3bucketSetup.bucket);
+createCacheInvalidation(setup, cloudFrontDistribution);
 
 export const url = pulumi.interpolate`https://${cloudFrontDistribution.domainName}`;
 export const bucketName = s3bucketSetup.bucket.bucket;

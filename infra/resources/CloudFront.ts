@@ -1,4 +1,5 @@
 import * as aws from '@pulumi/aws';
+import { local } from '@pulumi/command';
 import * as pulumi from '@pulumi/pulumi';
 import { ISetup } from '../utils/Setup';
 
@@ -80,4 +81,15 @@ export function createCloudFrontDistribution(
     });
 
     return cloudFrontDistribution;
+}
+
+export function createCacheInvalidation(setup: ISetup, distribution: aws.cloudfront.Distribution) {
+    const cacheInvalidationConfig = setup.getResourceConfig('CacheInvalidation');
+    new local.Command(
+        cacheInvalidationConfig.name,
+        {
+            create: pulumi.interpolate`aws cloudfront create-invalidation --distribution-id ${distribution.id} --paths "/*"`,
+        },
+        { deleteBeforeReplace: true }
+    );
 }

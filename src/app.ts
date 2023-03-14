@@ -145,46 +145,58 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
  */
 export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
     try {
-        let uri = event.rawPath;
-        console.log('URI: ', uri);
+        const handle = async (event: APIGatewayProxyEventV2) => {
+            let uri = event.rawPath;
+            console.log('URI: ', uri);
 
-        if (uri.startsWith('/resources')) {
-            const routerResponse: any = await engageResourcesRouter(uri);
-            if (routerResponse.response) {
-                return {
-                    statusCode: parseInt(routerResponse.response.status),
-                    body: routerResponse.response.body,
-                };
+            if (uri.startsWith('/resources')) {
+                const routerResponse: any = await engageResourcesRouter(uri);
+                if (routerResponse.response) {
+                    return {
+                        statusCode: parseInt(routerResponse.response.status),
+                        body: routerResponse.response.body,
+                    };
+                }
+
+                if (routerResponse.cacheable) {
+                    console.log('Cacheable: ', routerResponse.cacheable.filepath);
+                    return {
+                        statusCode: 200,
+                        body: routerResponse.cacheable.data,
+                    };
+                }
             }
 
-            if (routerResponse.cacheable) {
-                console.log('Cacheable: ', routerResponse.cacheable.filepath);
+            // Simulate CloudFront pass through
+            if (uri === '/') {
+                uri = '/index.html';
+            }
+
+            const resource = await InternalResources.getResourcePassThrough(uri);
+            if (resource) {
                 return {
                     statusCode: 200,
-                    body: routerResponse.cacheable.data,
+                    body: resource.body,
+                    headers: {
+                        'Content-Type': resource.mime || 'application/json',
+                    },
                 };
             }
-        }
-
-        // Simulate CloudFront pass through
-        if (uri === '/') {
-            uri = '/index.html';
-        }
-
-        const resource = await InternalResources.getResourcePassThrough(uri);
-        if (resource) {
             return {
-                statusCode: 200,
-                body: resource.body,
-                headers: {
-                    'Content-Type': resource.mime || 'application/json',
-                },
+                statusCode: 404,
+                body: JSON.stringify({ message: 'Not found' }),
             };
-        }
-        return {
-            statusCode: 404,
-            body: JSON.stringify({ message: 'Not found' }),
         };
+
+        const internalTimeoutEnforcer = async () => {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    reject(new Error('Timeout'));
+                }, 29000); // 29 seconds, 1 second less than CloudFront timeout
+            });
+        };
+
+        return await Promise.race([handle(event), internalTimeoutEnforcer() as any]); // Return the first to resolve
     } catch (error: any) {
         console.log(error?.message, error?.stack);
         return {
