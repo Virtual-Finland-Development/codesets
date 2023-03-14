@@ -179,7 +179,7 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
             return new Promise((resolve, reject) => {
                 setTimeout(() => {
                 reject(new Error("Timeout"));
-                }, 15000); // 15 seconds
+                }, 29000); // 29 seconds, 1 second less than CloudFront timeout
             });
         }
     

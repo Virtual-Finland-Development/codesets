@@ -13,7 +13,7 @@ custom:
 provider:
   name: "offline"
   stage: offline
-  timeout: 16
+  timeout: 30
 
 functions:
   codesets:
