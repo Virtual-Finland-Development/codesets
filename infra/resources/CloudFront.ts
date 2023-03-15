@@ -38,7 +38,7 @@ export function createCloudFrontDistribution(
                 cookies: {
                     forward: 'none',
                 },
-                queryString: false,
+                queryString: true,
             },
             minTtl: 0,
             defaultTtl: 2628000,
