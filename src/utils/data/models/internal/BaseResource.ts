@@ -5,7 +5,7 @@ export interface IResource {
     /**
      * Retrieve the data from the resource
      */
-    retrieve(): Promise<{ data: string; mime: string; size: number }>;
+    retrieve(params: Record<string, string>): Promise<{ data: string; mime: string; size: number }>;
 }
 
 export type ResourceData = Response | string | ReadableStream<Uint8Array> | null;
@@ -18,7 +18,7 @@ export default class BaseResource implements IResource {
 
     protected _parsers: {
         input?: (data: string) => unknown;
-        transform?: (data: unknown) => Promise<unknown>;
+        transform?: (data: unknown, params: Record<string, string>) => Promise<unknown>;
         output?: (data: unknown) => string;
     } = {};
 
@@ -39,7 +39,7 @@ export default class BaseResource implements IResource {
         dataGetter?: () => Promise<{ data: string; mime: string }>;
         parsers?: {
             input?: (data: string) => unknown; // Raw data intake -> data
-            transform?: (data: unknown) => Promise<unknown>; // Data intake -> transformed data
+            transform?: (data: unknown, params: Record<string, string>) => Promise<unknown>; // Data intake -> transformed data
             output?: (data: unknown) => string; // Transformed data intake -> raw output data
         };
     }) {
@@ -55,7 +55,7 @@ export default class BaseResource implements IResource {
         }
     }
 
-    public async retrieve(): Promise<{
+    public async retrieve(params: Record<string, string>): Promise<{
         data: string;
         mime: string;
         size: number;
@@ -63,7 +63,7 @@ export default class BaseResource implements IResource {
         try {
             const dataPackage = await this._retrieveDataPackage();
             const mime = this._mime || dataPackage.mime;
-            const finalData = await this._parseRawData(dataPackage.data, mime);
+            const finalData = await this._parseRawData(dataPackage.data, mime, params);
             return {
                 data: finalData,
                 mime: mime,
@@ -112,7 +112,7 @@ export default class BaseResource implements IResource {
         return typeof data === 'string' ? data : data !== null ? data.toString() : '';
     }
 
-    protected async _parseRawData(data: string, mime: string): Promise<string> {
+    protected async _parseRawData(data: string, mime: string, params: Record<string, string>): Promise<string> {
         let rawData: any = data;
 
         if (typeof this._parsers.input === 'function') {
@@ -122,7 +122,7 @@ export default class BaseResource implements IResource {
         }
 
         if (typeof this._parsers.transform === 'function') {
-            rawData = await this._parsers.transform(rawData);
+            rawData = await this._parsers.transform(rawData, params);
         }
 
         if (typeof this._parsers.output === 'function') {

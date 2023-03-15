@@ -12,12 +12,15 @@ import { getResource, listResources } from './utils/data/repositories/ResourceRe
 import { storeToS3 } from './utils/lib/S3Bucket';
 import { cutTooLongString } from './utils/strings';
 
-async function engageResourcesRouter(resourceURI: string): Promise<{
+async function engageResourcesRouter(
+    resourceURI: string,
+    queryParams: string
+): Promise<{
     response: CloudFrontResultResponse | undefined;
     cacheable?: { filepath: string; data: string; mime: string };
 }> {
-    const uriParts = resourceURI.split('?');
-    const resourceName = uriParts[0].replace('/resources', '').replace('/', ''); // First occurence of "/" is removed
+    const urlParams = Object.fromEntries(new URLSearchParams(queryParams || ''));
+    const resourceName = resourceURI.replace('/resources', '').replace('/', ''); // First occurence of "/" is removed
     if (!resourceName) {
         // On a requets path /resources, return a list of resources
         return {
@@ -32,7 +35,7 @@ async function engageResourcesRouter(resourceURI: string): Promise<{
     const resource = getResource(resourceName);
     if (resource) {
         console.log('Resource: ', resource.name);
-        const resourceResponse = await resource.retrieve();
+        const resourceResponse = await resource.retrieve(urlParams);
 
         if (resource.type === 'external') {
             // If resource size is larger than 1MB, store it in S3 and redirect to it instead
@@ -96,10 +99,14 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
     try {
         const request = event.Records[0].cf.request;
         let uri = request.uri;
-        console.log('URI: ', uri);
+        const queryParams = request.querystring;
+        console.log('Request: ', {
+            uri,
+            queryParams,
+        });
 
         if (uri.startsWith('/resources')) {
-            const routerResponse = await engageResourcesRouter(uri);
+            const routerResponse = await engageResourcesRouter(uri, queryParams);
             if (routerResponse.response) {
                 console.log('Response: ', {
                     ...routerResponse.response,
@@ -147,10 +154,14 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
     try {
         const handle = async (event: APIGatewayProxyEventV2) => {
             let uri = event.rawPath;
-            console.log('URI: ', uri);
+            const queryParams = event.rawQueryString;
+            console.log('Request: ', {
+                uri,
+                queryParams,
+            });
 
             if (uri.startsWith('/resources')) {
-                const routerResponse: any = await engageResourcesRouter(uri);
+                const routerResponse: any = await engageResourcesRouter(uri, queryParams);
                 if (routerResponse.response) {
                     return {
                         statusCode: parseInt(routerResponse.response.status),
