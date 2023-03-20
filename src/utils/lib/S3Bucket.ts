@@ -1,4 +1,3 @@
-
 import aws from 'aws-sdk';
 import { leftTrimSlash } from '../strings';
 
@@ -14,6 +13,6 @@ export async function storeToS3(bucketName: string, key: string, data: string, m
         await s3.putObject(params).promise();
     } catch (error: any) {
         console.error(error?.message, error?.stack);
-        throw new Error("An error occurred while storing to S3");
+        throw new Error('An error occurred while storing to S3');
     }
-}   
+}

@@ -1,4 +1,4 @@
-import { json } from "@iso4217/json";
+import { json } from '@iso4217/json';
 
 const transformed = json["$data"][0]["$data"].reduce((acc: any, blob: any) => {
   const blobData = blob["$data"];

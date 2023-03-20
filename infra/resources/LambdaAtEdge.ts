@@ -3,7 +3,6 @@ import * as pulumi from '@pulumi/pulumi';
 import * as fs from 'fs';
 import { ISetup } from '../utils/Setup';
 export default function createLambdaAtEdgeFunction(setup: ISetup, bucketName: string) {
-
     const lambdaAtEdgeRoleConfig = setup.getResourceConfig('LambdaAtEdgeRole');
     const lambdaAtEdgeRole = new aws.iam.Role(lambdaAtEdgeRoleConfig.name, {
         assumeRolePolicy: JSON.stringify({
@@ -12,10 +11,7 @@ export default function createLambdaAtEdgeFunction(setup: ISetup, bucketName: st
                 {
                     Action: 'sts:AssumeRole',
                     Principal: {
-                        Service: [ 
-                            'lambda.amazonaws.com', 
-                            'edgelambda.amazonaws.com' 
-                        ],
+                        Service: ['lambda.amazonaws.com', 'edgelambda.amazonaws.com'],
                     },
                     Effect: 'Allow',
                 },
@@ -31,22 +27,18 @@ export default function createLambdaAtEdgeFunction(setup: ISetup, bucketName: st
             Version: '2012-10-17',
             Statement: [
                 {
-                    Action: [
-                        'logs:CreateLogGroup',
-                        'logs:CreateLogStream',
-                        'logs:PutLogEvents',
-                    ],
+                    Action: ['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],
                     Resource: 'arn:aws:logs:*:*:*',
                     Effect: 'Allow',
-                }
+                },
             ],
         }),
     });
 
     // pass the bucket name to the lambda function dist folder
     fs.writeFileSync('./dist/build/bucket-info.json', JSON.stringify({ bucketName }));
-    console.log("Wrote bucket info to dist folder");
-    
+    console.log('Wrote bucket info to dist folder');
+
     const lambdaAtEdgeFunctionConfig = setup.getResourceConfig('LambdaAtEdge');
     const lambdaAtEdgeFunction = new aws.lambda.Function(lambdaAtEdgeFunctionConfig.name, {
         code: new pulumi.asset.FileArchive('./dist'),
@@ -57,7 +49,7 @@ export default function createLambdaAtEdgeFunction(setup: ISetup, bucketName: st
         role: lambdaAtEdgeRole.arn,
         tags: lambdaAtEdgeFunctionConfig.tags,
         publish: true,
-    }); 
+    });
     // { provider: new aws.Provider("us-east-1", { region: "us-east-1"} ) }
     // Lambda@Edge functions must be in us-east-1
 
@@ -67,4 +59,4 @@ export default function createLambdaAtEdgeFunction(setup: ISetup, bucketName: st
     };
 }
 
-// 
+//
