@@ -22,7 +22,7 @@ export default class BaseResource implements IResource {
         output?: (data: unknown) => string;
     } = {};
 
-    protected _dataGetter: (() => Promise<{ data: string; mime: string }>) | undefined;
+    protected _dataGetter: ((params: Record<string, string>) => Promise<{ data: string; mime: string }>) | undefined;
 
     constructor({
         name,
@@ -36,7 +36,7 @@ export default class BaseResource implements IResource {
         type?: 'external' | 'library';
         uri?: string;
         mime?: string;
-        dataGetter?: () => Promise<{ data: string; mime: string }>;
+        dataGetter?: (params: Record<string, string>) => Promise<{ data: string; mime: string }>;
         parsers?: {
             input?: (data: string) => unknown; // Raw data intake -> data
             transform?: (data: unknown, params: Record<string, string>) => Promise<unknown>; // Data intake -> transformed data
@@ -49,10 +49,6 @@ export default class BaseResource implements IResource {
         this._mime = mime;
         this._dataGetter = dataGetter;
         this._parsers = parsers || {};
-
-        if (this.type === 'external' && !this.uri) {
-            throw new Error('External resources must have a URI');
-        }
     }
 
     public async retrieve(params: Record<string, string>): Promise<{
@@ -61,7 +57,8 @@ export default class BaseResource implements IResource {
         size: number;
     }> {
         try {
-            const dataPackage = await this._retrieveDataPackage();
+            this.validateSelf();
+            const dataPackage = await this._retrieveDataPackage(params);
             const mime = this._mime || dataPackage.mime;
             const finalData = await this._parseRawData(dataPackage.data, mime, params);
             return {
@@ -75,12 +72,18 @@ export default class BaseResource implements IResource {
         }
     }
 
-    protected async _retrieveDataPackage(): Promise<{
+    private validateSelf(): void {
+        if (this.type === 'external' && !this.uri) {
+            throw new Error('External resources must have a URI');
+        }
+    }
+
+    protected async _retrieveDataPackage(params: Record<string, string>): Promise<{
         data: string;
         mime: string;
     }> {
         if (typeof this._dataGetter === 'function') {
-            return await this._dataGetter();
+            return await this._dataGetter(params);
         }
 
         const response = await this._fetchData(this.uri);
