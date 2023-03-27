@@ -47,7 +47,7 @@ export default new Resource({
         input(data: string) {
             return getInput()<RegionInputResource>(data);
         },
-        async transform(naceResponse: any) {
+        async transform(koodistoResponse: any) {
             const { iso31662 } = await import('iso-3166');
             const fiIsos = iso31662.filter((iso: any) => iso.parent === 'FI');
             function mapIsoCode(region: RegionInput): string {
@@ -60,7 +60,7 @@ export default new Resource({
                 return region.codeValue;
             }
 
-            return naceResponse['codes'].map((region: RegionInput) => {
+            return koodistoResponse['codes'].map((region: RegionInput) => {
                 return {
                     code: mapIsoCode(region),
                     statisticsFinlandCode: region['codeValue'],
