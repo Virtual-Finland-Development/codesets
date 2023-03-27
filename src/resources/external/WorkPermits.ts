@@ -14,7 +14,7 @@ interface WorkPermit {
 }
 
 export default new Resource({
-    name: 'SuomiFiKoodistotWorkPermit',
+    name: 'WorkPermits',
     uri: 'https://koodistot.suomi.fi/codelist-api/api/v1/coderegistries/dataecon/codeschemes/permit/?format=json&embedCodes=true&embedExtensions=true&embedMembers=true&expand=extension,member,codeScheme,code,memberValue,codeRegistry,organization,valueType,externalReference,propertyType&downloadFile=false&pretty',
     parsers: {
         async transform(koodistoResponse: any) {

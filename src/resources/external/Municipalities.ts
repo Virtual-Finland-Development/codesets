@@ -10,7 +10,7 @@ interface MunicipalityOutput {
 }
 
 export default new Resource({
-    name: 'SuomiFiKoodistotMunicipalities',
+    name: 'Municipalities',
     uri: 'https://koodistot.suomi.fi/codelist-api/api/v1/coderegistries/jhs/codeschemes/kunta_1_20230101/?format=json&embedCodes=true&embedExtensions=true&embedMembers=true&expand=extension,member,codeScheme,code,memberValue,codeRegistry,organization,valueType,externalReference,propertyType&downloadFile=false&pretty',
     parsers: {
         async transform(koodistoResponse: any) {

@@ -41,7 +41,7 @@ interface RegionOutput {
 }
 
 export default new Resource({
-    name: 'SuomiFiKoodistotRegions',
+    name: 'Regions',
     uri: 'https://koodistot.suomi.fi/codelist-api/api/v1/coderegistries/jhs/codeschemes/maakunta_1_20230101/?format=json&embedCodes=true&embedExtensions=true&embedMembers=true&expand=extension,member,codeScheme,code,memberValue,codeRegistry,organization,valueType,externalReference,propertyType&downloadFile=false&pretty',
     parsers: {
         input(data: string) {
