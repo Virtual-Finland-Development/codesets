@@ -3,7 +3,6 @@ import { getOutput } from '../../utils/data/parsers';
 
 type ISCO = {
     uri: string;
-    status: string;
     notation: string;
     prefLabel: {
         fi: string;
