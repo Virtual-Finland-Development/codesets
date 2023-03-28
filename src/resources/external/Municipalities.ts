@@ -15,17 +15,19 @@ export default new Resource({
     parsers: {
         async transform(koodistoResponse: any) {
             return koodistoResponse['extensions'].reduce((municipalities: any, extension: any) => {
-                const members = extension['members'].map((member: any) => {
-                    return {
-                        Koodi: member['code']['codeValue'],
-                        Selitteet: Object.entries(member['code']['prefLabel']).map(([locale, name]) => {
-                            return {
-                                Kielikoodi: locale,
-                                Teksti: name,
-                            };
-                        }),
-                    };
-                });
+                const members = extension['members']
+                    .filter((member: any) => typeof member['relatedMember'] !== 'undefined') // Filter out the regions
+                    .map((member: any) => {
+                        return {
+                            Koodi: member['code']['codeValue'],
+                            Selitteet: Object.entries(member['code']['prefLabel']).map(([locale, name]) => {
+                                return {
+                                    Kielikoodi: locale,
+                                    Teksti: name,
+                                };
+                            }),
+                        };
+                    });
 
                 municipalities.push(...members);
                 return municipalities;
