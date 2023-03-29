@@ -43,9 +43,9 @@ export default new Resource({
                     name: language.englishName,
                     twoLetterISOLanguageName: language.twoLetterISOLanguageName,
                     threeLetterISOLanguageName: language.threeLetterISOLanguageName,
-                    escoUri: escoCodeMap[mapCode],
+                    escoUri: escoCodeMap[mapCode] || 'http://data.europa.eu/esco/skill/L1',
                 };
-            }).filter((language: any) => Boolean(language.escoUri));
+            });
         },
         output(data: any) {
             return getOutput()<EscoLanguageOutput[]>(data);
