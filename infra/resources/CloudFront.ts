@@ -85,12 +85,10 @@ export function createCloudFrontDistribution(
 
 export function createCacheInvalidation(setup: ISetup, distribution: aws.cloudfront.Distribution) {
     const cacheInvalidationConfig = setup.getResourceConfig('CacheInvalidation');
-    const triggerToken = new Date().getTime().toString();
     new local.Command(
         cacheInvalidationConfig.name,
         {
             create: pulumi.interpolate`aws cloudfront create-invalidation --distribution-id ${distribution.id} --paths "/*"`,
-            triggers: [triggerToken],
         },
         { deleteBeforeReplace: true }
     );
