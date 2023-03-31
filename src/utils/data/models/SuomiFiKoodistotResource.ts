@@ -8,7 +8,7 @@ interface SuomiFiKoodistoOutput {
     hierarchyLevel: number;
     prefLabel: {
         fi: string;
-        en: string;
+        en?: string;
         se?: string;
     };
 }
