@@ -1,3 +1,4 @@
 {
-    "bucketName": ""
+    "name": "",
+    "uri": "http://localhost:3166/resources"
 }

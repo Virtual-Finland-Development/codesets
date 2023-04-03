@@ -11,7 +11,7 @@ import { getSetup } from './utils/Setup';
 const setup = getSetup();
 const originAccessIdentity = createOriginAccessIdentity(setup);
 const s3bucketSetup = createS3Bucket(setup);
-const edgeLambdaPackage = createLambdaAtEdgeFunction(setup, s3bucketSetup.name);
+const edgeLambdaPackage = createLambdaAtEdgeFunction(setup, s3bucketSetup);
 createS3BucketPermissions(setup, s3bucketSetup.bucket, originAccessIdentity, edgeLambdaPackage.lambdaAtEdgeRole);
 const cloudFrontDistribution = createCloudFrontDistribution(
     setup,

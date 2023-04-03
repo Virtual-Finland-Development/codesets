@@ -2,7 +2,10 @@ import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 import * as fs from 'fs';
 import { ISetup } from '../utils/Setup';
-export default function createLambdaAtEdgeFunction(setup: ISetup, bucketName: string) {
+export default function createLambdaAtEdgeFunction(
+    setup: ISetup,
+    s3BucketSetup: { name: string; bucket: aws.s3.Bucket }
+) {
     const lambdaAtEdgeRoleConfig = setup.getResourceConfig('LambdaAtEdgeRole');
     const lambdaAtEdgeRole = new aws.iam.Role(lambdaAtEdgeRoleConfig.name, {
         assumeRolePolicy: JSON.stringify({
@@ -36,7 +39,13 @@ export default function createLambdaAtEdgeFunction(setup: ISetup, bucketName: st
     });
 
     // pass the bucket name to the lambda function dist folder
-    fs.writeFileSync('./dist/build/bucket-info.json', JSON.stringify({ bucketName }));
+    fs.writeFileSync(
+        './dist/build/bucket-info.json',
+        JSON.stringify({
+            name: s3BucketSetup.name,
+            uri: s3BucketSetup.bucket.websiteEndpoint,
+        })
+    );
     console.log('Wrote bucket info to dist folder');
 
     const lambdaAtEdgeFunctionConfig = setup.getResourceConfig('LambdaAtEdge');
