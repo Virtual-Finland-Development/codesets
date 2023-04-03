@@ -116,18 +116,29 @@ export default class BaseResource implements IResource {
     }
 
     protected async _parseRawData(data: string, mime: string, params: Record<string, string>): Promise<string> {
-        let rawData: any = data;
+        let rawData = this._parseRawData_input(data, mime);
+        rawData = await this._parseRawData_transform(rawData, params);
+        return this._parseRawData_output(rawData, mime);
+    }
 
+    protected _parseRawData_input(rawData: string, mime: string): any {
         if (typeof this._parsers.input === 'function') {
-            rawData = this._parsers.input(rawData);
+            rawData = this._parsers.input(rawData) as any;
         } else if (mime.startsWith('application/json')) {
             rawData = JSON.parse(rawData);
         }
+        return rawData;
+    }
 
+    protected async _parseRawData_transform(rawData: any, params: Record<string, string>): Promise<any> {
         if (typeof this._parsers.transform === 'function') {
             rawData = await this._parsers.transform(rawData, params);
         }
 
+        return rawData;
+    }
+
+    protected _parseRawData_output(rawData: any, mime: string): string {
         if (typeof this._parsers.output === 'function') {
             return this._parsers.output(rawData);
         } else if (mime.startsWith('application/json')) {

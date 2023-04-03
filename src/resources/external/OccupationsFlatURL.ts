@@ -3,17 +3,11 @@ import { getOutput } from '../../utils/data/parsers';
 
 type ISCO = {
     uri: string;
-    status: string;
     notation: string;
     prefLabel: {
         fi: string;
         sv: string;
         en: string;
-    };
-    altLabel: {
-        fi: string[];
-        sv: string[];
-        en: string[];
     };
 };
 
@@ -23,7 +17,19 @@ export default new ZipResource({
     mime: 'application/json; charset=utf-8',
     parsers: {
         async transform(occupationsRaw: any) {
-            return occupationsRaw.filter((occupation: any) => Boolean(occupation.notation));
+            return occupationsRaw
+                .filter((occupation: any) => Boolean(occupation.notation))
+                .map((occupation: any) => {
+                    return {
+                        uri: occupation.uri,
+                        notation: occupation.notation,
+                        prefLabel: {
+                            fi: occupation.prefLabel.fi,
+                            sv: occupation.prefLabel.sv,
+                            en: occupation.prefLabel.en,
+                        },
+                    };
+                });
         },
         output(data: any) {
             return getOutput()<ISCO[]>(data);
