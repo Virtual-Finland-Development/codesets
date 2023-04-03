@@ -37,6 +37,11 @@ jobs:
       - name: prepare deployment
         run: |
           npm run build:infra
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       - name: Deploy with Pulumi
         id: pulumi
         uses: pulumi/actions@v3
@@ -47,8 +52,6 @@ jobs:
           upsert: true
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       - name: Tag the deployment
         uses: Virtual-Finland-Development/automatic-release-action@v1.0
         if: ${{ inputs.environment == 'staging' }}
