@@ -33,7 +33,7 @@ export default class BaseResource implements IResource {
         parsers,
     }: {
         name: string;
-        type?: 'external' | 'library';
+        type?: 'external' | 'library' | 'internal';
         uri?: string;
         mime?: string;
         dataGetter?: (params: Record<string, string>) => Promise<{ data: string; mime: string }>;
