@@ -9,7 +9,7 @@ import mime from 'mime';
 import { InternalResources } from './resources/index';
 import { getResource, listResources } from './utils/data/repositories/ResourceRepository';
 import { storeToS3 } from './utils/lib/S3Bucket';
-import { getInternalResourceInfo } from './utils/runtime';
+import { Environment, getInternalResourceInfo } from './utils/runtime';
 import { cutTooLongString } from './utils/strings';
 
 async function engageResourcesRouter(
@@ -152,6 +152,8 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
  */
 export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
     try {
+        Environment.isLocal = true;
+
         const handle = async (event: APIGatewayProxyEventV2) => {
             let uri = event.rawPath;
             const queryParams = event.rawQueryString;

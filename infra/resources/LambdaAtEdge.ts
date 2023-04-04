@@ -43,7 +43,6 @@ export default function createLambdaAtEdgeFunction(
         './dist/build/bucket-info.json',
         JSON.stringify({
             name: s3BucketSetup.name,
-            uri: s3BucketSetup.bucket.websiteEndpoint,
         })
     );
     console.log('Wrote bucket info to dist folder');
@@ -67,5 +66,3 @@ export default function createLambdaAtEdgeFunction(
         lambdaAtEdgeRole,
     };
 }
-
-//
