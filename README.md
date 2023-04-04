@@ -100,7 +100,30 @@ interface MyDataOutputInterface {
     }
 ```
 
-Working example: [src/resources/external/ISO3166CountriesURL.ts](./src/resources/external/ISO3166CountriesURL.ts)
+## Filter parameters
+
+Some of the codeset resources support filtering the data with query parameters. Supported filter parameters types are:
+
+-   `filters` - comma separated list of static filter names
+-   `query` - comma separated text search query
+-   `locales` - comma separated list of locales
+
+Example query:
+
+```
+GET /resources/Skills?query=foo&locales=fi
+```
+
+Example response:
+
+```json
+[
+    {
+        "uri": "http://data.europa.eu/esco/skill/f6d294f4-db62-4fc5-a7b8-778e5071c112",
+        "prefLabel": { "fi": "moderoida keskustelufoorumia" }
+    }
+]
+```
 
 # References
 
