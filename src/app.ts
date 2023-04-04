@@ -10,7 +10,7 @@ import { InternalResources } from './resources/index';
 import { getResource, listResources } from './utils/data/repositories/ResourceRepository';
 import { storeToS3 } from './utils/lib/S3Bucket';
 import { Environment, getInternalResourceInfo } from './utils/runtime';
-import { cutTooLongString } from './utils/strings';
+import { cutTooLongString, generateSimpleHash } from './utils/strings';
 
 async function engageResourcesRouter(
     resourceURI: string,
@@ -37,24 +37,22 @@ async function engageResourcesRouter(
         console.log('Resource: ', resource.name);
         const resourceResponse = await resource.retrieve(urlParams);
 
-        if (resource.type === 'external') {
-            // If resource size is larger than 1MB, store it in S3 and redirect to it instead
-            // This is a workaround to avoid CloudFront cache limit
-            // @see: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-functions-restrictions.html#lambda-at-edge-function-restrictions
-            console.log('Size: ', resourceResponse.size, 'bytes');
-            if (resourceResponse.size > 1024 * 1024) {
-                const extension = mime.getExtension(resourceResponse.mime);
-                const cachedName = `/resources/${resource.name}.${extension}`;
+        // If resource size is larger than 1MB, store it in S3 and redirect to it instead
+        // This is a workaround to avoid CloudFront cache limit
+        // @see: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-functions-restrictions.html#lambda-at-edge-function-restrictions
+        console.log('Size: ', resourceResponse.size, 'bytes');
+        if (resourceResponse.size > 1024 * 1024) {
+            const extension = mime.getExtension(resourceResponse.mime);
+            const cachedName = `/cached/${resource.name}-${generateSimpleHash(urlParams)}.${extension}`;
 
-                return {
-                    response: undefined,
-                    cacheable: {
-                        filepath: cachedName,
-                        data: resourceResponse.data,
-                        mime: resourceResponse.mime,
-                    },
-                };
-            }
+            return {
+                response: undefined,
+                cacheable: {
+                    filepath: cachedName,
+                    data: resourceResponse.data,
+                    mime: resourceResponse.mime,
+                },
+            };
         }
 
         return {

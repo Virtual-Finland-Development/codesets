@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 /**
  *
  * @param str
@@ -37,4 +39,13 @@ export function rightTrimSlash(str: string): string {
         return str.slice(0, -1);
     }
     return str;
+}
+
+/**
+ *
+ * @param data
+ * @returns
+ */
+export function generateSimpleHash(data: any): string {
+    return crypto.createHash('md5').update(JSON.stringify(data)).digest('hex');
 }
