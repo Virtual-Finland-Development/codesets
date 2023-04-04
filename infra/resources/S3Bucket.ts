@@ -55,7 +55,7 @@ function publicReadPolicyForBucket(bucketName: string, originAccessArn: string, 
                 Sid: 'PublicReadGetObject',
                 Effect: 'Allow',
                 Principal: {
-                    AWS: [`${originAccessArn}`],
+                    AWS: [`${originAccessArn}`, `${lambdaExecArn}`],
                 },
                 Action: 's3:GetObject',
                 Resource: `arn:aws:s3:::${bucketName}/*`,
