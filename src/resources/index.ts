@@ -24,7 +24,7 @@ const externalResources = Object.keys(externalResourcesImport).reduce((acc, key)
     };
 }, {});
 
-const internalResources = Object.keys(internalResourcesImport).reduce((acc, key) => {
+const functionalInternalResources = Object.keys(internalResourcesImport).reduce((acc, key) => {
     if (!isFunctionalInternalResourceFile(key)) {
         return acc;
     }
@@ -93,6 +93,6 @@ export const InternalResources = {
 
 export default {
     ...externalResources,
-    ...internalResources,
+    ...functionalInternalResources,
     ...libraryResources,
 };
