@@ -1,7 +1,7 @@
 import InternalResource from '../../utils/data/models/InternalResource';
 import { getOutput } from '../../utils/data/parsers';
 import { filterCommonEscoDataSet } from '../../utils/esco';
-import { isEnabledFilter } from '../../utils/filters';
+import { isEnabledFilter, isEnabledFormat } from '../../utils/filters';
 
 interface Occupation {
     uri: string;
@@ -10,6 +10,7 @@ interface Occupation {
     };
     notation?: string;
     narrower?: Occupation[]; // Enabled by the "tree" formats parameter
+    broader?: string[]; // Disabled by the "tree" formats parameter
 }
 
 export default new InternalResource({
@@ -27,7 +28,18 @@ export default new InternalResource({
                 });
             }
 
-            return filterCommonEscoDataSet<Occupation>(occupations, params);
+            occupations = filterCommonEscoDataSet<Occupation>(occupations, params);
+
+            if (!isEnabledFormat(params, 'broader') && !isEnabledFormat(params, 'tree')) {
+                occupations = occupations.map((occupation: Occupation) => {
+                    return {
+                        ...occupation,
+                        broader: undefined,
+                    };
+                });
+            }
+
+            return occupations;
         },
         output(data: any) {
             return getOutput()<Occupation[]>(data);

@@ -46,7 +46,7 @@ export function filterCommonEscoDataSet<T extends EscoDataUnit>(items: T[], para
         items = formatToEscoTree<T>(items);
     }
 
-    return items.map((item: T) => omitObjectKeys(item, ['broader']));
+    return items;
 }
 
 /**
@@ -71,10 +71,10 @@ export function formatToEscoTree<T extends EscoDataUnit>(items: T[]): T[] {
                 }
                 parent.narrower.push(omitObjectKeys(item, ['broader']));
             } else {
-                tree.push(item);
+                tree.push(omitObjectKeys(item, ['broader']));
             }
         } else {
-            tree.push(item);
+            tree.push(omitObjectKeys(item, ['broader']));
         }
     });
 
