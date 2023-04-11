@@ -2,22 +2,24 @@ import InternalResource from '../../utils/data/models/InternalResource';
 import { getOutput } from '../../utils/data/parsers';
 import { filterCommonEscoDataSet } from '../../utils/esco';
 
-interface Skill {
+interface Occupation {
     uri: string;
+    notation: string;
     prefLabel: {
         [key: string]: string;
     };
+    broader: string[];
 }
 
 export default new InternalResource({
-    name: 'Skills',
-    uri: 'skills.json',
+    name: 'Occupations',
+    uri: 'occupations.json',
     parsers: {
-        async transform(skills: any, params: Record<string, string>) {
-            return filterCommonEscoDataSet<Skill>(skills, params);
+        async transform(occupations: any, params: Record<string, string>) {
+            return filterCommonEscoDataSet(occupations, params);
         },
         output(data: any) {
-            return getOutput()<Skill[]>(data);
+            return getOutput()<Occupation[]>(data);
         },
     },
 });
