@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "serve": "./scripts/serve.sh",
-    "build": "ts-node src/build-data.ts",
+    "build:skills": "ts-node src/build-skills.ts",
+    "build:occupations": "ts-node src/build-occupations.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
