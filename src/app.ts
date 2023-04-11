@@ -8,9 +8,9 @@ import {
 import mime from 'mime';
 import { InternalResources } from './resources/index';
 import { getResource, listResources } from './utils/data/repositories/ResourceRepository';
+import { cutTooLongString, generateSimpleHash } from './utils/helpers';
 import { storeToS3 } from './utils/lib/S3Bucket';
 import { Environment, getInternalResourceInfo } from './utils/runtime';
-import { cutTooLongString, generateSimpleHash } from './utils/strings';
 
 async function engageResourcesRouter(
     resourceURI: string,

@@ -1,5 +1,5 @@
 import aws from 'aws-sdk';
-import { leftTrimSlash } from '../strings';
+import { leftTrimSlash } from '../helpers';
 
 export async function storeToS3(bucketName: string, key: string, data: string, mime: string) {
     try {

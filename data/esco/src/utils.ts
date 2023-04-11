@@ -22,3 +22,15 @@ export function omitObjectKeysNotIn(object: any, allowedKeys: string[]) {
     }
     return build;
 }
+
+/**
+ *
+ * @param str
+ * @returns
+ */
+export function leftTrimSlash(str: string): string {
+    if (str.startsWith('/')) {
+        return str.slice(1);
+    }
+    return str;
+}
