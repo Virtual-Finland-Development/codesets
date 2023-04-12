@@ -63,9 +63,6 @@ export function formatToEscoTree<T extends EscoDataUnit>(items: T[], params: Rec
     items.forEach((item) => {
         const parentUri = item.broader?.[0];
         if (typeof parentUri === 'string') {
-            if (item.notation === '011') {
-                console.log('PARENT REF OK');
-            }
             const parent = map.get(parentUri);
             if (parent) {
                 if (!parent.narrower) {
