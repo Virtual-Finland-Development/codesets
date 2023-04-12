@@ -6,6 +6,7 @@ BINARY_PATH=ESCO_Local_API_v1.1.0/tomcat-esp-api-v03_94
 if [ ! -d "${SERVER_PATH}/${BINARY_PATH}" ]; then
     echo "Server not found"
     echo "Download server binary from: https://esco.ec.europa.eu/en/use-esco/download"
+    echo "Unzip as path: ${BINARY_PATH}"
     exit 1
 fi
 

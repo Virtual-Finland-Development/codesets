@@ -49,3 +49,17 @@ export function rightTrimSlash(str: string): string {
 export function generateSimpleHash(data: any): string {
     return crypto.createHash('md5').update(JSON.stringify(data)).digest('hex');
 }
+
+/**
+ *
+ * @param object
+ * @param keys
+ * @returns
+ */
+export function omitObjectKeys(object: any, keys: string[]): any {
+    const result = { ...object };
+    keys.forEach((key) => {
+        delete result[key];
+    });
+    return result;
+}

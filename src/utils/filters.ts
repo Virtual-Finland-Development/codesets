@@ -6,6 +6,14 @@ export function isEnabledFilter(params: Record<string, string>, filterName: stri
     return false;
 }
 
+export function isEnabledFormat(params: Record<string, string>, formatName: string): boolean {
+    if (typeof params.formats === 'string') {
+        const formats = params.formats.split(',');
+        return formats.includes(formatName);
+    }
+    return false;
+}
+
 export function getSearchPhrases(params: Record<string, string>): Array<string> {
     if (typeof params.query === 'string') {
         return params.query.toLocaleLowerCase().split(',');
