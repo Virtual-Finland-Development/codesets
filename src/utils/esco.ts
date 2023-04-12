@@ -1,5 +1,4 @@
 import { getLocalesFilter, getSearchPhrases, isEnabledFormat } from './filters';
-import { omitObjectKeys } from './helpers';
 
 export interface EscoDataUnit {
     uri: string;
@@ -64,18 +63,26 @@ export function formatToEscoTree<T extends EscoDataUnit>(items: T[]): T[] {
     items.forEach((item) => {
         const parentUri = item.broader?.[0];
         if (typeof parentUri === 'string') {
+            if (item.notation === '011') {
+                console.log('PARENT REF OK');
+            }
             const parent = map.get(parentUri);
             if (parent) {
                 if (!parent.narrower) {
                     parent.narrower = [];
                 }
-                parent.narrower.push(omitObjectKeys(item, ['broader']));
+                parent.narrower.push(item);
             } else {
-                tree.push(omitObjectKeys(item, ['broader']));
+                tree.push(item);
             }
         } else {
-            tree.push(omitObjectKeys(item, ['broader']));
+            tree.push(item);
         }
+    });
+
+    // Cleanup the broader references
+    items.forEach((item) => {
+        delete item.broader;
     });
 
     return tree;
