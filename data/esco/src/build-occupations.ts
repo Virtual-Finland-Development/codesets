@@ -85,6 +85,29 @@ async function main() {
             };
         });
 
+        // Sort by notation, ascending
+        packagedResults.sort((a, b) => {
+            const partsA = a.notation.split('.');
+            const partsB = b.notation.split('.');
+
+            if (partsA.length !== partsB.length) {
+                return partsA.length - partsB.length;
+            }
+
+            let weight = 0;
+            for (let index = 0; index < partsA.length; index++) {
+                const partA = parseInt(partsA[index]);
+                const partB = parseInt(partsB[index]);
+                if (partA < partB) {
+                    weight--;
+                }
+                if (partA > partB) {
+                    weight++;
+                }
+            }
+            return weight;
+        });
+
         const filePath = '../../src/resources/internal/occupations.json';
         console.log('Saving to', filePath);
         await saveDataToJSONFile(filePath, packagedResults);

@@ -5,6 +5,14 @@ export async function saveDataToJSONFile(filePath: string, data: any) {
     await writeFile(filePath, JSON.stringify(data, null, 2));
 }
 
+export async function readJSONFile(filePath: string) {
+    const fs = require('fs');
+    const util = require('util');
+    const readFile = util.promisify(fs.readFile);
+    const data = await readFile(filePath, 'utf8');
+    return JSON.parse(data);
+}
+
 export function logProgress(progress: { pageNumber: number; max: number; chunk: number; retrievedTotal: number }) {
     console.log('Progress', {
         ...progress,
