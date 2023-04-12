@@ -42,7 +42,7 @@ export function filterCommonEscoDataSet<T extends EscoDataUnit>(items: T[], para
     }
 
     if (isEnabledFormat(params, 'tree')) {
-        items = formatToEscoTree<T>(items);
+        items = formatToEscoTree<T>(items, params);
     }
 
     return items;
@@ -54,7 +54,7 @@ export function filterCommonEscoDataSet<T extends EscoDataUnit>(items: T[], para
  * @param items
  * @returns
  */
-export function formatToEscoTree<T extends EscoDataUnit>(items: T[]): T[] {
+export function formatToEscoTree<T extends EscoDataUnit>(items: T[], params: Record<string, string>): T[] {
     const tree: T[] = [];
     const map = new Map<string, T>();
     items.forEach((item) => {
@@ -80,10 +80,12 @@ export function formatToEscoTree<T extends EscoDataUnit>(items: T[]): T[] {
         }
     });
 
-    // Cleanup the broader references
-    items.forEach((item) => {
-        delete item.broader;
-    });
+    if (!isEnabledFormat(params, 'broader')) {
+        // Cleanup the broader references
+        items.forEach((item) => {
+            delete item.broader;
+        });
+    }
 
     return tree;
 }
