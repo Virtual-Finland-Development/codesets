@@ -27,3 +27,26 @@ export function getLocalesFilter(params: Record<string, string>): Array<string> 
     }
     return [];
 }
+
+export function getPaginationParams(params: Record<string, string>): {
+    isPaginated: boolean;
+    offset: number;
+    limit: number;
+} {
+    let offset = -1;
+    let limit = -1;
+
+    if (typeof params.offset !== 'undefined' && typeof params.limit !== 'undefined') {
+        offset = parseInt(params.offset);
+        limit = parseInt(params.limit);
+        if (!Number.isInteger(offset) || !Number.isInteger(limit)) {
+            throw new Error('Invalid pagination parameters');
+        }
+    }
+
+    return {
+        isPaginated: offset >= 0 && limit > 0,
+        offset,
+        limit,
+    };
+}
