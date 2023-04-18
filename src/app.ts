@@ -15,12 +15,11 @@ import { Environment, getInternalResourceInfo } from './utils/runtime';
 
 async function engageResourcesRouter(
     resourceURI: string,
-    queryParams: string
+    params: Record<string, string>
 ): Promise<{
     response: CloudFrontResultResponse | undefined;
     cacheable?: { filepath: string; data: string; mime: string };
 }> {
-    const urlParams = Object.fromEntries(new URLSearchParams(queryParams || ''));
     const resourceName = resourceURI.replace('/resources', '').replace('/', ''); // First occurence of "/" is removed
     if (!resourceName) {
         // On a requets path /resources, return a list of resources
@@ -36,7 +35,7 @@ async function engageResourcesRouter(
     const resource = getResource(resourceName);
     if (resource) {
         console.log('Resource: ', resource.name);
-        const resourceResponse = await resource.retrieve(urlParams);
+        const resourceResponse = await resource.retrieve(params);
 
         // If resource size is larger than 1MB, store it in S3 and redirect to it instead
         // This is a workaround to avoid CloudFront cache limit
@@ -44,7 +43,7 @@ async function engageResourcesRouter(
         console.log('Size: ', resourceResponse.size, 'bytes');
         if (resourceResponse.size > 1024 * 1024) {
             const extension = mime.getExtension(resourceResponse.mime);
-            const cachedName = `/cached/${resource.name}-${generateSimpleHash(urlParams)}.${extension}`;
+            const cachedName = `/cached/${resource.name}-${generateSimpleHash(params)}.${extension}`;
 
             return {
                 response: undefined,
@@ -98,14 +97,25 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
     try {
         const request = event.Records[0].cf.request;
         let uri = resolveUri(request.uri);
-        const queryParams = request.querystring;
+        const params = Object.fromEntries(new URLSearchParams(request.querystring || ''));
+        if (request.method === 'POST' && typeof request.body === 'string') {
+            try {
+                const body = JSON.parse(request.body || '{}');
+                if (typeof body === 'object') {
+                    Object.assign(params, body);
+                }
+            } catch (error) {
+                //
+            }
+        }
+
         console.log('Request: ', {
             uri,
-            queryParams,
+            params,
         });
 
         if (uri.startsWith('/resources')) {
-            const routerResponse = await engageResourcesRouter(uri, queryParams);
+            const routerResponse = await engageResourcesRouter(uri, params);
             if (routerResponse.response) {
                 console.log('Response: ', {
                     ...routerResponse.response,
@@ -155,14 +165,25 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
 
         const handle = async (event: APIGatewayProxyEventV2) => {
             let uri = resolveUri(event.rawPath);
-            const queryParams = event.rawQueryString;
+            const params = Object.fromEntries(new URLSearchParams(event.rawQueryString || ''));
+            if (event.requestContext.http.method === 'POST') {
+                try {
+                    const body = JSON.parse(event.body || '{}');
+                    if (typeof body === 'object') {
+                        Object.assign(params, body);
+                    }
+                } catch (error) {
+                    //
+                }
+            }
+
             console.log('Request: ', {
                 uri,
-                queryParams,
+                params,
             });
 
             if (uri.startsWith('/resources')) {
-                const routerResponse: any = await engageResourcesRouter(uri, queryParams);
+                const routerResponse: any = await engageResourcesRouter(uri, params);
                 if (routerResponse.response) {
                     return {
                         statusCode: parseInt(routerResponse.response.status),
