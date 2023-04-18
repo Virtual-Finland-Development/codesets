@@ -1,4 +1,4 @@
-import { getLocalesFilter, getSearchPhrases, isEnabledFormat } from './filters';
+import { getLocalesFilter, getPaginationParams, getSearchPhrases, isEnabledFormat } from './filters';
 
 export interface EscoDataUnit {
     uri: string;
@@ -41,8 +41,14 @@ export function filterCommonEscoDataSet<T extends EscoDataUnit>(items: T[], para
         });
     }
 
-    if (isEnabledFormat(params, 'tree')) {
-        items = formatToEscoTree<T>(items, params);
+    const pagination = getPaginationParams(params);
+    if (pagination.isPaginated) {
+        items = items.slice(pagination.offset, pagination.offset + pagination.limit);
+    } else {
+        // Pagination and tree-format is not compatible
+        if (isEnabledFormat(params, 'tree')) {
+            items = formatToEscoTree<T>(items, params);
+        }
     }
 
     return items;

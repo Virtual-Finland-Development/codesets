@@ -8,6 +8,7 @@
     "build": "npm run build:occupations && npm run build:skills",
     "build:skills": "ts-node src/build-skills.ts",
     "build:occupations": "ts-node src/build-occupations.ts",
+    "build:bisness-finland": "ts-node src/build-business-finland-esco-occupations.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

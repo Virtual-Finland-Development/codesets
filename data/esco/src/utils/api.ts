@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { leftTrimSlash, logProgress } from './utils';
+import { leftTrimSlash, logProgress } from './helpers';
 
 class EscoAPI {
     host: string;
