@@ -18,7 +18,7 @@ export default function createS3Bucket(setup: ISetup) {
         corsRules: [
             {
                 allowedHeaders: ['*'],
-                allowedMethods: ['GET'],
+                allowedMethods: ['GET', 'POST'],
                 allowedOrigins: ['*'],
             },
         ],
@@ -59,6 +59,15 @@ function publicReadPolicyForBucket(bucketName: string, originAccessArn: string, 
                 },
                 Action: 's3:GetObject',
                 Resource: `arn:aws:s3:::${bucketName}/*`,
+            },
+            {
+                Sid: 'PublicReadGetCachedObject',
+                Effect: 'Allow',
+                Principal: {
+                    AWS: ['*'],
+                },
+                Action: 's3:GetObject',
+                Resource: `arn:aws:s3:::${bucketName}/cached/*`,
             },
             {
                 Sid: 'WriteAccess',

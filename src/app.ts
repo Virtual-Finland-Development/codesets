@@ -9,7 +9,7 @@ import mime from 'mime';
 import { InternalResources } from './resources/index';
 import { resolveUri } from './utils/UriResolver';
 import { getResource, listResources } from './utils/data/repositories/ResourceRepository';
-import { cutTooLongString, generateSimpleHash } from './utils/helpers';
+import { cutTooLongString, decodeBase64, generateSimpleHash } from './utils/helpers';
 import { storeToS3 } from './utils/lib/S3Bucket';
 import { Environment, getInternalResourceInfo } from './utils/runtime';
 
@@ -98,11 +98,14 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
         const request = event.Records[0].cf.request;
         let uri = resolveUri(request.uri);
         const params = Object.fromEntries(new URLSearchParams(request.querystring || ''));
-        if (request.method === 'POST') {
+        if (request.method === 'POST' && typeof request.body?.data === 'string') {
             try {
-                const body = JSON.parse(request.body?.data || '{}');
+                const body = JSON.parse(decodeBase64(request.body.data));
                 if (typeof body === 'object') {
-                    Object.assign(params, body);
+                    Object.assign(
+                        params,
+                        Object.entries(body).reduce((acc, [key, value]) => ({ ...acc, [key]: String(value) }), {})
+                    );
                 }
             } catch (error) {
                 //
@@ -138,6 +141,22 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
                     routerResponse.cacheable.mime
                 );
                 uri = routerResponse.cacheable.filepath; // pass through to s3 origin
+
+                if (request.method === 'POST') {
+                    // If the request is POST, we need to use a redirect as origin does not support POST
+                    return {
+                        status: '302',
+                        statusDescription: 'Found',
+                        headers: {
+                            location: [
+                                {
+                                    key: 'Location',
+                                    value: `https://${bucketName}.s3.amazonaws.com${routerResponse.cacheable.filepath}`,
+                                },
+                            ],
+                        },
+                    };
+                }
             }
         }
 
