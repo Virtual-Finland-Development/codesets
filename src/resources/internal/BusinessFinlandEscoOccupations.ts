@@ -11,7 +11,7 @@ interface Occupation {
 }
 
 interface OccupationsResponse {
-    total: number;
+    totalCount: number;
     occupations: Occupation[];
 }
 
@@ -20,14 +20,14 @@ export default new InternalResource({
     uri: 'business-finland-esco-v1_1_1-occupations.json',
     parsers: {
         async transform(occupations: any, params: Record<string, string>) {
-            const total = occupations.length;
+            const totalCount = occupations.length;
             const pagination = getPaginationParams(params);
             if (pagination.isPaginated) {
                 occupations = occupations.slice(pagination.offset, pagination.offset + pagination.limit);
             }
 
             return {
-                total: total,
+                totalCount: totalCount,
                 occupations: occupations,
             };
         },
