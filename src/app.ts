@@ -7,6 +7,7 @@ import {
 } from 'aws-lambda';
 import mime from 'mime';
 import { InternalResources } from './resources/index';
+import { resolveUri } from './utils/UriResolver';
 import { getResource, listResources } from './utils/data/repositories/ResourceRepository';
 import { cutTooLongString, generateSimpleHash } from './utils/helpers';
 import { storeToS3 } from './utils/lib/S3Bucket';
@@ -96,7 +97,7 @@ async function engageResourcesRouter(
 export async function handler(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
     try {
         const request = event.Records[0].cf.request;
-        let uri = request.uri;
+        let uri = resolveUri(request.uri);
         const queryParams = request.querystring;
         console.log('Request: ', {
             uri,
@@ -153,7 +154,7 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
         Environment.isLocal = true;
 
         const handle = async (event: APIGatewayProxyEventV2) => {
-            let uri = event.rawPath;
+            let uri = resolveUri(event.rawPath);
             const queryParams = event.rawQueryString;
             console.log('Request: ', {
                 uri,
