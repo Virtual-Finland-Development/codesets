@@ -30,8 +30,8 @@ export function createCloudFrontDistribution(
         ],
         customErrorResponses: [],
         defaultCacheBehavior: {
-            allowedMethods: ['GET', 'HEAD', 'OPTIONS'],
-            cachedMethods: ['GET', 'HEAD'],
+            allowedMethods: ['GET', 'POST', 'HEAD', 'OPTIONS'],
+            cachedMethods: ['GET', 'POST', 'HEAD'],
             targetOriginId: bucket.arn,
             viewerProtocolPolicy: 'redirect-to-https',
             forwardedValues: {
