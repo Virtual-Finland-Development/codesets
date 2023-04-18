@@ -98,9 +98,9 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
         const request = event.Records[0].cf.request;
         let uri = resolveUri(request.uri);
         const params = Object.fromEntries(new URLSearchParams(request.querystring || ''));
-        if (request.method === 'POST' && typeof request.body === 'string') {
+        if (request.method === 'POST') {
             try {
-                const body = JSON.parse(request.body || '{}');
+                const body = JSON.parse(request.body?.data || '{}');
                 if (typeof body === 'object') {
                     Object.assign(params, body);
                 }
