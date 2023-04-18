@@ -8,13 +8,14 @@
 ## Install
 
 -   run `npm install`
--   Download the esco v1.1.0 server from https://esco.ec.europa.eu/en/use-esco/download
+-   Download the esco v1.1.1 server from https://esco.ec.europa.eu/en/use-esco/download
 -   Unzip the downloaded file to `./server` folder
 
 ## Usage
 
 -   start server with `npm run serve` (~30s boot time)
--   run data building scripts with `npm run build:<feat>` eg. `npm run build:skills`
+-   in a separate terminal: run data building scripts with `npm run build:<feat>` eg. `npm run build:skills`
+    -   or all the known building scripts: `npm run build`
 
 ## Documentation
 
