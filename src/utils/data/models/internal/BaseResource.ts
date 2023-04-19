@@ -20,9 +20,10 @@ export default class BaseResource implements IResource {
         input?: (data: string) => unknown;
         transform?: (data: unknown, params: Record<string, string>) => Promise<unknown>;
         output?: (data: unknown) => string;
-    } = {};
+    };
 
     protected _dataGetter: ((params: Record<string, string>) => Promise<{ data: string; mime: string }>) | undefined;
+    protected _settings: Record<string, string | number | boolean>;
 
     constructor({
         name,
@@ -31,6 +32,7 @@ export default class BaseResource implements IResource {
         type,
         dataGetter,
         parsers,
+        settings,
     }: {
         name: string;
         type?: 'external' | 'library' | 'internal';
@@ -42,6 +44,7 @@ export default class BaseResource implements IResource {
             transform?: (data: unknown, params: Record<string, string>) => Promise<unknown>; // Data intake -> transformed data
             output?: (data: unknown) => string; // Transformed data intake -> raw output data
         };
+        settings?: Record<string, string | number | boolean>;
     }) {
         this.name = name;
         this.uri = uri || '';
@@ -49,6 +52,7 @@ export default class BaseResource implements IResource {
         this._mime = mime;
         this._dataGetter = dataGetter;
         this._parsers = parsers || {};
+        this._settings = settings || {};
     }
 
     public async retrieve(params: Record<string, string>): Promise<{
