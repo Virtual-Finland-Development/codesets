@@ -138,23 +138,23 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
                     routerResponse.cacheable.mime
                 );
                 uri = routerResponse.cacheable.filepath; // pass through to s3 origin
-
-                if (request.method === 'POST') {
-                    // If the request is POST, we need to use a redirect as origin does not support POST
-                    return {
-                        status: '302',
-                        statusDescription: 'Found',
-                        headers: {
-                            location: [
-                                {
-                                    key: 'Location',
-                                    value: uri,
-                                },
-                            ],
-                        },
-                    };
-                }
             }
+        }
+
+        if (request.method === 'POST') {
+            // If the request is POST, we need to use a redirect for the cache to work
+            return {
+                status: '302',
+                statusDescription: 'Found',
+                headers: {
+                    location: [
+                        {
+                            key: 'Location',
+                            value: uri,
+                        },
+                    ],
+                },
+            };
         }
 
         request.uri = uri; // Pass through to origin

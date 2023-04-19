@@ -61,15 +61,6 @@ function publicReadPolicyForBucket(bucketName: string, originAccessArn: string, 
                 Resource: `arn:aws:s3:::${bucketName}/*`,
             },
             {
-                Sid: 'PublicReadGetCachedObject',
-                Effect: 'Allow',
-                Principal: {
-                    AWS: ['*'],
-                },
-                Action: 's3:GetObject',
-                Resource: `arn:aws:s3:::${bucketName}/cached/*`,
-            },
-            {
                 Sid: 'WriteAccess',
                 Effect: 'Allow',
                 Principal: {
