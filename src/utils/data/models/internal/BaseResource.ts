@@ -56,20 +56,15 @@ export default class BaseResource implements IResource {
         mime: string;
         size: number;
     }> {
-        try {
-            this.validateSelf();
-            const dataPackage = await this._retrieveDataPackage(params);
-            const mime = this._mime || dataPackage.mime;
-            const finalData = await this._parseRawData(dataPackage.data, mime, params);
-            return {
-                data: finalData,
-                mime: mime,
-                size: Buffer.byteLength(finalData, 'utf8'),
-            };
-        } catch (error) {
-            console.log(error);
-            throw error;
-        }
+        this.validateSelf();
+        const dataPackage = await this._retrieveDataPackage(params);
+        const mime = this._mime || dataPackage.mime;
+        const finalData = await this._parseRawData(dataPackage.data, mime, params);
+        return {
+            data: finalData,
+            mime: mime,
+            size: Buffer.byteLength(finalData, 'utf8'),
+        };
     }
 
     private validateSelf(): void {

@@ -7,9 +7,9 @@ import {
 } from 'aws-lambda';
 import mime from 'mime';
 import { InternalResources } from './resources/index';
-import { resolveUri } from './utils/UriResolver';
+import { resolveError, resolveUri } from './utils/api';
 import { getResource, listResources } from './utils/data/repositories/ResourceRepository';
-import { cutTooLongString, decodeBase64, generateSimpleHash } from './utils/helpers';
+import { cutTooLongString, decodeBase64, generateSimpleHash, parseRequestInputParams } from './utils/helpers';
 import { storeToS3 } from './utils/lib/S3Bucket';
 import { Environment, getInternalResourceInfo } from './utils/runtime';
 
@@ -102,10 +102,7 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
             try {
                 const body = JSON.parse(decodeBase64(request.body.data));
                 if (typeof body === 'object') {
-                    Object.assign(
-                        params,
-                        Object.entries(body).reduce((acc, [key, value]) => ({ ...acc, [key]: String(value) }), {})
-                    );
+                    Object.assign(params, parseRequestInputParams(body));
                 }
             } catch (error) {
                 //
@@ -163,11 +160,11 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
         request.uri = uri; // Pass through to origin
         return request;
     } catch (error: any) {
-        console.log(error?.message, error?.stack);
+        const errorPackage = resolveError(error);
         return {
-            status: '500',
-            statusDescription: 'Internal Server Error',
-            body: JSON.stringify({ message: error?.message }),
+            status: errorPackage.statusCode.toString(),
+            statusDescription: errorPackage.description,
+            body: errorPackage.body,
         };
     }
 }
@@ -189,7 +186,7 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
                 try {
                     const body = JSON.parse(event.body || '{}');
                     if (typeof body === 'object') {
-                        Object.assign(params, body);
+                        Object.assign(params, parseRequestInputParams(body));
                     }
                 } catch (error) {
                     //
@@ -250,10 +247,6 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
 
         return await Promise.race([handle(event), internalTimeoutEnforcer() as any]); // Return the first to resolve
     } catch (error: any) {
-        console.log(error?.message, error?.stack);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ message: error?.message }),
-        };
+        return resolveError(error);
     }
 }
