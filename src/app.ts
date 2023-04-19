@@ -148,7 +148,7 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
                             location: [
                                 {
                                     key: 'Location',
-                                    value: `https://${bucketName}.s3.amazonaws.com${routerResponse.cacheable.filepath}`,
+                                    value: uri,
                                 },
                             ],
                         },
