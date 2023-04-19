@@ -63,3 +63,21 @@ export function omitObjectKeys(object: any, keys: string[]): any {
     });
     return result;
 }
+
+/**
+ *
+ * @param str
+ * @returns
+ */
+export function decodeBase64(str: string): string {
+    return Buffer.from(str, 'base64').toString('utf-8');
+}
+
+/**
+ *
+ * @param body
+ * @returns
+ */
+export function parseRequestInputParams(body: any): Record<string, string> {
+    return Object.entries(body).reduce((acc, [key, value]) => ({ ...acc, [key]: String(value) }), {});
+}

@@ -18,7 +18,7 @@ export default function createS3Bucket(setup: ISetup) {
         corsRules: [
             {
                 allowedHeaders: ['*'],
-                allowedMethods: ['GET'],
+                allowedMethods: ['GET', 'POST'],
                 allowedOrigins: ['*'],
             },
         ],

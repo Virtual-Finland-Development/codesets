@@ -37,10 +37,11 @@ export function getPaginationParams(params: Record<string, string>): {
     let limit = -1;
 
     if (typeof params.offset !== 'undefined' && typeof params.limit !== 'undefined') {
-        offset = parseInt(params.offset);
-        limit = parseInt(params.limit);
-        if (!Number.isInteger(offset) || !Number.isInteger(limit)) {
-            throw new Error('Invalid pagination parameters');
+        const parsedOffset = parseInt(params.offset);
+        const parsedLimit = parseInt(params.limit);
+        if (Number.isInteger(parsedOffset) && Number.isInteger(parsedLimit)) {
+            offset = parsedOffset;
+            limit = parsedLimit;
         }
     }
 

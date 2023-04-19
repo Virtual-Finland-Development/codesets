@@ -17,8 +17,15 @@ test('Basic router test', async () => {
         ],
     } as CloudFrontRequestEvent;
     */
+
+    // Mock event
     const event = {
         rawPath: '/resources/bazz',
+        requestContext: {
+            http: {
+                method: 'GET',
+            },
+        },
     } as unknown as APIGatewayProxyEventV2;
 
     const result = (await offlineHandler(event)) as unknown as APIGatewayProxyStructuredResultV2;

@@ -2,6 +2,8 @@ import InternalResource from '../../utils/data/models/InternalResource';
 import { getOutput } from '../../utils/data/parsers';
 import { getPaginationParams } from '../../utils/filters';
 
+import BusinessFinlandDataSet from './business-finland-esco-v1_1_1-occupations.json';
+
 interface Occupation {
     escoCode: string;
     escoJobTitle: string;
@@ -34,5 +36,11 @@ export default new InternalResource({
         output(data: any) {
             return getOutput()<OccupationsResponse>(data);
         },
+    },
+    dataGetter() {
+        return Promise.resolve({
+            data: JSON.stringify(BusinessFinlandDataSet),
+            mime: 'application/json',
+        });
     },
 });

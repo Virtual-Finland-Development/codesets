@@ -7,19 +7,19 @@ import {
 } from 'aws-lambda';
 import mime from 'mime';
 import { InternalResources } from './resources/index';
+import { resolveError, resolveUri } from './utils/api';
 import { getResource, listResources } from './utils/data/repositories/ResourceRepository';
-import { cutTooLongString, generateSimpleHash } from './utils/helpers';
+import { cutTooLongString, decodeBase64, generateSimpleHash, parseRequestInputParams } from './utils/helpers';
 import { storeToS3 } from './utils/lib/S3Bucket';
 import { Environment, getInternalResourceInfo } from './utils/runtime';
 
 async function engageResourcesRouter(
     resourceURI: string,
-    queryParams: string
+    params: Record<string, string>
 ): Promise<{
     response: CloudFrontResultResponse | undefined;
     cacheable?: { filepath: string; data: string; mime: string };
 }> {
-    const urlParams = Object.fromEntries(new URLSearchParams(queryParams || ''));
     const resourceName = resourceURI.replace('/resources', '').replace('/', ''); // First occurence of "/" is removed
     if (!resourceName) {
         // On a requets path /resources, return a list of resources
@@ -35,7 +35,7 @@ async function engageResourcesRouter(
     const resource = getResource(resourceName);
     if (resource) {
         console.log('Resource: ', resource.name);
-        const resourceResponse = await resource.retrieve(urlParams);
+        const resourceResponse = await resource.retrieve(params);
 
         // If resource size is larger than 1MB, store it in S3 and redirect to it instead
         // This is a workaround to avoid CloudFront cache limit
@@ -43,7 +43,7 @@ async function engageResourcesRouter(
         console.log('Size: ', resourceResponse.size, 'bytes');
         if (resourceResponse.size > 1024 * 1024) {
             const extension = mime.getExtension(resourceResponse.mime);
-            const cachedName = `/cached/${resource.name}-${generateSimpleHash(urlParams)}.${extension}`;
+            const cachedName = `/cached/${resource.name}-${generateSimpleHash(params)}.${extension}`;
 
             return {
                 response: undefined,
@@ -96,15 +96,26 @@ async function engageResourcesRouter(
 export async function handler(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
     try {
         const request = event.Records[0].cf.request;
-        let uri = request.uri;
-        const queryParams = request.querystring;
+        let uri = resolveUri(request.uri);
+        const params = Object.fromEntries(new URLSearchParams(request.querystring || ''));
+        if (request.method === 'POST' && typeof request.body?.data === 'string') {
+            try {
+                const body = JSON.parse(decodeBase64(request.body.data));
+                if (typeof body === 'object') {
+                    Object.assign(params, parseRequestInputParams(body));
+                }
+            } catch (error) {
+                //
+            }
+        }
+
         console.log('Request: ', {
             uri,
-            queryParams,
+            params,
         });
 
         if (uri.startsWith('/resources')) {
-            const routerResponse = await engageResourcesRouter(uri, queryParams);
+            const routerResponse = await engageResourcesRouter(uri, params);
             if (routerResponse.response) {
                 console.log('Response: ', {
                     ...routerResponse.response,
@@ -130,14 +141,30 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
             }
         }
 
+        if (request.method === 'POST') {
+            // If the request is POST, we need to use a redirect for the cache to work
+            return {
+                status: '302',
+                statusDescription: 'Found',
+                headers: {
+                    location: [
+                        {
+                            key: 'Location',
+                            value: uri,
+                        },
+                    ],
+                },
+            };
+        }
+
         request.uri = uri; // Pass through to origin
         return request;
     } catch (error: any) {
-        console.log(error?.message, error?.stack);
+        const errorPackage = resolveError(error);
         return {
-            status: '500',
-            statusDescription: 'Internal Server Error',
-            body: JSON.stringify({ message: error?.message }),
+            status: errorPackage.statusCode.toString(),
+            statusDescription: errorPackage.description,
+            body: errorPackage.body,
         };
     }
 }
@@ -153,15 +180,26 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
         Environment.isLocal = true;
 
         const handle = async (event: APIGatewayProxyEventV2) => {
-            let uri = event.rawPath;
-            const queryParams = event.rawQueryString;
+            let uri = resolveUri(event.rawPath);
+            const params = Object.fromEntries(new URLSearchParams(event.rawQueryString || ''));
+            if (event.requestContext.http.method === 'POST') {
+                try {
+                    const body = JSON.parse(event.body || '{}');
+                    if (typeof body === 'object') {
+                        Object.assign(params, parseRequestInputParams(body));
+                    }
+                } catch (error) {
+                    //
+                }
+            }
+
             console.log('Request: ', {
                 uri,
-                queryParams,
+                params,
             });
 
             if (uri.startsWith('/resources')) {
-                const routerResponse: any = await engageResourcesRouter(uri, queryParams);
+                const routerResponse: any = await engageResourcesRouter(uri, params);
                 if (routerResponse.response) {
                     return {
                         statusCode: parseInt(routerResponse.response.status),
@@ -209,10 +247,6 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
 
         return await Promise.race([handle(event), internalTimeoutEnforcer() as any]); // Return the first to resolve
     } catch (error: any) {
-        console.log(error?.message, error?.stack);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ message: error?.message }),
-        };
+        return resolveError(error);
     }
 }
