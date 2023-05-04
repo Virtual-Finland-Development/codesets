@@ -71,6 +71,17 @@ export function createCloudFrontDistribution(
         tags: cloudFrontDistributionConfig.tags,
     });
 
+    // Extended monitoring
+    const cloudFrontDistributionMonitoringConfig = setup.getResourceConfig('CloudFrontDistributionMonitoring');
+    new aws.cloudfront.MonitoringSubscription(cloudFrontDistributionMonitoringConfig.name, {
+        distributionId: cloudFrontDistribution.id,
+        monitoringSubscription: {
+            realtimeMetricsSubscriptionConfig: {
+                realtimeMetricsSubscriptionStatus: 'Enabled',
+            },
+        },
+    });
+
     // Permissions for Lambda@Edge
     const LambdaAtEdgePermissionConfig = setup.getResourceConfig('LambdaAtEdgePermission');
     new aws.lambda.Permission(LambdaAtEdgePermissionConfig.name, {
