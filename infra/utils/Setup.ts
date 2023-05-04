@@ -8,9 +8,8 @@ const setup = {
         return {
             name: `${this.projectName}-${name}-${this.stage}`,
             tags: {
-                Name: name,
-                Environment: this.stage,
-                Project: this.projectName,
+                'vfd:stack': this.stage,
+                'vfd:project': this.projectName,
             },
         };
     },
