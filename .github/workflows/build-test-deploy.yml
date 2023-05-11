@@ -21,6 +21,9 @@ jobs:
     build-test-deploy:
         name: Build, test and deploy ${{ inputs.environment }}
         runs-on: ubuntu-latest
+        permissions:
+            id-token: write
+            contents: read
         environment: ${{ inputs.environment }}
         outputs:
             url: ${{ steps.pulumi.outputs.url }}
