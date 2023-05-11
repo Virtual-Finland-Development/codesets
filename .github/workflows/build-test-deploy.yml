@@ -1,64 +1,64 @@
 name: Build, Test, Deploy
 
 on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: Environment where to deploy the stack (dev, staging)
-        type: environment
-        required: true
-  workflow_call:
-    inputs:
-      environment:
-        description: Environment where to deploy the stack (dev, staging)
-        type: string
-        required: true
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: Environment where to deploy the stack (dev, staging)
+                type: environment
+                required: true
+    workflow_call:
+        inputs:
+            environment:
+                description: Environment where to deploy the stack (dev, staging)
+                type: string
+                required: true
 
 env:
-  AWS_REGION: eu-north-1
+    AWS_REGION: eu-north-1
 
 jobs:
-  build-test-deploy:
-    name: Build, test and deploy ${{ inputs.environment }}
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
-    outputs:
-      url: ${{ steps.pulumi.outputs.url }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.x
-      - name: Build
-        run: |
-          npm install
-          npm run build
-      - name: Test
-        run: |
-          npm run test
-      - name: prepare deployment
-        run: |
-          npm run build:infra
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-      - name: Deploy with Pulumi
-        id: pulumi
-        uses: pulumi/actions@v3
-        with:
-          work-dir: ./infra
-          command: up
-          stack-name: virtualfinland/${{ inputs.environment }}
-          upsert: true
-        env:
-          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-      - name: Tag the deployment
-        uses: Virtual-Finland-Development/automatic-release-action@v1.0
-        if: ${{ inputs.environment == 'staging' }}
-        with:
-          environment: ${{ inputs.environment }}
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
+    build-test-deploy:
+        name: Build, test and deploy ${{ inputs.environment }}
+        runs-on: ubuntu-latest
+        environment: ${{ inputs.environment }}
+        outputs:
+            url: ${{ steps.pulumi.outputs.url }}
+        steps:
+            - uses: actions/checkout@v3
+            - name: Use Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 18.x
+            - name: Build
+              run: |
+                  npm install
+                  npm run build
+            - name: Test
+              run: |
+                  npm run test
+            - name: prepare deployment
+              run: |
+                  npm run build:infra
+            - name: Configure AWS credentials
+              uses: Virtual-Finland-Development/infrastructure/.github/actions/configure-aws-credentials@main
+              with:
+                  environment: ${{ inputs.environment }}
+                  aws-region: ${{ secrets.AWS_REGION }}
+                  pulumi-access-token: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+            - name: Deploy with Pulumi
+              id: pulumi
+              uses: pulumi/actions@v4
+              with:
+                  work-dir: ./infra
+                  command: up
+                  stack-name: virtualfinland/${{ inputs.environment }}
+                  upsert: true
+              env:
+                  PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+            - name: Tag the deployment
+              uses: Virtual-Finland-Development/automatic-release-action@v1.0
+              if: ${{ inputs.environment == 'staging' }}
+              with:
+                  environment: ${{ inputs.environment }}
+                  githubToken: ${{ secrets.GITHUB_TOKEN }}
