@@ -14,9 +14,6 @@ on:
                 type: string
                 required: true
 
-env:
-    AWS_REGION: eu-north-1
-
 jobs:
     build-test-deploy:
         name: Build, test and deploy ${{ inputs.environment }}
@@ -25,8 +22,6 @@ jobs:
             id-token: write
             contents: read
         environment: ${{ inputs.environment }}
-        outputs:
-            url: ${{ steps.pulumi.outputs.url }}
         steps:
             - uses: actions/checkout@v3
             - name: Use Node.js

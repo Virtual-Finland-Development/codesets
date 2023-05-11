@@ -1,12 +1,12 @@
-name: "Dev: build, test and deploy"
+name: 'Dev: build, test and deploy'
 on:
-  push:
-    branches: ["main"]
-  workflow_dispatch: 
+    push:
+        branches: ['main']
+    workflow_dispatch:
 
 jobs:
-  deploy-dev:
-    uses: Virtual-Finland-Development/codesets/.github/workflows/build-test-deploy.yml@main
-    secrets: inherit
-    with:
-      environment: dev
+    deploy-dev:
+        uses: Virtual-Finland-Development/codesets/.github/workflows/build-test-deploy.yml@main
+        secrets: inherit
+        with:
+            environment: dev

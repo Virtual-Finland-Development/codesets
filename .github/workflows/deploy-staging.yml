@@ -1,11 +1,10 @@
-name: "Staging: build, test and deploy"
+name: 'Staging: build, test and deploy'
 on:
-  workflow_dispatch:
-    branches: ["main"]
+    workflow_dispatch:
 
 jobs:
-  deploy-staging:
-    uses: Virtual-Finland-Development/codesets/.github/workflows/build-test-deploy.yml@main
-    secrets: inherit
-    with:
-      environment: staging
+    deploy-staging:
+        uses: Virtual-Finland-Development/codesets/.github/workflows/build-test-deploy.yml@main
+        secrets: inherit
+        with:
+            environment: staging
