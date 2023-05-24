@@ -71,7 +71,7 @@ export function createCloudFrontDistribution(
         retainOnDelete: false,
         tags: cloudFrontDistributionConfig.tags,
         loggingConfig: {
-            bucket: standardLogsBucket.arn,
+            bucket: standardLogsBucket.bucket,
             prefix: 'std-cf-logs',
             includeCookies: false,
         }
