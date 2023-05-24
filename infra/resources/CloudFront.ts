@@ -72,7 +72,7 @@ export function createCloudFrontDistribution(
         tags: cloudFrontDistributionConfig.tags,
         loggingConfig: {
             bucket: standardLogsBucket.arn,
-            prefix: '',
+            prefix: 'std-cf-logs',
             includeCookies: false,
         }
     });
