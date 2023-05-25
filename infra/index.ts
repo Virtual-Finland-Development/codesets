@@ -30,7 +30,6 @@ export const bucketName = s3bucketSetup.bucket.bucket;
 export const lambdaId = pulumi.interpolate`${edgeLambdaPackage.lambdaAtEdgeFunction.name}:${edgeLambdaPackage.lambdaAtEdgeFunction.version}`
 export const cloudFrontDistributionId = cloudFrontDistribution.id;
 export const standardLogsBucketDetails = {
-    name: standardLogsBucket.bucket,
     arn: standardLogsBucket.arn,
     id: standardLogsBucket.id
 }
