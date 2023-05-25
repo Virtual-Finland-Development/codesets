@@ -3,7 +3,7 @@ import {Bucket} from "@pulumi/aws/s3";
 import {ISetup} from "../utils/Setup";
 
 export function createStandardLogsBucket(setup: ISetup): Bucket {
-    return new aws.s3.Bucket(`standard-logs-bucket-${setup.stage}`, {
+    const bucket = new aws.s3.Bucket(`standard-logs-bucket-${setup.stage}`, {
         lifecycleRules: [
             {
                 enabled: true,
@@ -16,4 +16,13 @@ export function createStandardLogsBucket(setup: ISetup): Bucket {
         acl: 'private',
         tags: setup.getResourceConfig('standard-logs-bucket').tags
     });
+    
+    const bucketOwnershipControls = new aws.s3.BucketOwnershipControls('controls', {
+       bucket: bucket.id,
+       rule: {
+           objectOwnership: "BucketOwnerPreferred"
+       } 
+    });
+    
+    return bucket;
 }
