@@ -14,7 +14,8 @@ export function createCloudFrontDistribution(
     setup: ISetup,
     bucket: aws.s3.Bucket,
     originAccessIdentity: aws.cloudfront.OriginAccessIdentity,
-    lambdaAtEdgeFunction: aws.lambda.Function
+    lambdaAtEdgeFunction: aws.lambda.Function,
+    cacheCorrectionsFunction: aws.cloudfront.Function
 ) {
     const cloudFrontDistributionConfig = setup.getResourceConfig('CloudFrontDistribution');
 
@@ -44,6 +45,12 @@ export function createCloudFrontDistribution(
             defaultTtl: 2628000,
             maxTtl: 31536000,
             compress: true,
+            functionAssociations: [
+                {
+                    eventType: 'viewer-request',
+                    functionArn: cacheCorrectionsFunction.arn,
+                },
+            ],
             lambdaFunctionAssociations: [
                 {
                     eventType: 'origin-request',
