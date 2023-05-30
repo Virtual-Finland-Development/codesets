@@ -20,7 +20,7 @@ jobs:
         runs-on: ubuntu-latest
         permissions:
             id-token: write
-            contents: read
+            contents: write
         environment: ${{ inputs.environment }}
         steps:
             - uses: actions/checkout@v3
