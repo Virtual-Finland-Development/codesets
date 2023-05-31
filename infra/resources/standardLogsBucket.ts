@@ -25,6 +25,8 @@ export function createStandardLogsBucket(setup: ISetup): Bucket {
         rule: {
             objectOwnership: "BucketOwnerPreferred"
         }
+    }, {
+        provider: awsEuNorth1
     });
 
     return bucket;
