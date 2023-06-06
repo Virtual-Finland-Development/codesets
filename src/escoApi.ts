@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { resolveError } from './utils/api';
-import { decodeBase64, parseRequestInputParams } from './utils/helpers';
+import { parseRequestInputParams } from './utils/helpers';
 
 const CODESETS_API_ENDPOINT = process.env.CODESETS_API_ENDPOINT;
 
@@ -8,17 +8,27 @@ const CODESETS_API_ENDPOINT = process.env.CODESETS_API_ENDPOINT;
 export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
     const { path, queryStringParameters, body } = event;
 
+    if (typeof body !== 'string' || body.length < 1) {
+        return {
+            statusCode: 400,
+            body: 'Invalid request body',
+        };
+    } else if (body === 'warmup') {
+        return {
+            statusCode: 200,
+            body: 'Warmup successful',
+        };
+    }
+
     try {
         const params = (queryStringParameters as Record<string, string>) || {};
-        if (typeof body === 'string') {
-            try {
-                const bodyData = JSON.parse(decodeBase64(body));
-                if (typeof bodyData === 'object') {
-                    Object.assign(params, parseRequestInputParams(bodyData));
-                }
-            } catch (error) {
-                //
+        try {
+            const bodyData = JSON.parse(body);
+            if (typeof bodyData === 'object') {
+                Object.assign(params, parseRequestInputParams(bodyData));
             }
+        } catch (error) {
+            // Pass
         }
 
         console.log('Request: ', {

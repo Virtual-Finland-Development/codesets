@@ -53,6 +53,30 @@ export function createLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulumi.Outpu
         },
     });
 
+    // Warmup scheduler for lambda function
+    const warmupSchedulerEventConfig = setup.getResourceConfig('WarmupSchedulerEvent');
+    const warmupSchedulerEvent = new aws.cloudwatch.EventRule(warmupSchedulerEventConfig.name, {
+        scheduleExpression: 'rate(5 minutes)',
+        description: 'Warmup scheduler for lambda function',
+        tags: warmupSchedulerEventConfig.tags,
+    });
+
+    const warmupSchedulerTargetConfig = setup.getResourceConfig('WarmupSchedulerTarget');
+    new aws.cloudwatch.EventTarget(warmupSchedulerTargetConfig.name, {
+        rule: warmupSchedulerEvent.name,
+        arn: lambdaFunction.arn,
+        input: 'warmup',
+    });
+
+    // Permission for the warmup scheduler to invoke the lambda function
+    const warmupSchedulerPermissionConfig = setup.getResourceConfig('WarmupSchedulerPermission');
+    new aws.lambda.Permission(warmupSchedulerPermissionConfig.name, {
+        action: 'lambda:InvokeFunction',
+        function: lambdaFunction.name,
+        principal: 'events.amazonaws.com',
+        sourceArn: warmupSchedulerEvent.arn,
+    });
+
     return {
         lambdaFunctionExecRoleRole,
         lambdaFunction,
