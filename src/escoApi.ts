@@ -1,5 +1,5 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { resolveError } from './utils/api';
+import { UriRedirects, resolveError } from './utils/api';
 import { ValidationError } from './utils/exceptions';
 
 const CODESETS_API_ENDPOINT = process.env.CODESETS_API_ENDPOINT;
@@ -57,6 +57,11 @@ function parseRequest(event: APIGatewayProxyEventV2): { method: string; path: st
     }
     if (typeof body !== 'string' || body.length < 1) {
         throw new ValidationError('Missing request body');
+    }
+
+    const knownPaths = Object.keys(UriRedirects);
+    if (!knownPaths.includes(rawPath)) {
+        throw new ValidationError('Unknown request path');
     }
 
     let requestData: Record<string, any>;

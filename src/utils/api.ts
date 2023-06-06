@@ -1,6 +1,6 @@
 import { ValidationError } from './exceptions';
 
-const UriRedirects: Record<string, string> = {
+export const UriRedirects: Record<string, string> = {
     '/productizer/draft/Employment/EscoOccupations': '/resources/BusinessFinlandEscoOccupations',
 };
 
