@@ -77,6 +77,23 @@ export function createEscoApiLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulum
     );
 
     // Warmup scheduler for lambda function
+    const isProductionlikeEnvironment = setup.isProductionLikeEnvironment();
+    if (isProductionlikeEnvironment) {
+        setupLambdaWarmerScheduler(setup, escoApiLambdaFunction, escoApiRegion);
+    }
+
+    return {
+        lambdaFunctionExecRoleRole: escoApiLambdaFunctionExecRoleRole,
+        lambdaFunction: escoApiLambdaFunction,
+        lambdaFunctionUrl: escoApiLambdaFunctionUrl,
+    };
+}
+
+function setupLambdaWarmerScheduler(
+    setup: ISetup,
+    escoApiLambdaFunction: aws.lambda.Function,
+    escoApiRegion: aws.Provider
+) {
     const escoApiWarmupSchedulerEventConfig = setup.getResourceConfig('EscoApiWarmupSchedulerEvent');
     const escoApiWarmupSchedulerEvent = new aws.cloudwatch.EventRule(
         escoApiWarmupSchedulerEventConfig.name,
@@ -111,10 +128,4 @@ export function createEscoApiLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulum
         },
         { provider: escoApiRegion }
     );
-
-    return {
-        lambdaFunctionExecRoleRole: escoApiLambdaFunctionExecRoleRole,
-        lambdaFunction: escoApiLambdaFunction,
-        lambdaFunctionUrl: escoApiLambdaFunctionUrl,
-    };
 }
