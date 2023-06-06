@@ -5,7 +5,7 @@ import {
     createOriginAccessIdentity,
 } from './resources/CloudFront';
 import createLambdaAtEdgeFunction from './resources/LambdaAtEdge';
-import { createLambdaFunctionUrl } from './resources/LambdaFunctionUrl';
+import { createEscoApiLambdaFunctionUrl } from './resources/LambdaFunctionUrl';
 import createS3Bucket, { createS3BucketPermissions, uploadAssetsToBucket } from './resources/S3Bucket';
 import { getSetup } from './utils/Setup';
 
@@ -30,6 +30,6 @@ export const lambdaId = pulumi.interpolate`${edgeLambdaPackage.lambdaAtEdgeFunct
 export const cloudFrontDistributionId = cloudFrontDistribution.id;
 
 // Esco API
-const escoApi = createLambdaFunctionUrl(setup, url);
+const escoApi = createEscoApiLambdaFunctionUrl(setup, url);
 export const escoApiUrl = escoApi.lambdaFunctionUrl.functionUrl;
 export const escoApiLambdaId = escoApi.lambdaFunction.id;

@@ -40,7 +40,7 @@ export default function createLambdaAtEdgeFunction(
 
     // pass the bucket name to the lambda function dist folder
     fs.writeFileSync(
-        './dist/build/bucket-info.json',
+        './dist/codesets/build/bucket-info.json',
         JSON.stringify({
             name: s3BucketSetup.name,
         })
@@ -48,20 +48,16 @@ export default function createLambdaAtEdgeFunction(
     console.log('Wrote bucket info to dist folder');
 
     const lambdaAtEdgeFunctionConfig = setup.getResourceConfig('LambdaAtEdge');
-    const lambdaAtEdgeFunction = new aws.lambda.Function(
-        lambdaAtEdgeFunctionConfig.name,
-        {
-            code: new pulumi.asset.FileArchive('./dist'),
-            handler: 'codesets.handler',
-            runtime: 'nodejs18.x',
-            memorySize: 256,
-            timeout: 30,
-            role: lambdaAtEdgeRole.arn,
-            tags: lambdaAtEdgeFunctionConfig.tags,
-            publish: true,
-        },
-        { provider: new aws.Provider('us-east-1', { region: 'us-east-1' }) }
-    ); // Lambda@Edge functions must be deployed in us-east-1
+    const lambdaAtEdgeFunction = new aws.lambda.Function(lambdaAtEdgeFunctionConfig.name, {
+        code: new pulumi.asset.FileArchive('./dist/codesets'),
+        handler: 'codesets.handler',
+        runtime: 'nodejs18.x',
+        memorySize: 256,
+        timeout: 30,
+        role: lambdaAtEdgeRole.arn,
+        tags: lambdaAtEdgeFunctionConfig.tags,
+        publish: true,
+    });
 
     return {
         lambdaAtEdgeFunction,

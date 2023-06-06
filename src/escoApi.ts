@@ -1,51 +1,38 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { resolveError } from './utils/api';
 import { ValidationError } from './utils/exceptions';
-import { parseRequestInputParams } from './utils/helpers';
 
 const CODESETS_API_ENDPOINT = process.env.CODESETS_API_ENDPOINT;
 
 // AWS Lambda function hanlder for the ESCO API
-export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> {
-    const { path, queryStringParameters, body } = event;
+export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
+    // Lambda warmup request handling
+    if ((event as any)?.source === 'warmup') {
+        return {
+            statusCode: 200,
+            body: 'Warmup successful',
+        };
+    }
 
+    // Normal request handling
     try {
-        if (typeof body !== 'string' || body.length < 1) {
-            throw new ValidationError('Missing request body');
-        }
+        const request = parseRequest(event);
 
-        const params = (queryStringParameters as Record<string, string>) || {};
-        const bodyData = JSON.parse(body);
-        if (typeof bodyData !== 'object' || bodyData === null) {
-            throw new ValidationError('Invalid request body');
-        }
-
-        // Lambda warmup request handling
-        if (bodyData.source === 'warmup') {
-            return {
-                statusCode: 200,
-                body: 'Warmup successful',
-            };
-        }
-
-        // Normal request handling
-        Object.assign(params, parseRequestInputParams(bodyData));
-        console.log('Request: ', {
-            path,
-            params,
-        });
-
-        const paramsAsQuery = new URLSearchParams(params).toString();
-        const uri = `${CODESETS_API_ENDPOINT}/${path}`;
+        const paramsAsQuery = new URLSearchParams(request.params).toString();
+        const uri = `${CODESETS_API_ENDPOINT}${request.path}`;
         const uriAsQuery = uri + (paramsAsQuery ? '?' + paramsAsQuery : '');
         const response = await fetch(uriAsQuery);
+        const responseBody = await response.text();
+
+        const responseHeaders = Object.entries(response.headers).reduce((headers, [key, value]) => {
+            headers[key] = value;
+            return headers;
+        }, {} as Record<string, string>);
+
         return {
             statusCode: response.status,
-            headers: Object.entries(response.headers).reduce((headers, [key, value]) => {
-                headers[key] = value;
-                return headers;
-            }, {} as Record<string, string>),
-            body: response.body as any,
+            headers: responseHeaders,
+            body: responseBody,
         };
     } catch (error: any) {
         const errorPackage = resolveError(error);
@@ -54,4 +41,34 @@ export async function handler(event: APIGatewayProxyEvent): Promise<APIGatewayPr
             body: errorPackage.body,
         };
     }
+}
+
+function parseRequest(event: APIGatewayProxyEventV2): { method: string; path: string; params: Record<string, any> } {
+    const {
+        rawPath,
+        body,
+        requestContext: {
+            http: { method },
+        },
+    } = event;
+
+    if (method !== 'POST') {
+        throw new ValidationError('Bad request method');
+    }
+    if (typeof body !== 'string' || body.length < 1) {
+        throw new ValidationError('Missing request body');
+    }
+
+    let requestData: Record<string, any>;
+    try {
+        requestData = JSON.parse(body);
+    } catch (error) {
+        throw new ValidationError('Invalid request body');
+    }
+
+    return {
+        method,
+        path: rawPath,
+        params: requestData,
+    };
 }
