@@ -65,7 +65,7 @@ export function createLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulumi.Outpu
     new aws.cloudwatch.EventTarget(warmupSchedulerTargetConfig.name, {
         rule: warmupSchedulerEvent.name,
         arn: lambdaFunction.arn,
-        input: 'warmup',
+        input: JSON.stringify({ source: 'warmup' }),
     });
 
     // Permission for the warmup scheduler to invoke the lambda function
