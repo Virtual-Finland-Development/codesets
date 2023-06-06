@@ -4,7 +4,7 @@ import {ISetup} from "../utils/Setup";
 
 export function createStandardLogsBucket(setup: ISetup): Bucket {
     const awsEuNorth1 = new aws.Provider("aws-eu-north-1", {region: "eu-north-1"});
-    const bucket = new aws.s3.Bucket(`standard-logs-bucket-${setup.stage}`, {
+    const bucket = new aws.s3.Bucket(`${setup.projectName}-standard-logs-${setup.stage}`, {
         lifecycleRules: [
             {
                 enabled: true,
