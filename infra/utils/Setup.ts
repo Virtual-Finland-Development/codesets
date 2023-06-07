@@ -13,6 +13,9 @@ const setup = {
             },
         };
     },
+    isProductionLikeEnvironment() {
+        return this.stage === 'production' || this.stage === 'staging';
+    },
 };
 
 type ISetup = typeof setup;

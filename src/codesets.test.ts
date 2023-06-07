@@ -1,6 +1,6 @@
 import { test } from '@jest/globals';
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { offlineHandler } from './app';
+import { offlineHandler } from './codesets';
 
 jest.mock('node:fetch');
 
