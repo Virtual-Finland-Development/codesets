@@ -14,7 +14,8 @@ export function createCloudFrontDistribution(
     setup: ISetup,
     bucket: aws.s3.Bucket,
     originAccessIdentity: aws.cloudfront.OriginAccessIdentity,
-    lambdaAtEdgeFunction: aws.lambda.Function
+    lambdaAtEdgeFunction: aws.lambda.Function,
+    standardLogsBucket: aws.s3.Bucket
 ) {
     const cloudFrontDistributionConfig = setup.getResourceConfig('CloudFrontDistribution');
 
@@ -69,6 +70,11 @@ export function createCloudFrontDistribution(
         enabled: true,
         retainOnDelete: false,
         tags: cloudFrontDistributionConfig.tags,
+        loggingConfig: {
+            bucket: standardLogsBucket.bucketDomainName,
+            prefix: 'std-cf-logs',
+            includeCookies: false,
+        }
     });
 
     // Extended monitoring
