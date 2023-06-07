@@ -36,7 +36,7 @@ export function createEscoApiLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulum
     });
 
     const escoApiConfig = new pulumi.Config('escoApi');
-    const escoApiRegionConfig = setup.getResourceConfig('EscosApiRegion');
+    const escoApiRegionConfig = setup.getResourceConfig('EscoApiRegion');
     const escoApiRegion = new aws.Provider(escoApiRegionConfig.name, {
         region: escoApiConfig.require('awsRegion') as aws.Region,
     });
@@ -77,8 +77,7 @@ export function createEscoApiLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulum
     );
 
     // Warmup scheduler for lambda function
-    const isProductionlikeEnvironment = setup.isProductionLikeEnvironment();
-    if (isProductionlikeEnvironment) {
+    if (setup.isProductionLikeEnvironment()) {
         setupLambdaWarmerScheduler(setup, escoApiLambdaFunction, escoApiRegion);
     }
 
