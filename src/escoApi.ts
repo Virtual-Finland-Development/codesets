@@ -4,7 +4,7 @@ import { ValidationError } from './utils/exceptions';
 
 const CODESETS_API_ENDPOINT = process.env.CODESETS_API_ENDPOINT;
 
-// AWS Lambda function hanlder for the ESCO API
+// AWS Lambda function handler for the ESCO API
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
     // Lambda warmup request handling
     if ((event as any)?.source === 'warmup') {
