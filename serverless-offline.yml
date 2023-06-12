@@ -17,7 +17,7 @@ provider:
 
 functions:
     codesets:
-        handler: dist/codesets.offlineHandler
+        handler: dist/codesets/codesets.offlineHandler
         events:
             - httpApi:
                   method: any
