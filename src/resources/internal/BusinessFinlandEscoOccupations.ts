@@ -1,6 +1,6 @@
 import InternalResource from '../../utils/data/models/InternalResource';
 import { getOutput } from '../../utils/data/parsers';
-import { getPaginationParams } from '../../utils/filters';
+import { transformOccupations as transform } from '../../utils/data/transformers';
 
 import BusinessFinlandDataSet from './business-finland-esco-v1_1_1-occupations.json';
 
@@ -21,18 +21,7 @@ export default new InternalResource({
     name: 'BusinessFinlandEscoOccupations',
     uri: 'business-finland-esco-v1_1_1-occupations.json',
     parsers: {
-        async transform(occupations: any, params: Record<string, string>) {
-            const totalCount = occupations.length;
-            const pagination = getPaginationParams(params);
-            if (pagination.isPaginated) {
-                occupations = occupations.slice(pagination.offset, pagination.offset + pagination.limit);
-            }
-
-            return {
-                totalCount: totalCount,
-                occupations: occupations,
-            };
-        },
+        transform,
         output(data: any) {
             return getOutput()<OccupationsResponse>(data);
         },
