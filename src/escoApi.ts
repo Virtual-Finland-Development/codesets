@@ -6,8 +6,8 @@ import { ValidationError } from './utils/exceptions';
 const CODESETS_API_ENDPOINT = process.env.CODESETS_API_ENDPOINT;
 
 // Store for the duration of the lambda instance
-const internalMemory = {
-    responseData: null,
+const internalMemory: any = {
+    occupations: null,
 };
 
 // AWS Lambda function handler for the ESCO API
@@ -25,12 +25,16 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
         const request = parseRequest(event);
         const uri = `${CODESETS_API_ENDPOINT}${request.path}`;
 
-        if (internalMemory.responseData === null) {
+        if (internalMemory.occupations === null) {
             const response = await fetch(uri);
-            internalMemory.responseData = await response.json();
+            const responseData = await response.json();
+            if (!(responseData.occupations instanceof Array)) {
+                throw new Error('Invalid response from codesets API');
+            }
+            internalMemory.occupations = responseData.occupations;
         }
 
-        const transformedData = transformOccupations(internalMemory.responseData, request.params);
+        const transformedData = await transformOccupations(internalMemory.occupations, request.params);
         const responseBody = JSON.stringify(transformedData);
 
         return {
