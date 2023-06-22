@@ -1,8 +1,14 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { UriRedirects, resolveError } from './utils/api';
+import { resolveError } from './utils/api';
+import { transformOccupations } from './utils/data/transformers';
 import { ValidationError } from './utils/exceptions';
 
 const CODESETS_API_ENDPOINT = process.env.CODESETS_API_ENDPOINT;
+
+// Store for the duration of the lambda instance
+const internalMemory: any = {
+    occupations: null,
+};
 
 // AWS Lambda function handler for the ESCO API
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
@@ -17,21 +23,25 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
     // Normal request handling
     try {
         const request = parseRequest(event);
-
-        const paramsAsQuery = new URLSearchParams(request.params).toString();
         const uri = `${CODESETS_API_ENDPOINT}${request.path}`;
-        const uriAsQuery = uri + (paramsAsQuery ? '?' + paramsAsQuery : '');
-        const response = await fetch(uriAsQuery);
-        const responseBody = await response.text();
 
-        const responseHeaders = Object.entries(response.headers).reduce((headers, [key, value]) => {
-            headers[key] = value;
-            return headers;
-        }, {} as Record<string, string>);
+        if (internalMemory.occupations === null) {
+            const response = await fetch(uri);
+            const responseData = await response.json();
+            if (!(responseData.occupations instanceof Array)) {
+                throw new Error('Invalid response from codesets API');
+            }
+            internalMemory.occupations = responseData.occupations;
+        }
+
+        const transformedData = await transformOccupations(internalMemory.occupations, request.params);
+        const responseBody = JSON.stringify(transformedData);
 
         return {
-            statusCode: response.status,
-            headers: responseHeaders,
+            statusCode: 200,
+            headers: {
+                'Content-Type': 'application/json',
+            },
             body: responseBody,
         };
     } catch (error: any) {
@@ -59,7 +69,7 @@ function parseRequest(event: APIGatewayProxyEventV2): { method: string; path: st
         throw new ValidationError('Missing request body');
     }
 
-    const knownPaths = Object.keys(UriRedirects);
+    const knownPaths = ['/productizer/draft/Employment/EscoOccupations'];
     if (!knownPaths.includes(rawPath)) {
         throw new ValidationError('Unknown request path');
     }
