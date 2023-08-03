@@ -1,5 +1,5 @@
 import { getOutput } from '../parsers';
-import BaseResource from './internal/BaseResource';
+import ExternalResource from './ExternalResource';
 
 interface SuomiFiKoodistoOutput {
     codeValue: string;
@@ -13,7 +13,7 @@ interface SuomiFiKoodistoOutput {
     };
 }
 
-export default class SuomiFiKoodistotResource extends BaseResource {
+export default class SuomiFiKoodistotResource extends ExternalResource {
     protected async _parseRawData_transform(rawData: any): Promise<any> {
         return rawData['codes'].map((permit: any) => {
             return {
