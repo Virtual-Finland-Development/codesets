@@ -24,7 +24,7 @@ jobs:
         environment: ${{ inputs.environment }}
         steps:
             - uses: actions/checkout@v3
-            - name: Use Node.js
+            - name: Setup Node.js
               uses: actions/setup-node@v3
               with:
                   node-version: 18.x
@@ -35,7 +35,7 @@ jobs:
             - name: Test
               run: |
                   npm run test
-            - name: prepare deployment
+            - name: Prepare deployment
               run: |
                   npm run build:infra
             - name: Configure AWS credentials
