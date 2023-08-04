@@ -13,11 +13,16 @@ export function resolveError(error: Error): { statusCode: number; body: string; 
     const errorPackage = resolveErrorPackage(error);
     console.error('Error: ', errorPackage);
     if (error instanceof ValiError) {
+        // Cleanup the vali error to make it more accessible: only show the first issue and remove the input
         console.error('Validation errors: ', JSON.stringify(error.issues.slice(0, 1).map(i => {
             return {
-                message: i.message,
-                reason: i.reason,
-                origin: i.origin,
+               ...i,
+                path: i.path?.map(p => {
+                    return {
+                        ...p,
+                        input: undefined 
+                    }
+                })
             }
         }), null, 4));
     }
