@@ -1,7 +1,6 @@
+import { Output, array, object, record, string } from 'valibot';
 import InternalResource from '../../utils/data/models/InternalResource';
 import { filterCommonEscoDataSet } from '../../utils/esco';
-
-import { Output, array, object, record, string } from 'valibot';
 
 const SkillSchema = object({
     uri: string(),
@@ -12,7 +11,7 @@ type Skill = Output<typeof SkillSchema>;
 const SkillsResponseSchema = array(SkillSchema);
 type SkillsResponse = Output<typeof SkillsResponseSchema>;
 
-export default new InternalResource<SkillsResponse, SkillsResponse>({
+export default new InternalResource({
     name: 'Skills',
     uri: 'skills.json',
     parsers: {

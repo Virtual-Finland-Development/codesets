@@ -24,14 +24,14 @@ export const SuomiKoodistotOutputSchema = array(object({
 }));
 export type SuomiKoodistotOutput = Output<typeof SuomiKoodistotOutputSchema>;
 
-export default class SuomiFiKoodistotResource<I = unknown, O = unknown> extends BaseResource<I, O> {
+export default class SuomiFiKoodistotResource extends BaseResource {
     
-    protected _parseRawData_parseInputSchema(rawData: any) {
+    protected _parseRawData_parseInputSchema(rawData: unknown) {
         return parse(SuomiKoodistotInputSchema, rawData);
     }
 
-    protected async _parseRawData_transform(rawData: SuomiKoodistotInput) {
-        return rawData['codes'].map((member) => {
+    protected async _parseRawData_transform(data: SuomiKoodistotInput) {
+        return data['codes'].map((member) => {
             return {
                 codeValue: member['codeValue'],
                 order: member['order'],
@@ -42,7 +42,7 @@ export default class SuomiFiKoodistotResource<I = unknown, O = unknown> extends 
         });
     }
 
-    protected _parseRawData_parseOutputSchema(rawData: SuomiKoodistotOutput) {
-        return parse(SuomiKoodistotOutputSchema, rawData);
+    protected _parseRawData_parseOutputSchema(data: SuomiKoodistotOutput) {
+        return parse(SuomiKoodistotOutputSchema, data);
     }
 }

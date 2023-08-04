@@ -2,7 +2,7 @@ const { Reader } = require('@transcend-io/conflux');
 
 import BaseResource, { ResourceData } from './internal/BaseResource';
 
-export default class ZipResource<I = unknown, O = unknown> extends BaseResource<I, O> {
+export default class ZipResource extends BaseResource {
     protected async _parseResponseRawData(data: ResourceData) {
         if (!(data instanceof Response)) {
             throw new Error('Unable to retrieve data');

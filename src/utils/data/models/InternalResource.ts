@@ -11,7 +11,7 @@ const inMemoryCache: Record<
     }
 > = {};
 
-export default class InternalResource<I = unknown, O = unknown> extends BaseResource<I, O> {
+export default class InternalResource extends BaseResource {
     public type = 'internal';
 
     protected async _retrieveDataPackage(): Promise<{
