@@ -16,7 +16,7 @@ const NaceSchema = object({
         order: number(),
         hierarchyLevel: number(),
     })),
-    children: optional(array(any())), // NaceSchema[]
+    children: optional(array(any())), // @TODO: fix any() as NaceSchema
 });
 
 export default new Resource({

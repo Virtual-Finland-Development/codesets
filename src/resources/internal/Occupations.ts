@@ -7,12 +7,12 @@ const OccupationSchema = object({
     uri: string(),
     prefLabel: record(string([length(2)]), string()), 
     notation: optional(string()),
-    narrower: optional(any()),// optional(recursive(() => )), // Enabled by the "tree" formats parameter
+    narrower: optional(any()), // Enabled by the "tree" formats parameter // @TODO: fix any() as OccupationSchema
     broader: optional(array(string())), // Disabled by the "tree" formats parameter
 });
-const OccupationsResponseSchema = array(OccupationSchema);
-
 type Occupation = Output<typeof OccupationSchema>;
+
+const OccupationsResponseSchema = array(OccupationSchema);
 type OccupationsResponse = Output<typeof OccupationsResponseSchema>;
 
 export default new InternalResource({
