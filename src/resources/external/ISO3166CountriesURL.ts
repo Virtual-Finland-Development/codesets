@@ -1,11 +1,11 @@
-import { Output, array, maxLength, minLength, object, string } from 'valibot';
+import { Output, array, length, object, string } from 'valibot';
 import Resource from '../../utils/data/models/Resource';
 import { isEnabledFilter } from '../../utils/filters';
 
 const CountriesInputDataSchema = array(
     object({
-        cca2: string([minLength(2), maxLength(2)]),
-        cca3: string([minLength(3), maxLength(3)]),
+        cca2: string([length(2)]),
+        cca3: string([length(3)]),
         name: object({
             common: string(),
             official: string(),
@@ -19,8 +19,8 @@ const CountrySchema = object({
     displayName: string(),
     englishName: string(),
     nativeName: string(),
-    twoLetterISORegionName: string([minLength(2), maxLength(2)]),
-    threeLetterISORegionName: string([minLength(3), maxLength(3)]),
+    twoLetterISORegionName: string([length(2)]),
+    threeLetterISORegionName: string([length(3)]),
 });
 type Country = Output<typeof CountrySchema>;
 const CountriesResponseSchema = array(CountrySchema);

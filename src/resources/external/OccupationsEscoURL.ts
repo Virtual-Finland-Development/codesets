@@ -1,11 +1,11 @@
-import { any, array, object, optional, record, string } from 'valibot';
+import { any, array, length, object, optional, record, string } from 'valibot';
 import Resource from '../../utils/data/models/Resource';
 
 const IscoOutputSchema = array(object({
     uri: string(),
     status: string(),
     notation: string(),
-    prefLabel: record(string(), string()),
+    prefLabel: record(string([length(2)]), string()),
     altLabel: record(string(), array(string())),
     broader: optional(array(string())),
     narrower: optional(array(any())), // 

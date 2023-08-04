@@ -1,11 +1,11 @@
-import { Output, any, array, object, optional, record, string } from 'valibot';
+import { Output, any, array, length, object, optional, record, string } from 'valibot';
 import InternalResource from '../../utils/data/models/InternalResource';
 import { filterCommonEscoDataSet } from '../../utils/esco';
 import { isEnabledFilter, isEnabledFormat } from '../../utils/filters';
 
 const OccupationSchema = object({
     uri: string(),
-    prefLabel: record(string(), string()),
+    prefLabel: record(string([length(2)]), string()), 
     notation: optional(string()),
     narrower: optional(any()),// optional(recursive(() => )), // Enabled by the "tree" formats parameter
     broader: optional(array(string())), // Disabled by the "tree" formats parameter

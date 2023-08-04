@@ -1,4 +1,4 @@
-import { Output, array, equal, maxLength, minLength, object, string } from 'valibot';
+import { Output, array, equal, length, object, string } from 'valibot';
 import Resource from '../../utils/data/models/Resource';
 import ISO639Languages from '../library/ISO639Languages';
 
@@ -19,8 +19,8 @@ type EscoLanguagesInput = Output<typeof EscoLanguagesInputSchema>;
 const EscoLanguageOutputSchema = array(object({
     id: string(),
     name: string(),
-    twoLetterISOLanguageName: string([minLength(2), maxLength(2)]),
-    threeLetterISOLanguageName: string([minLength(3), maxLength(3)]),
+    twoLetterISOLanguageName: string([length(2)]),
+    threeLetterISOLanguageName: string([length(3)]),
     escoUri: string(),
 }));
 

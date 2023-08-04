@@ -1,10 +1,10 @@
-import { Output, array, object, record, string } from 'valibot';
+import { Output, array, length, object, record, string } from 'valibot';
 import InternalResource from '../../utils/data/models/InternalResource';
 import { filterCommonEscoDataSet } from '../../utils/esco';
 
 const SkillSchema = object({
     uri: string(),
-    prefLabel: record(string(), string()),
+    prefLabel: record(string([length(2)]), string()),
 })
 type Skill = Output<typeof SkillSchema>;
 

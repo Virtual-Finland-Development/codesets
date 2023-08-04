@@ -1,4 +1,4 @@
-import { any, array, number, object, optional, record, string } from 'valibot';
+import { any, array, length, number, object, optional, record, string } from 'valibot';
 import Resource from '../../utils/data/models/Resource';
 import { SuomiKoodistotInput, SuomiKoodistotInputSchema } from '../../utils/data/models/SuomiFiKoodistotResource';
 import dotNotatedSet from '../internal/nace-dot-notated.json';
@@ -10,7 +10,7 @@ const NaceSchema = object({
     order: number(),
     uri: string(),
     hierarchyLevel: number(),
-    prefLabel: record(string(), string()),
+    prefLabel: record(string([length(2)]), string()), 
     broaderCode: optional(object({
         codeValue: string(),
         order: number(),

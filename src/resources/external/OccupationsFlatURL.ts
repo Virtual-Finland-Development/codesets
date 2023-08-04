@@ -1,17 +1,17 @@
-import { Output, array, object, optional, record, string } from 'valibot';
+import { Output, array, length, object, optional, record, string } from 'valibot';
 import ZipResource from '../../utils/data/models/ZipResource';
 
 const IscoInputSchema = array(object({
     uri: string(),
     notation: optional(string()),
-    prefLabel: record(string(), string()),
+    prefLabel: record(string([length(2)]), string()),
 }));
 type IscoInput = Output<typeof IscoInputSchema>;
 
 const IscoOutputSchema = array(object({
     uri: string(),
     notation: string(),
-    prefLabel: record(string(), string()),
+    prefLabel: record(string([length(2)]), string()), 
 }));
 
 export default new ZipResource({

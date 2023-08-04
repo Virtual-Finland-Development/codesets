@@ -1,4 +1,4 @@
-import { Output, array, number, object, parse, record, string } from 'valibot';
+import { Output, array, length, number, object, parse, record, string } from 'valibot';
 import BaseResource from './internal/BaseResource';
 
 export const SuomiKoodistoInputObjectSchema = object({
@@ -6,7 +6,7 @@ export const SuomiKoodistoInputObjectSchema = object({
     order: number(),
     uri: string(),
     hierarchyLevel: number(),
-    prefLabel: record(string(), string()),
+    prefLabel: record(string([length(2)]), string()), // {"en" => "Cook", ...}
 });
 export type SuomiKoodistoInputObject = Output<typeof SuomiKoodistoInputObjectSchema>;
 
@@ -20,7 +20,7 @@ export const SuomiKoodistotOutputSchema = array(object({
     order: number(),
     uri: string(),
     hierarchyLevel: number(),
-    prefLabel: record(string(), string()),
+    prefLabel: record(string([length(2)]), string()),
 }));
 export type SuomiKoodistotOutput = Output<typeof SuomiKoodistotOutputSchema>;
 
