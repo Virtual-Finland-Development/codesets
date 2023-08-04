@@ -43,8 +43,6 @@ export default new InternalResource({
 
             return occupations;
         },
-    },
-    schemas: {
         output: OccupationsResponseSchema,
     }
 });

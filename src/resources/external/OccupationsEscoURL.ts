@@ -14,7 +14,7 @@ const IscoOutputSchema = array(object({
 export default new Resource({
     name: 'OccupationsEscoURL',
     uri: 'https://tyomarkkinatori.fi/api/codes/v1/isco',
-    schemas: {
+    parsers: {
         output: IscoOutputSchema,
     },
 });

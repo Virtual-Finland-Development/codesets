@@ -28,6 +28,7 @@ export default new Resource({
     name: 'EscoLanguages',
     uri: 'https://esco.ec.europa.eu/sites/default/files/languages.json',
     parsers: {
+        input: EscoLanguagesInputSchema,
         async transform(escoResponse: EscoLanguagesInput) {
             const escoCodeMap = escoResponse.links.narrowerSkill.reduce((acc: any, language: any) => {
                 const code = language.title.toLocaleLowerCase();
@@ -46,9 +47,6 @@ export default new Resource({
                 };
             });
         },
-    },
-    schemas: {
-        input: EscoLanguagesInputSchema,
         output: EscoLanguageOutputSchema,
-    }
+    },
 });

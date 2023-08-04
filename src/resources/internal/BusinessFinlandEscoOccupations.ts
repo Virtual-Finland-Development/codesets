@@ -21,14 +21,12 @@ export default new InternalResource({
     uri: 'business-finland-esco-v1_1_1-occupations.json',
     parsers: {
         transform,
+        output: OccupationsResponseSchema,
     },
     dataGetter() {
         return Promise.resolve({
             data: JSON.stringify(BusinessFinlandDataSet),
             mime: 'application/json',
         });
-    },
-    schemas: {
-        output: OccupationsResponseSchema,
     },
 });

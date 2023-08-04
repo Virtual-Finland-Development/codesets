@@ -47,21 +47,14 @@ The external resource parsers can be defined using the `parsers` attribute of th
 {
     ...,
     parsers: {
-        input?: (data: string) => unknown; // Raw data intake -> data
-        transform?: (data: unknown) => Promise<unknown>; // Data intake -> transformed data
-        output?: (data: unknown) => string; // Transformed data intake -> raw output data
+        rawInput?: (data: string) => unknown; // Raw input string -> data (e.g. JSON.parse)
+        input?: (data: unknown) => unknown; // data intake -> parsed data schema
+        transform?: (data: unknown) => Promise<unknown>; // Parsed data intake -> transformed data
+        output?: (data: unknown) => unknown; // Transformed data intake -> output data schema
+        rawOutput?: (data: unknown) => string; // Output data intake -> raw output string (e.g. JSON.stringify)
     }
 }
 
-```
-
-By default for the JSON-type resource the `input` and `output` parsers are defined as follows:
-
-```typescript
-parsers: {
-    input: (data: string) => JSON.parse(data),
-    output: (data: unknown) => JSON.stringify(data)
-}
 ```
 
 ## Filter parameters
@@ -93,7 +86,7 @@ Example response:
 
 ## Input/Output data validation tools
 
--   [typia](https://github.com/samchon/typia)
+-   [valibot](https://valibot.dev) - data schema parser library
 
 ## Deployment
 

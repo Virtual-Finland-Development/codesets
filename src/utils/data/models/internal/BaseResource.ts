@@ -19,13 +19,11 @@ export default class BaseResource<I = unknown, O = unknown> implements IResource
     protected _mime: string | undefined;
 
     protected _parsers: {
-        input?: (data: string) => I;
-        transform?: (data: I, params: Record<string, string>) => Promise<O>;
-        output?: (data: O) => string;
-    };
-    protected _schemas: {
+        rawInput?: (data: string) => I;
         input?: I extends unknown ? ReturnType<typeof parse> : never;
+        transform?: (data: I, params: Record<string, string>) => Promise<O>;
         output?: O extends unknown ? ReturnType<typeof parse> : never;
+        rawOutput?: (data: O) => string;
     };
 
     protected _dataGetter: ((params: Record<string, string>) => Promise<{ data: string; mime: string }>) | undefined;
@@ -38,7 +36,6 @@ export default class BaseResource<I = unknown, O = unknown> implements IResource
         type,
         dataGetter,
         parsers,
-        schemas,
         settings,
     }: {
         name: string;
@@ -47,13 +44,11 @@ export default class BaseResource<I = unknown, O = unknown> implements IResource
         mime?: string;
         dataGetter?: (params: Record<string, string>) => Promise<{ data: string; mime: string }>;
         parsers?: {
-            input?: (data: string) => I; // Raw data intake -> data
-            transform?: (data: I, params: Record<string, string>) => Promise<O>; // Data intake -> transformed data
-            output?: (data: O) => string; // Transformed data intake -> raw output data
-        };
-        schemas?: {
-            input?: I extends unknown ? ReturnType<typeof parse> : never
-            output?: O extends unknown ? ReturnType<typeof parse> : never
+            rawInput?: (data: string) => I;
+            input?: I extends unknown ? ReturnType<typeof parse> : never;
+            transform?: (data: I, params: Record<string, string>) => Promise<O>;
+            output?: O extends unknown ? ReturnType<typeof parse> : never;
+            rawOutput?: (data: O) => string;
         };
         settings?: Record<string, string | number | boolean>;
     }) {
@@ -63,7 +58,6 @@ export default class BaseResource<I = unknown, O = unknown> implements IResource
         this._mime = mime;
         this._dataGetter = dataGetter;
         this._parsers = parsers || {};
-        this._schemas = schemas || {};
         this._settings = settings || {};
     }
 
@@ -149,8 +143,8 @@ export default class BaseResource<I = unknown, O = unknown> implements IResource
     }
 
     protected _parseRawData_input(rawData: string, mime: string): any {
-        if (typeof this._parsers.input === 'function') {
-            rawData = this._parsers.input(rawData) as any;
+        if (typeof this._parsers.rawInput === 'function') {
+            rawData = this._parsers.rawInput(rawData) as any;
         } else if (mime.startsWith('application/json')) {
             rawData = JSON.parse(rawData);
         }
@@ -158,8 +152,8 @@ export default class BaseResource<I = unknown, O = unknown> implements IResource
     }
 
     protected _parseRawData_parseInputSchema(rawData: any): any {
-        if (typeof this._schemas.input !== "undefined") {
-            rawData = parse(this._schemas.input, rawData);
+        if (typeof this._parsers.input !== "undefined") {
+            rawData = parse(this._parsers.input, rawData);
         }
         return rawData;
     }
@@ -173,15 +167,15 @@ export default class BaseResource<I = unknown, O = unknown> implements IResource
     }
 
     protected _parseRawData_parseOutputSchema(rawData: any): any {
-        if (typeof this._schemas.output !== "undefined") {
-            rawData = parse(this._schemas.output, rawData);
+        if (typeof this._parsers.output !== "undefined") {
+            rawData = parse(this._parsers.output, rawData);
         }
         return rawData;
     }
 
     protected _parseRawData_output(rawData: any, mime: string): string {
-        if (typeof this._parsers.output === 'function') {
-            return this._parsers.output(rawData);
+        if (typeof this._parsers.rawOutput === 'function') {
+            return this._parsers.rawOutput(rawData);
         } else if (mime.startsWith('application/json')) {
             return JSON.stringify(rawData);
         }

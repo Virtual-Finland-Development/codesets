@@ -38,6 +38,7 @@ export default new Resource({
     uri: 'https://github.com/mledoze/countries/blob/master/countries.json?raw=true',
     mime: 'application/json; charset=utf-8',
     parsers: {
+        input: CountriesInputDataSchema,
         async transform(countriesRaw: CountriesInputData, params: Record<string, string>) {
             const countries = countriesRaw.map((countryData) => {
                 return {
@@ -58,9 +59,6 @@ export default new Resource({
             }
             return countries;
         },
-    },
-    schemas: {
-        input: CountriesInputDataSchema,
         output: CountriesResponseSchema,
     }
 });
