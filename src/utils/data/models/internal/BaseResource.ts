@@ -1,3 +1,5 @@
+import { parse } from 'valibot';
+
 export interface IResource {
     uri: string;
     name: string;
@@ -10,16 +12,20 @@ export interface IResource {
 
 export type ResourceData = Response | string | ReadableStream<Uint8Array> | null;
 
-export default class BaseResource implements IResource {
+export default class BaseResource<I = unknown, O = unknown> implements IResource {
     public name: string;
     public uri: string;
     public type = 'external';
     protected _mime: string | undefined;
 
     protected _parsers: {
-        input?: (data: string) => unknown;
-        transform?: (data: unknown, params: Record<string, string>) => Promise<unknown>;
-        output?: (data: unknown) => string;
+        input?: (data: string) => I;
+        transform?: (data: I, params: Record<string, string>) => Promise<O>;
+        output?: (data: O) => string;
+    };
+    protected _schemas: {
+        input?: I extends unknown ? ReturnType<typeof parse> : never;
+        output?: O extends unknown ? ReturnType<typeof parse> : never;
     };
 
     protected _dataGetter: ((params: Record<string, string>) => Promise<{ data: string; mime: string }>) | undefined;
@@ -32,6 +38,7 @@ export default class BaseResource implements IResource {
         type,
         dataGetter,
         parsers,
+        schemas,
         settings,
     }: {
         name: string;
@@ -40,9 +47,13 @@ export default class BaseResource implements IResource {
         mime?: string;
         dataGetter?: (params: Record<string, string>) => Promise<{ data: string; mime: string }>;
         parsers?: {
-            input?: (data: string) => unknown; // Raw data intake -> data
-            transform?: (data: unknown, params: Record<string, string>) => Promise<unknown>; // Data intake -> transformed data
-            output?: (data: unknown) => string; // Transformed data intake -> raw output data
+            input?: (data: string) => I; // Raw data intake -> data
+            transform?: (data: I, params: Record<string, string>) => Promise<O>; // Data intake -> transformed data
+            output?: (data: O) => string; // Transformed data intake -> raw output data
+        };
+        schemas?: {
+            input?: I extends unknown ? ReturnType<typeof parse> : never
+            output?: O extends unknown ? ReturnType<typeof parse> : never
         };
         settings?: Record<string, string | number | boolean>;
     }) {
@@ -52,6 +63,7 @@ export default class BaseResource implements IResource {
         this._mime = mime;
         this._dataGetter = dataGetter;
         this._parsers = parsers || {};
+        this._schemas = schemas || {};
         this._settings = settings || {};
     }
 
@@ -77,6 +89,12 @@ export default class BaseResource implements IResource {
         }
     }
 
+    /**
+     * The retriever
+     * 
+     * @param params 
+     * @returns 
+     */
     protected async _retrieveDataPackage(params: Record<string, string>): Promise<{
         data: string;
         mime: string;
@@ -114,9 +132,19 @@ export default class BaseResource implements IResource {
         return typeof data === 'string' ? data : data !== null ? data.toString() : '';
     }
 
+    /**
+     * The data parser / transformer
+     * 
+     * @param data 
+     * @param mime 
+     * @param params 
+     * @returns 
+     */
     protected async _parseRawData(data: string, mime: string, params: Record<string, string>): Promise<string> {
         let rawData = this._parseRawData_input(data, mime);
+        rawData = this._parseRawData_parseInputSchema(rawData);
         rawData = await this._parseRawData_transform(rawData, params);
+        rawData = this._parseRawData_parseOutputSchema(rawData);
         return this._parseRawData_output(rawData, mime);
     }
 
@@ -129,11 +157,25 @@ export default class BaseResource implements IResource {
         return rawData;
     }
 
+    protected _parseRawData_parseInputSchema(rawData: any): any {
+        if (typeof this._schemas.input !== "undefined") {
+            rawData = parse(this._schemas.input, rawData);
+        }
+        return rawData;
+    }
+
     protected async _parseRawData_transform(rawData: any, params: Record<string, string>): Promise<any> {
         if (typeof this._parsers.transform === 'function') {
             rawData = await this._parsers.transform(rawData, params);
         }
 
+        return rawData;
+    }
+
+    protected _parseRawData_parseOutputSchema(rawData: any): any {
+        if (typeof this._schemas.output !== "undefined") {
+            rawData = parse(this._schemas.output, rawData);
+        }
         return rawData;
     }
 

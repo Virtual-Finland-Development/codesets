@@ -1,23 +1,27 @@
 import InternalResource from '../../utils/data/models/InternalResource';
-import { getOutput } from '../../utils/data/parsers';
 import { filterCommonEscoDataSet } from '../../utils/esco';
 
-interface Skill {
-    uri: string;
-    prefLabel: {
-        [key: string]: string;
-    };
-}
+import { Output, array, object, record, string } from 'valibot';
 
-export default new InternalResource({
+const SkillSchema = object({
+    uri: string(),
+    prefLabel: record(string(), string()),
+})
+type Skill = Output<typeof SkillSchema>;
+
+const SkillsResponseSchema = array(SkillSchema);
+type SkillsResponse = Output<typeof SkillsResponseSchema>;
+
+export default new InternalResource<SkillsResponse, SkillsResponse>({
     name: 'Skills',
     uri: 'skills.json',
     parsers: {
-        async transform(skills: any, params: Record<string, string>) {
+        async transform(skills: SkillsResponse, params: Record<string, string>) {
             return filterCommonEscoDataSet<Skill>(skills, params);
         },
-        output(data: any) {
-            return getOutput()<Skill[]>(data);
-        },
+    },
+    schemas: {
+        input: SkillsResponseSchema,
+        output: SkillsResponseSchema,
     },
 });
