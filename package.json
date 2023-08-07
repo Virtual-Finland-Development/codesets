@@ -13,6 +13,8 @@
     "predeploy": "npm run build && npm run build:infra",
     "deploy": "pulumi -C infra up --yes",
     "start": "nodemon --delay 80ms --watch 'src' -e 'ts'  --exec \"npm run build && npm run serve\"",
+    "start:codesets": "nodemon --delay 80ms --watch 'src' -e 'ts'  --exec \"npm run build:codesets && npm run serve\"",
+    "start:escoapi": "nodemon --delay 80ms --watch 'src' -e 'ts'  --exec \"npm run build:escoapi && npm run serve\"",
     "serve": "serverless offline --config ./serverless-offline.yml",
     "test": "jest",
     "format": "prettier --write \"./**/*.ts\"",
