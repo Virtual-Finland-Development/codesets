@@ -1,4 +1,4 @@
-import { Output, array, length, number, object, parse, record, string } from 'valibot';
+import { Output, any, array, length, number, object, optional, parse, record, string } from 'valibot';
 import BaseResource from './internal/BaseResource';
 
 export const SuomiKoodistoInputObjectSchema = object({
@@ -7,6 +7,14 @@ export const SuomiKoodistoInputObjectSchema = object({
     uri: string(),
     hierarchyLevel: number(),
     prefLabel: record(string([length(2)]), string()), // {"en" => "Cook", ...}
+    dotNotationCodeValue: optional(string()),
+    topLevelGroupCode: optional(string()),
+    broaderCode: optional(object({
+        codeValue: string(),
+        order: number(),
+        hierarchyLevel: number(),
+    })),
+    children: optional(array(any())), // @TODO: fix any() as SuomiKoodistoInputObjectSchema
 });
 export type SuomiKoodistoInputObject = Output<typeof SuomiKoodistoInputObjectSchema>;
 

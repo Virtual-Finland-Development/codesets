@@ -1,12 +1,11 @@
-import { any, array, length, number, object, optional, record, string } from 'valibot';
+import { array, length, number, object, optional, record, string } from 'valibot';
 import Resource from '../../utils/data/models/Resource';
 import { SuomiKoodistotInput, SuomiKoodistotInputSchema } from '../../utils/data/models/SuomiFiKoodistotResource';
 import dotNotatedSet from '../internal/nace-dot-notated.json';
 
-const NaceSchema = object({
+const NaceOutputSchema = object({
     codeValue: string(),
     dotNotationCodeValue: optional(string()),
-    topLevelGroupCode: optional(string()),
     order: number(),
     uri: string(),
     hierarchyLevel: number(),
@@ -16,7 +15,6 @@ const NaceSchema = object({
         order: number(),
         hierarchyLevel: number(),
     })),
-    children: optional(array(any())), // @TODO: fix any() as NaceSchema
 });
 
 export default new Resource({
@@ -35,6 +33,6 @@ export default new Resource({
                 }
             });
         },
-        output: array(NaceSchema),
+        output: array(NaceOutputSchema),
     },
 });
