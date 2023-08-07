@@ -1,6 +1,6 @@
 import { array, object, optional, record, string } from 'valibot';
 import Resource from '../../utils/data/models/Resource';
-import { SuomiKoodistoInputObject, SuomiKoodistotInput, SuomiKoodistotInputSchema } from '../../utils/data/models/SuomiFiKoodistotResource';
+import { SuomiKoodistoInputItem, SuomiKoodistotInput, SuomiKoodistotInputSchema } from '../../utils/data/models/SuomiFiKoodistotResource';
 
 const RegionsOutputSchema = array(object({
     code: string(), // "FI-01",
@@ -16,7 +16,7 @@ export default new Resource({
         async transform(koodistoResponse: SuomiKoodistotInput) {
             const { iso31662 } = await import('iso-3166');
             const fiIsos = iso31662.filter((iso: any) => iso.parent === 'FI');
-            function mapIsoCode(region: SuomiKoodistoInputObject): string {
+            function mapIsoCode(region: SuomiKoodistoInputItem): string {
                 const isoEntity = fiIsos.find((iso: any) => {
                     return iso.name === region['prefLabel']['fi'];
                 });

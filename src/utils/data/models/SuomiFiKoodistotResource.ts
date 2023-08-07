@@ -1,12 +1,14 @@
-import { Output, any, array, length, number, object, optional, parse, record, string } from 'valibot';
+import { BaseSchema, Output, array, length, merge, number, object, optional, parse, record, recursive, string } from 'valibot';
 import BaseResource from './internal/BaseResource';
 
-export const SuomiKoodistoInputObjectSchema = object({
+// Build a recursive object type with children of self-likes
+// @see: https://github.com/fabian-hiller/valibot/issues/72
+const BaseSuomiKoodistoInputItemSchema = object({
     codeValue: string(),
     order: number(),
     uri: string(),
     hierarchyLevel: number(),
-    prefLabel: record(string([length(2)]), string()), // {"en" => "Cook", ...}
+    prefLabel: record(string([length(2)]), string()), // {"en" => "Cook", "fi" => "Kokki", ...}
     dotNotationCodeValue: optional(string()),
     topLevelGroupCode: optional(string()),
     broaderCode: optional(object({
@@ -14,12 +16,18 @@ export const SuomiKoodistoInputObjectSchema = object({
         order: number(),
         hierarchyLevel: number(),
     })),
-    children: optional(array(any())), // @TODO: fix any() as SuomiKoodistoInputObjectSchema
 });
-export type SuomiKoodistoInputObject = Output<typeof SuomiKoodistoInputObjectSchema>;
+export type SuomiKoodistoInputItem = Output<typeof BaseSuomiKoodistoInputItemSchema> &  {
+    children?: SuomiKoodistoInputItem[],
+};
+export const SuomiKoodistoInputItemSchema: BaseSchema<SuomiKoodistoInputItem> = merge([
+    BaseSuomiKoodistoInputItemSchema, object({
+        children: optional(recursive(() => array(SuomiKoodistoInputItemSchema)))
+    })
+]);
 
 export const SuomiKoodistotInputSchema = object({
-    codes: array(SuomiKoodistoInputObjectSchema),
+    codes: array(SuomiKoodistoInputItemSchema),
 });
 export type SuomiKoodistotInput = Output<typeof SuomiKoodistotInputSchema>;
 
