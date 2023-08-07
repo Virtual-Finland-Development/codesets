@@ -4,18 +4,20 @@
   "description": "A shared codesets / resources router for virtual finland projects",
   "scripts": {
     "prebuild": "npm i && npm run clean",
-    "build": "npm run build:codesets && npm run build:escoapi",
+    "build": "npm run build:codesets && npm run build:escoApi",
     "build:codesets": "ttsc",
-    "build:escoapi": "ncc build src/escoApi.ts -o dist/escoApi --minify",
+    "build:escoApi": "ncc build src/escoApi.ts -o dist/escoApi --minify",
     "postbuild": "ts-node src/build/finalize-build.ts",
     "build:infra": "npm -C infra install && npm -C infra run build",
     "clean": "rimraf dist",
     "predeploy": "npm run build && npm run build:infra",
     "deploy": "pulumi -C infra up --yes",
-    "start": "nodemon --delay 80ms --watch 'src' -e 'ts'  --exec \"npm run build && npm run serve\"",
-    "start:codesets": "nodemon --delay 80ms --watch 'src' -e 'ts'  --exec \"npm run build:codesets && npm run serve\"",
-    "start:escoapi": "nodemon --delay 80ms --watch 'src' -e 'ts'  --exec \"npm run build:escoapi && npm run serve\"",
-    "serve": "serverless offline --config ./serverless-offline.yml",
+    "dev": "npm run-all --parallel dev:codesets dev:escoApi",
+    "dev:codesets": "nodemon --delay 80ms --watch 'src' -e 'ts' --ignore src/escoApi.ts --exec \"npm run build:codesets && npm run serve:codesets\"",
+    "dev:escoApi": "nodemon --delay 80ms --watch src/escoApi.ts --watch src/utils -e 'ts'  --exec \"npm run build:escoApi && npm run serve:escoApi\"",
+    "serve": "npm run-all --parallel serve:codesets serve:escoApi",
+    "serve:codesets": "serverless offline --config ./serverless-offline.codesets.yml",
+    "serve:escoApi": "serverless offline --config ./serverless-offline.escoApi.yml",
     "test": "jest",
     "format": "prettier --write \"./**/*.ts\"",
     "lint": "eslint --ext .ts ."
@@ -48,7 +50,8 @@
     "ts-jest": "^29.0.5",
     "ts-node": "^10.9.1",
     "ttypescript": "^1.5.15",
-    "typescript": "^4.9.5"
+    "typescript": "^4.9.5",
+    "npm-run-all": "^4.1.5"
   },
   "dependencies": {
     "@iso4217/json": "^20230101.1.6",

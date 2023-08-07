@@ -20,6 +20,10 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
         };
     }
 
+    if (!CODESETS_API_ENDPOINT) {
+        throw new Error('Missing CODESETS_API_ENDPOINT environment variable');
+    }
+
     // Normal request handling
     try {
         const request = parseRequest(event);
