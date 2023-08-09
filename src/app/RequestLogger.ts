@@ -13,8 +13,8 @@ export type LogPackage = {
         query: string;
     };
     response: {
-        status: number;
-        body: number;
+        statusCode: number;
+        contentLength: number;
     };
 };
 
@@ -40,7 +40,7 @@ export default class RequestLogger {
             log.trace.sourceIp = undefined;
         }
 
-        if (typeof log.response.status !== "number" || log.response.status >= 400) {
+        if (typeof log.response.statusCode !== "number" || log.response.statusCode >= 400) {
             console.error(JSON.stringify(log));
         } else {
             console.log(JSON.stringify(log));
@@ -72,8 +72,8 @@ export default class RequestLogger {
                 query: rawQueryString,
             },
             response: {
-                status: statusCode || 500,
-                body: body ? body.length : 0,
+                statusCode: statusCode || 500,
+                contentLength: body ? body.length : 0,
             },
         };
     }
@@ -108,19 +108,19 @@ export default class RequestLogger {
         return parsedHeaders;
     }
 
-    private parseCloudFrontRequestResult(response: CloudFrontRequestResult): { status: number; body: number } {
+    private parseCloudFrontRequestResult(response: CloudFrontRequestResult): { statusCode: number; contentLength: number } {
         const parsedResponse = {
-            status: 500,
-            body: 0,
+            statusCode: 500,
+            contentLength: 0,
         };
 
         if (typeof response === "object" && response !== null) {
             if (typeof (response as CloudFrontResultResponse).status === "string") {
-                parsedResponse.status = parseInt((response as CloudFrontResultResponse).status);
-                parsedResponse.body = (response as CloudFrontResultResponse).body?.length || 0;
+                parsedResponse.statusCode = parseInt((response as CloudFrontResultResponse).status);
+                parsedResponse.contentLength = (response as CloudFrontResultResponse).body?.length || 0;
             } else if (typeof response.body === "object" && response.body !== null && typeof response.body.data === "string") {
-                parsedResponse.status = 200; // Pass-through response code
-                parsedResponse.body = response.body.data.length;
+                parsedResponse.statusCode = 200; // Pass-through response code
+                parsedResponse.contentLength = response.body.data.length;
             }
         }
         
