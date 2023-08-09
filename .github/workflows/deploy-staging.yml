@@ -1,10 +1,22 @@
 name: 'Staging: build, test and deploy'
 on:
     workflow_dispatch:
-
+        inputs:
+            deploy_codesets:
+                description: Deploy codesets
+                type: boolean
+                required: false
+                default: true
+            deploy_esco_api:
+                description: Deploy Esco API
+                type: boolean
+                required: false
+                default: true
 jobs:
     deploy-staging:
         uses: Virtual-Finland-Development/codesets/.github/workflows/build-test-deploy.yml@main
         secrets: inherit
         with:
             environment: staging
+            deploy_codesets: ${{ github.event.inputs.deploy_codesets }}
+            deploy_esco_api: ${{ github.event.inputs.deploy_esco_api }}
