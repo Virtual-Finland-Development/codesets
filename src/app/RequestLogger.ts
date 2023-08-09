@@ -44,13 +44,13 @@ export default class RequestLogger {
     }
 
     private parseApiGatewayEvent(request: APIGatewayProxyEventV2, response: APIGatewayProxyStructuredResultV2): LogPackage {
-        const { rawPath, rawQueryString, requestContext } = request;
+        const { rawPath, rawQueryString, requestContext, headers } = request;
         const { statusCode, body } = response;
         
         return {
             trace: {
-                id: request.requestContext.requestId,
-                amazonTraceId: request.headers['x-amzn-trace-id'],
+                id: requestContext.requestId,
+                amazonTraceId: headers['x-amzn-trace-id'],
                 userAgent: requestContext.http.userAgent,
                 sourceIp: requestContext.http.sourceIp,
             },
