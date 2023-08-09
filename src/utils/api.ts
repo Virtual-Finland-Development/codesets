@@ -8,13 +8,7 @@ export function resolveUri(uri: string): string {
     return UriRedirects[uri] || uri;
 }
 
-export function resolveError(error: Error): { statusCode: number; body: string; description: string } {
-    const errorPackage = resolveErrorPackage(error);
-    console.error('Error: ', errorPackage);
-    return errorPackage;
-}
-
-function resolveErrorPackage(error: Error): { statusCode: number; body: string; description: string } {
+export function resolveErrorPackage(error: Error): { statusCode: number; body: string; description: string } {
     if (error instanceof ValidationError) {
         return {
             statusCode: 400,

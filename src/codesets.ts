@@ -2,90 +2,15 @@ import {
     APIGatewayProxyEventV2,
     APIGatewayProxyStructuredResultV2,
     CloudFrontRequestEvent,
-    CloudFrontRequestResult,
-    CloudFrontResultResponse,
+    CloudFrontRequestResult
 } from 'aws-lambda';
-import mime from 'mime';
+import RequestLogger from './app/RequestLogger';
+import { engageResourcesAction } from './app/resources-controller';
 import { InternalResources } from './resources/index';
-import { resolveError, resolveUri } from './utils/api';
-import { getResource, listResources } from './utils/data/repositories/ResourceRepository';
-import { cutTooLongString, decodeBase64, generateSimpleHash, parseRequestInputParams } from './utils/helpers';
+import { resolveErrorPackage, resolveUri } from './utils/api';
+import { decodeBase64, parseRequestInputParams } from './utils/helpers';
 import { storeToS3 } from './utils/lib/S3Bucket';
 import { Environment, getInternalResourceInfo } from './utils/runtime';
-
-async function engageResourcesRouter(
-    resourceURI: string,
-    params: Record<string, string>
-): Promise<{
-    response: CloudFrontResultResponse | undefined;
-    cacheable?: { filepath: string; data: string; mime: string };
-}> {
-    const resourceName = resourceURI.replace('/resources', '').replace('/', ''); // First occurence of "/" is removed
-    if (!resourceName) {
-        // On a requets path /resources, return a list of resources
-        return {
-            response: {
-                status: '200',
-                statusDescription: 'OK: list of resources',
-                body: JSON.stringify([...listResources(), ...InternalResources.listResources()]),
-            },
-        };
-    }
-
-    const resource = getResource(resourceName);
-    if (resource) {
-        console.log('Resource: ', resource.name);
-        const resourceResponse = await resource.retrieve(params);
-
-        // If resource size is larger than 1MB, store it in S3 and redirect to it instead
-        // This is a workaround to avoid CloudFront cache limit
-        // @see: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/edge-functions-restrictions.html#lambda-at-edge-function-restrictions
-        console.log('Size: ', resourceResponse.size, 'bytes');
-        if (resourceResponse.size > 1024 * 1024) {
-            const extension = mime.getExtension(resourceResponse.mime);
-            const cachedName = `/cached/${resource.name}-${generateSimpleHash(params)}.${extension}`;
-
-            return {
-                response: undefined,
-                cacheable: {
-                    filepath: cachedName,
-                    data: resourceResponse.data,
-                    mime: resourceResponse.mime,
-                },
-            };
-        }
-
-        return {
-            response: {
-                status: '200',
-                statusDescription: 'OK: resource found',
-                body: resourceResponse.data,
-                bodyEncoding: 'text',
-                headers: {
-                    'content-type': [{ key: 'Content-Type', value: resourceResponse.mime }],
-                    'access-control-allow-origin': [{ key: 'Access-Control-Allow-Origin', value: '*' }],
-                },
-            },
-        };
-    }
-
-    if (InternalResources.hasResource(resourceName)) {
-        return {
-            response: undefined, // pass the request to the cloudfront origin
-        };
-    }
-
-    return {
-        response: {
-            status: '404',
-            statusDescription: 'Not Found: resource not found',
-            body: JSON.stringify({ message: 'Resource not found' }),
-            headers: {
-                'content-type': [{ key: 'Content-Type', value: 'application/json' }],
-            },
-        },
-    };
-}
 
 /**
  * Live environment handler
@@ -94,6 +19,13 @@ async function engageResourcesRouter(
  * @returns
  */
 export async function handler(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
+    const requestLogger = new RequestLogger(event);
+    const response = await handleLiveRequest(event);
+    requestLogger.log(response);
+    return response;
+}
+
+async function handleLiveRequest(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
     try {
         const request = event.Records[0].cf.request;
         let uri = resolveUri(request.uri);
@@ -109,27 +41,14 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
             }
         }
 
-        console.log('Request: ', {
-            uri,
-            params,
-        });
 
         if (uri.startsWith('/resources')) {
-            const routerResponse = await engageResourcesRouter(uri, params);
+            const routerResponse = await engageResourcesAction(uri, params);
             if (routerResponse.response) {
-                console.log('Response: ', {
-                    ...routerResponse.response,
-                    body: cutTooLongString(routerResponse.response.body, 250),
-                });
                 return routerResponse.response;
             }
 
             if (routerResponse.cacheable) {
-                console.log('Cacheable: ', {
-                    filepath: routerResponse.cacheable.filepath,
-                    data: cutTooLongString(routerResponse.cacheable.data, 250),
-                    mime: routerResponse.cacheable.mime,
-                });
                 const bucketName = getInternalResourceInfo().name;
                 await storeToS3(
                     bucketName,
@@ -160,7 +79,7 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
         request.uri = uri; // Pass through to origin
         return request;
     } catch (error: any) {
-        const errorPackage = resolveError(error);
+        const errorPackage = resolveErrorPackage(error);
         return {
             status: errorPackage.statusCode.toString(),
             statusDescription: errorPackage.description,
@@ -176,9 +95,21 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
  * @returns
  */
 export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
-    try {
-        Environment.isLocal = true;
+    Environment.isLocal = true;
+    const requestLogger = new RequestLogger(event);
+    const response = await handleLocalEvent(event);
+    requestLogger.log(response);
+    return response;
+}
 
+/**
+ * Local environment handler
+ *
+ * @param event
+ * @returns
+ */
+async function handleLocalEvent(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
+    try {
         const handle = async (event: APIGatewayProxyEventV2) => {
             let uri = resolveUri(event.rawPath);
             const params = Object.fromEntries(new URLSearchParams(event.rawQueryString || ''));
@@ -193,13 +124,8 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
                 }
             }
 
-            console.log('Request: ', {
-                uri,
-                params,
-            });
-
             if (uri.startsWith('/resources')) {
-                const routerResponse: any = await engageResourcesRouter(uri, params);
+                const routerResponse: any = await engageResourcesAction(uri, params);
                 if (routerResponse.response) {
                     return {
                         statusCode: parseInt(routerResponse.response.status),
@@ -208,7 +134,6 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
                 }
 
                 if (routerResponse.cacheable) {
-                    console.log('Cacheable: ', routerResponse.cacheable.filepath);
                     return {
                         statusCode: 200,
                         body: routerResponse.cacheable.data,
@@ -247,6 +172,6 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
 
         return await Promise.race([handle(event), internalTimeoutEnforcer() as any]); // Return the first to resolve
     } catch (error: any) {
-        return resolveError(error);
+        return resolveErrorPackage(error);
     }
 }
