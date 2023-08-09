@@ -54,6 +54,7 @@ export function createEscoApiLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulum
                     CODESETS_API_ENDPOINT: pulumi.interpolate`${codesetsUrl}`,
                 },
             },
+            publish: true,
         },
         { provider: escoApiRegion }
     );
@@ -75,7 +76,7 @@ export function createEscoApiLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulum
 
     // Warmup scheduler for lambda function
     if (setup.isProductionLikeEnvironment()) {
-        setupLambdaWarmerScheduler(setup, escoApiLambdaFunction, escoApiRegion);
+        createProvisionedConcurrencyConfig(setup, escoApiLambdaFunction, escoApiRegion);
     }
 
     return {
@@ -85,43 +86,23 @@ export function createEscoApiLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulum
     };
 }
 
-function setupLambdaWarmerScheduler(
+function createProvisionedConcurrencyConfig(
     setup: ISetup,
     escoApiLambdaFunction: aws.lambda.Function,
     escoApiRegion: aws.Provider
 ) {
-    const escoApiWarmupSchedulerEventConfig = setup.getResourceConfig('EscoApiWarmupSchedulerEvent');
-    const escoApiWarmupSchedulerEvent = new aws.cloudwatch.EventRule(
-        escoApiWarmupSchedulerEventConfig.name,
+    const escoApiLambdaFunctionProvisionedConcurrencyConfig = setup.getResourceConfig(
+        'EscoApiLambdaFunctionProvisionedConcurrency'
+    );
+    const escoApiLambdaFunctionProvisionedConcurrency = new aws.lambda.ProvisionedConcurrencyConfig(
+        escoApiLambdaFunctionProvisionedConcurrencyConfig.name,
         {
-            scheduleExpression: 'rate(5 minutes)',
-            description: 'Warmup scheduler for Esco API lambda function',
-            tags: escoApiWarmupSchedulerEventConfig.tags,
+            functionName: escoApiLambdaFunction.name,
+            provisionedConcurrentExecutions: 1,
+            qualifier: escoApiLambdaFunction.version,
         },
         { provider: escoApiRegion }
     );
 
-    const escoApiWarmupSchedulerTargetConfig = setup.getResourceConfig('EscoApiWarmupSchedulerTarget');
-    new aws.cloudwatch.EventTarget(
-        escoApiWarmupSchedulerTargetConfig.name,
-        {
-            rule: escoApiWarmupSchedulerEvent.name,
-            arn: escoApiLambdaFunction.arn,
-            input: JSON.stringify({ source: 'warmup' }),
-        },
-        { provider: escoApiRegion }
-    );
-
-    // Permission for the warmup scheduler to invoke the lambda function
-    const escoApiWarmupSchedulerPermissionConfig = setup.getResourceConfig('EscoApiWarmupSchedulerPermission');
-    new aws.lambda.Permission(
-        escoApiWarmupSchedulerPermissionConfig.name,
-        {
-            action: 'lambda:InvokeFunction',
-            function: escoApiLambdaFunction.name,
-            principal: 'events.amazonaws.com',
-            sourceArn: escoApiWarmupSchedulerEvent.arn,
-        },
-        { provider: escoApiRegion }
-    );
+    return escoApiLambdaFunctionProvisionedConcurrency;
 }
