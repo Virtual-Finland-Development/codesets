@@ -91,15 +91,24 @@ function createProvisionedConcurrencyConfig(
     escoApiLambdaFunction: aws.lambda.Function,
     escoApiRegion: aws.Provider
 ) {
+    const aliasForFunctionConfig = setup.getResourceConfig(
+        'EscoApiLambdaAlias'
+    );
+    const aliasForFunction = new aws.lambda.Alias(aliasForFunctionConfig.name, {
+        functionName: escoApiLambdaFunction.name,
+        functionVersion: escoApiLambdaFunction.version,
+        name: aliasForFunctionConfig.name,
+    });
+
     const escoApiLambdaFunctionProvisionedConcurrencyConfig = setup.getResourceConfig(
-        'EscoApiLambdaFunctionProvisionedConcurrency'
+        'EscoApiLambdaProvisionedConcurrency'
     );
     const escoApiLambdaFunctionProvisionedConcurrency = new aws.lambda.ProvisionedConcurrencyConfig(
         escoApiLambdaFunctionProvisionedConcurrencyConfig.name,
         {
             functionName: escoApiLambdaFunction.name,
             provisionedConcurrentExecutions: 1,
-            qualifier: escoApiLambdaFunction.version,
+            qualifier: aliasForFunction.name,
         },
         { provider: escoApiRegion }
     );
