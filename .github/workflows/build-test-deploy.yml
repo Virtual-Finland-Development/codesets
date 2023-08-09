@@ -64,7 +64,7 @@ jobs:
                   aws-region: ${{ secrets.AWS_REGION }}
                   pulumi-access-token: ${{ secrets.PULUMI_ACCESS_TOKEN }}
             - name: Deploy codesets
-              if: ${{ inputs.deploy_codesets == 'true' }}
+              if: ${{ inputs.deploy_codesets }}
               uses: pulumi/actions@v4
               with:
                   work-dir: ./infra/apps/codesets
@@ -74,7 +74,7 @@ jobs:
               env:
                   PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
             - name: Deploy Esco API
-              if: ${{ inputs.deploy_esco_api == 'true' }}
+              if: ${{ inputs.deploy_esco_api }}
               uses: pulumi/actions@v4
               with:
                   work-dir: ./infra/apps/escoApi
