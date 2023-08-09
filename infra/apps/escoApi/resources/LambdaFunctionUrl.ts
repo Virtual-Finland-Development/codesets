@@ -1,6 +1,6 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
-import { ISetup } from '../utils/Setup';
+import { ISetup } from '../../../utils/Setup';
 
 export function createEscoApiLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulumi.Output<string>) {
     const escoApiLambdaFunctionExecRoleConfig = setup.getResourceConfig('EscoApiLambdaFunctionExecRole');
@@ -35,11 +35,8 @@ export function createEscoApiLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulum
         }),
     });
 
-    const escoApiConfig = new pulumi.Config('escoApi');
     const escoApiRegionConfig = setup.getResourceConfig('EscoApiRegion');
-    const escoApiRegion = new aws.Provider(escoApiRegionConfig.name, {
-        region: escoApiConfig.require('awsRegion') as aws.Region,
-    });
+    const escoApiRegion = new aws.Provider(escoApiRegionConfig.name);
 
     const escoApiLambdaFunctionConfig = setup.getResourceConfig('EscoApiLambdaFunction');
     const escoApiLambdaFunction = new aws.lambda.Function(
