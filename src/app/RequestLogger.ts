@@ -5,7 +5,7 @@ export type LogPackage = {
         id: string;
         amazonTraceId?: string;
         userAgent: string;
-        sourceIp: string;
+        sourceIp?: string;
     };
     request: {
         method: string;
@@ -18,15 +18,27 @@ export type LogPackage = {
     };
 };
 
+type RequestLoggerSettings = {
+    disable?: {
+        sourceIp?: boolean;
+    }
+};
+
 export default class RequestLogger {
     private readonly request: APIGatewayProxyEventV2 | CloudFrontRequestEvent;
+    private readonly configuration: RequestLoggerSettings;
 
-    constructor(request: APIGatewayProxyEventV2 | CloudFrontRequestEvent) {
+    constructor(request: APIGatewayProxyEventV2 | CloudFrontRequestEvent, configuration?: RequestLoggerSettings) {
         this.request = request;
+        this.configuration = configuration || {};
     }
 
     public log(response: APIGatewayProxyStructuredResultV2 | CloudFrontRequestResult): void {
         const log = this.parseLogPackage(this.request, response);
+
+        if (this.configuration.disable?.sourceIp) {
+            log.trace.sourceIp = undefined;
+        }
 
         if (typeof log.response.status !== "number" || log.response.status >= 400) {
             console.error(JSON.stringify(log));

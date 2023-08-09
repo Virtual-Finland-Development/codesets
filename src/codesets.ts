@@ -12,6 +12,12 @@ import { decodeBase64, parseRequestInputParams } from './utils/helpers';
 import { storeToS3 } from './utils/lib/S3Bucket';
 import { Environment, getInternalResourceInfo } from './utils/runtime';
 
+const loggerConfiguration = {
+    disable: {
+        sourceIp: true,
+    },
+};
+
 /**
  * Live environment handler
  *
@@ -19,7 +25,7 @@ import { Environment, getInternalResourceInfo } from './utils/runtime';
  * @returns
  */
 export async function handler(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
-    const requestLogger = new RequestLogger(event);
+    const requestLogger = new RequestLogger(event, loggerConfiguration);
     const response = await handleLiveRequest(event);
     requestLogger.log(response);
     return response;
@@ -96,7 +102,7 @@ async function handleLiveRequest(event: CloudFrontRequestEvent): Promise<CloudFr
  */
 export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
     Environment.isLocal = true;
-    const requestLogger = new RequestLogger(event);
+    const requestLogger = new RequestLogger(event, loggerConfiguration);
     const response = await handleLocalEvent(event);
     requestLogger.log(response);
     return response;
