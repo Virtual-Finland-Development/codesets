@@ -18,7 +18,7 @@ export type LogPackage = {
     };
 };
 
-type RequestLoggerSettings = {
+export type RequestLoggerSettings = {
     disable?: {
         sourceIp?: boolean;
     }
