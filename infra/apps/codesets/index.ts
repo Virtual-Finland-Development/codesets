@@ -27,6 +27,7 @@ createCacheInvalidation(setup, cloudFrontDistribution);
 
 export const url = pulumi.interpolate`https://${cloudFrontDistribution.domainName}`;
 export const bucketName = s3bucketSetup.bucket.bucket;
+export const lambdaId = pulumi.interpolate`${edgeLambdaPackage.lambdaAtEdgeFunction.name}:${edgeLambdaPackage.lambdaAtEdgeFunction.version}`;
 export const cloudFrontDistributionId = cloudFrontDistribution.id;
 export const standardLogsBucketDetails = {
     arn: standardLogsBucket.arn,
