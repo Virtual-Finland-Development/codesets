@@ -43,7 +43,7 @@ async function handleLiveRequest(event: CloudFrontRequestEvent): Promise<CloudFr
                     Object.assign(params, parseRequestInputParams(body));
                 }
             } catch (error) {
-                //
+                // Pass
             }
         }
 

@@ -1,4 +1,5 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2, CloudFrontHeaders, CloudFrontRequestEvent, CloudFrontRequestResult, CloudFrontResultResponse } from "aws-lambda";
+import { cutTooLongString } from "../utils/helpers";
 
 export type LogPackage = {
     trace: {
@@ -15,6 +16,7 @@ export type LogPackage = {
     response: {
         statusCode: number;
         contentLength: number;
+        body?: string; // For error diagnostics
     };
 };
 
@@ -41,8 +43,10 @@ export default class RequestLogger {
         }
 
         if (typeof log.response.statusCode !== "number" || log.response.statusCode >= 400) {
+            log.response.body = cutTooLongString(log.response.body, 1000); // Limit logged body length to 1000 characters
             console.error(JSON.stringify(log));
         } else {
+            delete log.response.body; // Remove body from successful requests logs
             console.log(JSON.stringify(log));
         }
     }
@@ -74,6 +78,7 @@ export default class RequestLogger {
             response: {
                 statusCode: statusCode || 500,
                 contentLength: body ? body.length : 0,
+                body: body,
             },
         };
     }
@@ -108,19 +113,22 @@ export default class RequestLogger {
         return parsedHeaders;
     }
 
-    private parseCloudFrontRequestResult(response: CloudFrontRequestResult): { statusCode: number; contentLength: number } {
-        const parsedResponse = {
+    private parseCloudFrontRequestResult(response: CloudFrontRequestResult): LogPackage["response"] {
+        const parsedResponse: LogPackage["response"] = {
             statusCode: 500,
             contentLength: 0,
+            body: undefined,
         };
 
         if (typeof response === "object" && response !== null) {
             if (typeof (response as CloudFrontResultResponse).status === "string") {
                 parsedResponse.statusCode = parseInt((response as CloudFrontResultResponse).status);
                 parsedResponse.contentLength = (response as CloudFrontResultResponse).body?.length || 0;
+                parsedResponse.body = (response as CloudFrontResultResponse).body;
             } else if (typeof response.body === "object" && response.body !== null && typeof response.body.data === "string") {
                 parsedResponse.statusCode = 200; // Pass-through response code
                 parsedResponse.contentLength = response.body.data.length;
+                parsedResponse.body = response.body.data;
             }
         }
         
