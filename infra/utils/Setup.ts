@@ -14,7 +14,7 @@ const setup = {
         };
     },
     isProductionLikeEnvironment() {
-        return this.stage === 'production' || this.stage === 'staging';
+        return this.stage.endsWith('production') || this.stage.endsWith('staging');
     },
 };
 
@@ -23,4 +23,5 @@ function getSetup() {
     return setup;
 }
 
-export { getSetup, ISetup };
+export { ISetup, getSetup };
+

@@ -1,7 +1,7 @@
 name: 'Staging: build, test and deploy'
 on:
     workflow_dispatch:
-
+        
 jobs:
     deploy-staging:
         uses: Virtual-Finland-Development/codesets/.github/workflows/build-test-deploy.yml@main

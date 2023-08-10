@@ -12,5 +12,7 @@
     "noImplicitReturns": true,
     "forceConsistentCasingInFileNames": true
   },
-  "files": ["index.ts"]
+  "files": [
+    "apps/codesets/index.ts"
+  ]
 }
