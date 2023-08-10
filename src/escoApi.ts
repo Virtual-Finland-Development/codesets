@@ -12,15 +12,6 @@ const internalMemory: any = {
 
 // AWS Lambda function handler for the ESCO API
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
-    // Lambda warmup request handling
-    if ((event as any)?.source === 'warmup') {
-        return {
-            statusCode: 200,
-            body: 'Warmup successful',
-        };
-    }
-
-    // Normal request handling
     try {
         const request = parseRequest(event);
         const uri = `${CODESETS_API_ENDPOINT}${request.path}`;

@@ -1,0 +1,5 @@
+name: escoApi
+description: Esco API infra builder
+runtime: nodejs
+config:
+    aws:region: eu-north-1
