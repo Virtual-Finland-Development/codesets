@@ -1,4 +1,4 @@
-import BaseResource from './internal/BaseResource';
+import BaseResource from './shared/BaseResource';
 
 export default class LibraryResource extends BaseResource {
     public type = 'library';

@@ -17,7 +17,7 @@ export interface IResource {
 
 export type ResourceData = Response | string | ReadableStream<Uint8Array> | null;
 
-export default class BaseResource<I = any, O = any> implements IResource {
+export default abstract class BaseResource<I = any, O = any> implements IResource {
     public name: string;
     public uri: string;
     public type = 'external';

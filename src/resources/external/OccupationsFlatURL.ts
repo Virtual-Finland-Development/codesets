@@ -1,5 +1,5 @@
 import { Output, array, length, object, optional, record, string } from 'valibot';
-import ZipResource from '../../utils/data/models/ZipResource';
+import ExternalZipResource from '../../utils/data/models/ExternalZipResource';
 
 const IscoInputSchema = array(object({
     uri: string(),
@@ -14,7 +14,7 @@ const IscoOutputSchema = array(object({
     prefLabel: record(string([length(2)]), string()), 
 }));
 
-export default new ZipResource({
+export default new ExternalZipResource({
     name: 'OccupationsFlatURL',
     uri: 'https://tyomarkkinatori.fi/dam/jcr:42efb1fc-93f3-4146-a46f-71c2f9f5eb9b/occupations.json.zip',
     mime: 'application/json; charset=utf-8',

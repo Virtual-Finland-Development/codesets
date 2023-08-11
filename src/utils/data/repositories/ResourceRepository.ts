@@ -1,5 +1,5 @@
 import * as resources from '../../../resources/index';
-import { IResource } from '../models/internal/BaseResource';
+import { IResource } from '../models/shared/BaseResource';
 const _resourses = resources.default;
 
 export function getResources(resourceType: 'external' | 'internal' | 'library' | 'all' = 'all') {
