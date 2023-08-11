@@ -6,6 +6,7 @@ export interface IResource {
      * Retrieve the data from the resource
      */
     retrieve(params: Record<string, string>): Promise<{ data: string; mime: string; size: number }>;
+    fetchData(): Promise<{ data: ResourceData; mime: string }>;
 }
 
 export type ResourceData = Response | string | ReadableStream<Uint8Array> | null;
@@ -85,23 +86,22 @@ export default class BaseResource implements IResource {
             return await this._dataGetter(params);
         }
 
-        const response = await this._fetchData(this.uri);
-        const resolved = await this._resolveDataResponse(response.response);
-        const rawData = await this._parseResponseRawData(resolved);
+        const response = await this.fetchData();
+        const rawData = await this._parseResponseRawData(response.data);
         return {
             data: rawData,
             mime: response.mime,
         };
     }
 
-    protected async _fetchData(uri: string): Promise<{ response: Response; mime: string }> {
-        const response = await fetch(uri);
+    public async fetchData(): Promise<{ data: ResourceData; mime: string }> {
+        const response = await fetch(this.uri);
         if (response.status !== 200) {
             throw new Error(`Failed to fetch resource: ${response.status} ${response.statusText}`);
         }
 
         return {
-            response: response,
+            data: await this._resolveDataResponse(response),
             mime: response.headers.get('content-type') || 'application/json',
         };
     }

@@ -92,7 +92,7 @@ export const InternalResources = {
 };
 
 export default {
-    ...externalResources,
-    ...functionalInternalResources,
-    ...libraryResources,
+    external: externalResources,
+    internal: functionalInternalResources,
+    library: libraryResources,
 };
