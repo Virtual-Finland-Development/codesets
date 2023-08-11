@@ -8,7 +8,11 @@ export interface IResource {
      * Retrieve the data from the resource
      */
     retrieve(params: Record<string, string>): Promise<{ data: string; mime: string; size: number }>;
-    fetchData(): Promise<{ data: ResourceData; mime: string }>;
+    retrieveDataPackage(params?: Record<string, string>): Promise<{
+        data: string;
+        mime: string;
+    }>;
+    parseRawData(rawData: string, mime: string, params?: Record<string, string>): Promise<string>;
 }
 
 export type ResourceData = Response | string | ReadableStream<Uint8Array> | null;
@@ -22,12 +26,12 @@ export default class BaseResource<I = any, O = any> implements IResource {
     protected _parsers: {
         rawInput?: (data: string) => unknown;
         input?: BaseSchema<I> | ((data: unknown) => I);
-        transform?: (data: I, params: Record<string, string>) => Promise<O>;
+        transform?: (data: I, params?: Record<string, string>) => Promise<O>;
         output?: BaseSchema<O> | ((data: O) => O);
         rawOutput?: (data: O) => string;
     };
 
-    protected _dataGetter: ((params: Record<string, string>) => Promise<{ data: string; mime: string }>) | undefined;
+    protected _dataGetter: ((params?: Record<string, string>) => Promise<{ data: string; mime: string }>) | undefined;
     protected _settings: Record<string, string | number | boolean>;
 
     constructor({
@@ -43,11 +47,11 @@ export default class BaseResource<I = any, O = any> implements IResource {
         type?: 'external' | 'library' | 'internal';
         uri?: string;
         mime?: string;
-        dataGetter?: (params: Record<string, string>) => Promise<{ data: string; mime: string }>;
+        dataGetter?: (params?: Record<string, string>) => Promise<{ data: string; mime: string }>;
         parsers?: {
             rawInput?: (data: string) => unknown;
             input?: BaseSchema<I> | ((data: unknown) => I);
-            transform?: (data: I, params: Record<string, string>) => Promise<O>;
+            transform?: (data: I, params?: Record<string, string>) => Promise<O>;
             output?: BaseSchema<O> | ((data: O) => O);
             rawOutput?: (data: O) => string;
         };
@@ -68,9 +72,9 @@ export default class BaseResource<I = any, O = any> implements IResource {
         size: number;
     }> {
         this.validateSelf();
-        const dataPackage = await this._retrieveDataPackage(params);
+        const dataPackage = await this.retrieveDataPackage(params);
         const mime = this._mime || dataPackage.mime;
-        const finalData = await this._parseRawData(dataPackage.data, mime, params);
+        const finalData = await this.parseRawData(dataPackage.data, mime, params);
         return {
             data: finalData,
             mime: mime,
@@ -90,7 +94,7 @@ export default class BaseResource<I = any, O = any> implements IResource {
      * @param params 
      * @returns 
      */
-    protected async _retrieveDataPackage(params: Record<string, string>): Promise<{
+    public async retrieveDataPackage(params?: Record<string, string>): Promise<{
         data: string;
         mime: string;
     }> {
@@ -98,7 +102,7 @@ export default class BaseResource<I = any, O = any> implements IResource {
             return await this._dataGetter(params);
         }
 
-        const response = await this.fetchData();
+        const response = await this._fetchData();
         const rawData = await this._parseResponseRawData(response.data);
         return {
             data: rawData,
@@ -106,7 +110,7 @@ export default class BaseResource<I = any, O = any> implements IResource {
         };
     }
 
-    public async fetchData(): Promise<{ data: ResourceData; mime: string }> {
+    protected async _fetchData(): Promise<{ data: ResourceData; mime: string }> {
         const response = await fetch(this.uri);
         if (response.status !== 200) {
             throw new Error(`Failed to fetch resource: ${response.status} ${response.statusText}`);
@@ -134,7 +138,7 @@ export default class BaseResource<I = any, O = any> implements IResource {
      * @param params 
      * @returns 
      */
-    protected async _parseRawData(rawData: string, mime: string, params: Record<string, string>): Promise<string> {
+    public async parseRawData(rawData: string, mime: string, params?: Record<string, string>): Promise<string> {
         let parsedData = this._parseRawData_input(rawData, mime);
         parsedData = this._parseRawData_parseInputSchema(parsedData);
         parsedData = await this._parseRawData_transform(parsedData as I, params);
@@ -160,7 +164,7 @@ export default class BaseResource<I = any, O = any> implements IResource {
         return rawData as I;
     }
 
-    protected async _parseRawData_transform(data: I, params: Record<string, string>): Promise<O> {
+    protected async _parseRawData_transform(data: I, params?: Record<string, string>): Promise<O> {
         if (typeof this._parsers.transform === 'function') {
             return await this._parsers.transform(data, params);
         }

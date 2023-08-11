@@ -6,8 +6,14 @@ export async function handler() {
         const resource = externalResources[resourceName];
         
         try {
-            const resourceData = await resource.fetchData();
+            // Fetch data response string
+            const dataPackage = await resource.retrieveDataPackage();
 
+            // Validate input/output by parsing
+            await resource.parseRawData(dataPackage.data, dataPackage.mime);
+            
+            // Store data in cache
+            await resource.storeData(dataPackage.data, dataPackage.mime);
         } catch (error) {
             console.error(error);
         }
