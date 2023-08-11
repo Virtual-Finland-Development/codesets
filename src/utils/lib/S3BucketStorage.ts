@@ -39,6 +39,22 @@ class S3BucketStorage implements IStorage {
             throw new Error('An error occurred while retrieving from S3');
         }
     }
+
+    public async exists(bucketName: string, key: string): Promise<boolean> {
+        try {
+            const s3 = new aws.S3();
+            const params = {
+                Bucket: bucketName,
+                Key: leftTrimSlash(key),
+            };
+            await s3.headObject(params).promise();
+            return true;
+        } catch (error: any) {
+            if (error.code === 'NotFound') return false;
+            console.error(error?.message, error?.stack);
+            throw new Error('An error occurred while checking for resource in S3');
+        }
+    }
 }
 
 export default new S3BucketStorage();

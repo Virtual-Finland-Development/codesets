@@ -1,4 +1,5 @@
 import { getResources } from './utils/data/repositories/ResourceRepository';
+import ExternalResourceCache from './utils/lib/ExternalResourceCache';
 
 export async function handler() {
     const externalResources = getResources('external');
@@ -13,7 +14,8 @@ export async function handler() {
             await resource.parseRawData(dataPackage.data, dataPackage.mime);
             
             // Store data in cache
-            await resource.storeData(dataPackage.data, dataPackage.mime);
+            await ExternalResourceCache.store(resource.name, dataPackage);
+            
         } catch (error) {
             console.error(error);
         }

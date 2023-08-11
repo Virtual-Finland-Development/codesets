@@ -1,19 +1,6 @@
 import { BaseSchema, parse } from 'valibot';
-
-export interface IResource {
-    uri: string;
-    name: string;
-    type: string;
-    /**
-     * Retrieve the data from the resource
-     */
-    retrieve(params: Record<string, string>): Promise<{ data: string; mime: string; size: number }>;
-    retrieveDataPackage(params?: Record<string, string>): Promise<{
-        data: string;
-        mime: string;
-    }>;
-    parseRawData(rawData: string, mime: string, params?: Record<string, string>): Promise<string>;
-}
+import IDataPackage from './IDataPackage';
+import IResource from './IResource';
 
 export type ResourceData = Response | string | ReadableStream<Uint8Array> | null;
 
@@ -94,10 +81,7 @@ export default abstract class BaseResource<I = any, O = any> implements IResourc
      * @param params 
      * @returns 
      */
-    public async retrieveDataPackage(params?: Record<string, string>): Promise<{
-        data: string;
-        mime: string;
-    }> {
+    public async retrieveDataPackage(params?: Record<string, string>): Promise<IDataPackage> {
         if (typeof this._dataGetter === 'function') {
             return await this._dataGetter(params);
         }
