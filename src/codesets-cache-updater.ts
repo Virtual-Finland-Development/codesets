@@ -1,7 +1,10 @@
 import { getResources } from './utils/data/repositories/ResourceRepository';
 import ExternalResourceCache from './utils/lib/ExternalResourceCache';
+import { Environment } from './utils/runtime';
 
 export async function handler() {
+    Environment.isSystemTask = true;
+    
     const externalResources = getResources('external');
     for (const resourceName in externalResources) {
         const resource = externalResources[resourceName];

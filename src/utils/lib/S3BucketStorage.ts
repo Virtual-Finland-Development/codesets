@@ -55,6 +55,35 @@ class S3BucketStorage implements IStorage {
             throw new Error('An error occurred while checking for resource in S3');
         }
     }
+
+    public async getExistsAndExpiredInfo(bucketName: string, key: string, secondsToLive: number): Promise<{
+        exists: boolean,
+        expired: boolean,
+    }> {
+        try {
+            const s3 = new aws.S3();
+            const params = {
+                Bucket: bucketName,
+                Key: leftTrimSlash(key),
+            };
+
+            const data = await s3.headObject(params).promise();
+            if (typeof data?.LastModified === "undefined") throw new Error('Invalid data returned from S3');
+            
+            const lastModified = data.LastModified.getTime();
+            const now = new Date().getTime();
+            const diff = now - lastModified;
+            const expired = diff > secondsToLive * 1000;
+            return {
+                exists: true,
+                expired,
+            };
+        } catch (error: any) {
+            if (error.code === 'NotFound') return { exists: false, expired: false };
+            console.error(error?.message, error?.stack);
+            throw new Error('An error occurred while checking for resource in S3');
+        }
+    }
 }
 
 export default new S3BucketStorage();
