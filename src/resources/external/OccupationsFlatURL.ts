@@ -1,25 +1,29 @@
+import { Output, array, length, object, optional, record, string } from 'valibot';
 import ZipResource from '../../utils/data/models/ZipResource';
-import { getOutput } from '../../utils/data/parsers';
 
-type ISCO = {
-    uri: string;
-    notation: string;
-    prefLabel: {
-        fi: string;
-        sv: string;
-        en: string;
-    };
-};
+const IscoInputSchema = array(object({
+    uri: string(),
+    notation: optional(string()),
+    prefLabel: record(string([length(2)]), string()),
+}));
+type IscoInput = Output<typeof IscoInputSchema>;
+
+const IscoOutputSchema = array(object({
+    uri: string(),
+    notation: string(),
+    prefLabel: record(string([length(2)]), string()), 
+}));
 
 export default new ZipResource({
     name: 'OccupationsFlatURL',
     uri: 'https://tyomarkkinatori.fi/dam/jcr:42efb1fc-93f3-4146-a46f-71c2f9f5eb9b/occupations.json.zip',
     mime: 'application/json; charset=utf-8',
     parsers: {
-        async transform(occupationsRaw: any) {
+        input: IscoInputSchema,
+        async transform(occupationsRaw: IscoInput) {
             return occupationsRaw
-                .filter((occupation: any) => Boolean(occupation.notation))
-                .map((occupation: any) => {
+                .filter((occupation) => Boolean(occupation.notation))
+                .map((occupation) => {
                     return {
                         uri: occupation.uri,
                         notation: occupation.notation,
@@ -31,8 +35,6 @@ export default new ZipResource({
                     };
                 });
         },
-        output(data: any) {
-            return getOutput()<ISCO[]>(data);
-        },
-    },
+        output: IscoOutputSchema,
+    }
 });

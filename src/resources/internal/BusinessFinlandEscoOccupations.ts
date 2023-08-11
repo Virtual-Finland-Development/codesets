@@ -1,30 +1,27 @@
+import { array, number, object, string } from 'valibot';
 import InternalResource from '../../utils/data/models/InternalResource';
-import { getOutput } from '../../utils/data/parsers';
 import { transformOccupations as transform } from '../../utils/data/transformers';
 
 import BusinessFinlandDataSet from './business-finland-esco-v1_1_1-occupations.json';
 
-interface Occupation {
-    escoCode: string;
-    escoJobTitle: string;
-    alternativeTitles: string[];
-    escoDescription: string;
-    escoIdentifier: string;
-}
-
-interface OccupationsResponse {
-    totalCount: number;
-    occupations: Occupation[];
-}
+const OccupationSchema = object({
+    escoCode: string(),
+    escoJobTitle: string(),
+    alternativeTitles: array(string()),
+    escoDescription: string(),
+    escoIdentifier: string(),
+});
+const OccupationsResponseSchema = object({
+    totalCount: number(),
+    occupations: array(OccupationSchema),
+});
 
 export default new InternalResource({
     name: 'BusinessFinlandEscoOccupations',
     uri: 'business-finland-esco-v1_1_1-occupations.json',
     parsers: {
         transform,
-        output(data: any) {
-            return getOutput()<OccupationsResponse>(data);
-        },
+        output: OccupationsResponseSchema,
     },
     dataGetter() {
         return Promise.resolve({

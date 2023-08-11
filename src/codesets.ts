@@ -27,7 +27,7 @@ async function engageResourcesRouter(
             response: {
                 status: '200',
                 statusDescription: 'OK: list of resources',
-                body: JSON.stringify([...listResources(), ...InternalResources.listResources()]),
+                body: JSON.stringify([...listResources(), ...InternalResources.listResources()].sort()),
             },
         };
     }
