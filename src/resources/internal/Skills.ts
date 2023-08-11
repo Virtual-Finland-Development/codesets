@@ -16,7 +16,7 @@ export default new InternalResource({
     uri: 'skills.json',
     parsers: {
         input: SkillsResponseSchema,
-        async transform(skills: SkillsResponse, params: Record<string, string>) {
+        async transform(skills: SkillsResponse, params?: Record<string, string>) {
             return filterCommonEscoDataSet<Skill>(skills, params);
         },
         output: SkillsResponseSchema,

@@ -31,7 +31,7 @@ export default new InternalResource({
     name: 'Occupations',
     uri: 'occupations.json',
     parsers: {
-        async transform(occupations: OccupationsResponse, params: Record<string, string>) {
+        async transform(occupations: OccupationsResponse, params?: Record<string, string>) {
             if (isEnabledFilter(params, 'isco') && !isEnabledFilter(params, 'esco')) {
                 occupations = occupations.filter((occupation: Occupation) => {
                     return !occupation.uri.startsWith('http://data.europa.eu/esco/occupation/');
