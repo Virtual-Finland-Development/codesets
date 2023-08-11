@@ -10,8 +10,8 @@ import { InternalResources } from './resources/index';
 import { resolveError, resolveUri } from './utils/api';
 import { getResource, listResources } from './utils/data/repositories/ResourceRepository';
 import { cutTooLongString, decodeBase64, generateSimpleHash, parseRequestInputParams } from './utils/helpers';
-import S3BucketStorage from './utils/lib/S3BucketStorage';
 import { Environment, getInternalResourceInfo } from './utils/runtime';
+import S3BucketStorage from './utils/services/S3BucketStorage';
 
 async function engageResourcesRouter(
     resourceURI: string,

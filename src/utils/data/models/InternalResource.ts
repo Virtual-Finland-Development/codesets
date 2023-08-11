@@ -1,6 +1,6 @@
 import { InternalResources } from '../../../resources';
-import S3BucketStorage from '../../lib/S3BucketStorage';
 import { Environment, getInternalResourceInfo } from '../../runtime';
+import S3BucketStorage from '../../services/S3BucketStorage';
 import BaseResource from './shared/BaseResource';
 
 const inMemoryCache: Record<

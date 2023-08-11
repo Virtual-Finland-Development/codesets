@@ -1,14 +1,6 @@
-import ExternalResourceCache from '../../lib/ExternalResourceCache';
 import { Environment } from '../../runtime';
+import ExternalResourceCache from '../../services/ExternalResourceCache';
 import BaseResource from './shared/BaseResource';
-
-const inMemoryCache: Record<
-    string,
-    {
-        data: string;
-        mime: string;
-    }
-> = {};
 
 export default class ExternalResource extends BaseResource {
     public type = 'external';
@@ -17,10 +9,8 @@ export default class ExternalResource extends BaseResource {
         data: string;
         mime: string;
     }> {
-        if (Environment.isLocal && typeof inMemoryCache[this.uri] !== 'undefined') {
-            console.log(`Using in-memory cache for resource: ${this.name}`);
-            return inMemoryCache[this.uri];
-        } else if (!Environment.isSystemTask) {
+        
+        if (!Environment.isSystemTask) {
             const { exists, expired } = await ExternalResourceCache.getExistsAndExpiredInfo(this.name);
             if (exists) {
                 if (expired) {
@@ -39,18 +29,15 @@ export default class ExternalResource extends BaseResource {
                         console.error(error); // Flag as error for alerts
                     }
                 }
-                console.log(`Using S3 cache for resource: ${this.name}`);
+                console.log(`Using externals cache for resource: ${this.name}`);
                 return ExternalResourceCache.retrieve(this.name);
             }
         }
 
         const dataPackage = await super.retrieveDataPackage(params);
 
-        if (Environment.isLocal) {
-            console.log(`Caching resource in-memory: ${this.name}`);
-            inMemoryCache[this.uri] = dataPackage;
-        } else if (!Environment.isSystemTask) {
-            console.log(`Caching resource in S3: ${this.name}`);
+        if (!Environment.isSystemTask) {
+            console.log(`Caching resource in externals store: ${this.name}`);
             await ExternalResourceCache.store(this.name, dataPackage);
         }
 

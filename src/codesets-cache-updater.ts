@@ -1,6 +1,6 @@
 import { getResources } from './utils/data/repositories/ResourceRepository';
-import ExternalResourceCache from './utils/lib/ExternalResourceCache';
 import { Environment } from './utils/runtime';
+import ExternalResourceCache from './utils/services/ExternalResourceCache';
 
 export async function handler() {
     Environment.isSystemTask = true;

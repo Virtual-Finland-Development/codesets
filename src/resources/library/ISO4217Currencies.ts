@@ -35,7 +35,7 @@ const filters = {
 
 export default new LibraryResource({
     name: 'ISO4217Currencies',
-    async dataGetter(params: Record<string, string>) {
+    async dataGetter(params?: Record<string, string>) {
         let data = transformed;
 
         if (isEnabledFilter(params, 'nsg')) {
