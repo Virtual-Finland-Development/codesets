@@ -1,7 +1,7 @@
 import * as pulumi from '@pulumi/pulumi';
 import { getSetup } from '../../utils/Setup';
 import {
-    createCacheInvalidation,
+    createEdgeCacheInvalidation,
     createCloudFrontDistribution,
     createOriginAccessIdentity,
 } from './resources/CloudFront';
@@ -30,7 +30,7 @@ const cloudFrontDistribution = createCloudFrontDistribution(
 uploadAssetsToBucket(s3bucketSetup.bucket);
 
 invokeTheCacheUpdatingFunction(setup, cacheUpdaterFunction); // Regenerate external resources cache
-createCacheInvalidation(setup, cloudFrontDistribution); // Invalidate the edge-cache of cloudfront
+createEdgeCacheInvalidation(setup, cloudFrontDistribution); // Invalidate the edge-cache of cloudfront
 
 // Outputs
 export const url = pulumi.interpolate`https://${cloudFrontDistribution.domainName}`;
