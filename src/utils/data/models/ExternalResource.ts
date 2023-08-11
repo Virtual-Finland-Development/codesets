@@ -26,7 +26,7 @@ export default class ExternalResource extends BaseResource {
                         return freshDataPackage;
                     } catch (error) {
                         // Pass: If there is an error, we don't want to overwrite the cache, pass the expired cache through instead
-                        console.error(error); // Flag as error for alerts
+                        console.error(error); // Flag as error for alerts // @TODO: alerts to admin
                     }
                 }
                 console.log(`Using externals cache for resource: ${this.name}`);

@@ -3,7 +3,7 @@ import { Environment } from './utils/runtime';
 import ExternalResourceCache from './utils/services/ExternalResourceCache';
 
 export async function handler() {
-    Environment.isSystemTask = true;
+    Environment.isSystemTask = true; // Flag the resources system to skip existing cache usage
     
     const externalResources = getResources('external');
     for (const resourceName in externalResources) {
@@ -21,6 +21,7 @@ export async function handler() {
             
         } catch (error) {
             console.error(error);
+            // @TODO: alerts to admin
         }
     }
 }
