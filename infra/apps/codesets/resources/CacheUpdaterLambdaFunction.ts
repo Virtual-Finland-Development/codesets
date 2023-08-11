@@ -1,9 +1,10 @@
 
 import * as aws from '@pulumi/aws';
+import { local } from '@pulumi/command';
 import * as pulumi from '@pulumi/pulumi';
 import { ISetup } from '../../../utils/Setup';
 
-export default function createCacheUpdaterLambdaFunction(setup: ISetup, s3Bucket: aws.s3.Bucket) {
+export function createCacheUpdaterLambdaFunction(setup: ISetup, s3Bucket: aws.s3.Bucket) {
 
     const execRoleConfig = setup.getResourceConfig('CodesetsCacheUpdaterLambdaFunctionExecRole');
     const functionExecRole = new aws.iam.Role(execRoleConfig.name, {
@@ -64,4 +65,16 @@ export default function createCacheUpdaterLambdaFunction(setup: ISetup, s3Bucket
     );
 
     return lambdaFunction;
+}
+
+export function invokeTheCacheUpdatingFunction(setup: ISetup, lambdaFunction: aws.lambda.Function) {
+    const invokeConfig = setup.getResourceConfig('CodesetsCacheUpdaterLambdaFunctionInvoke');
+    const triggerToken = new Date().getTime().toString(); // Trigger always
+    new local.Command(
+        invokeConfig.name,
+        {
+            create: pulumi.interpolate`aws lambda invoke --function-name ${lambdaFunction.name} /dev/null`,
+            triggers: [triggerToken],
+        },
+    );
 }
