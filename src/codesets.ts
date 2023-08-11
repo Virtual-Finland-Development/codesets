@@ -10,7 +10,7 @@ import { InternalResources } from './resources/index';
 import { resolveError, resolveUri } from './utils/api';
 import { getResource, listResources } from './utils/data/repositories/ResourceRepository';
 import { cutTooLongString, decodeBase64, generateSimpleHash, parseRequestInputParams } from './utils/helpers';
-import { Environment, getInternalResourceInfo } from './utils/runtime';
+import { Environment, getStorageBucketInfo } from './utils/runtime';
 import S3BucketStorage from './utils/services/S3BucketStorage';
 
 async function engageResourcesRouter(
@@ -130,7 +130,7 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
                     data: cutTooLongString(routerResponse.cacheable.data, 250),
                     mime: routerResponse.cacheable.mime,
                 });
-                const bucketName = getInternalResourceInfo().name;
+                const bucketName = getStorageBucketInfo().name;
                 await S3BucketStorage.store(
                     bucketName,
                     routerResponse.cacheable.filepath,

@@ -42,7 +42,7 @@ export function createCloudFrontDistribution(
                 queryString: true,
             },
             minTtl: 0,
-            defaultTtl: 2628000,
+            defaultTtl: 2628000, // 1 month
             maxTtl: 31536000,
             compress: true,
             lambdaFunctionAssociations: [

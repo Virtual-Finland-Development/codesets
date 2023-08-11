@@ -1,5 +1,5 @@
 import { InternalResources } from '../../../resources';
-import { Environment, getInternalResourceInfo } from '../../runtime';
+import { Environment, getStorageBucketInfo } from '../../runtime';
 import S3BucketStorage from '../../services/S3BucketStorage';
 import BaseResource from './shared/BaseResource';
 
@@ -38,7 +38,7 @@ export default class InternalResource extends BaseResource {
             throw new Error(`Resource ${fileName} not found`);
         }
 
-        const bucketName = getInternalResourceInfo().name;
+        const bucketName = getStorageBucketInfo().name;
         const bucketKey = `resources/${fileName}`;
         inMemoryCache[this.uri] = await S3BucketStorage.retrieve(bucketName, bucketKey);
         return inMemoryCache[this.uri];

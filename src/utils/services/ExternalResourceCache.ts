@@ -1,12 +1,12 @@
 import IDataPackage from '../data/models/shared/IDataPackage';
-import { Environment, getInternalResourceInfo } from '../runtime';
+import { Environment, getStorageBucketInfo } from '../runtime';
 import S3BucketStorage from './S3BucketStorage';
 
 class ExternalResourceCache {
 
-    private readonly bucketName = getInternalResourceInfo().name;
+    private readonly bucketName = getStorageBucketInfo().name;
     private readonly keyPrefix = 'external-cache';
-    private readonly cacheDuration = 60 * 60 * 24 * 7; // 1 week
+    private readonly cacheDuration = 7884000; // 3 months in seconds
     private readonly localInMemoryCache: Record<
         string,
         {
