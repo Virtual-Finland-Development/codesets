@@ -12,6 +12,10 @@ const internalMemory: any = {
 
 // AWS Lambda function handler for the ESCO API
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
+    if (!CODESETS_API_ENDPOINT) {
+        throw new Error('Missing CODESETS_API_ENDPOINT environment variable');
+    }
+  
     try {
         const request = parseRequest(event);
         const uri = `${CODESETS_API_ENDPOINT}${request.path}`;
