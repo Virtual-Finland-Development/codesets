@@ -1,6 +1,5 @@
 import { InternalResources } from '../../../resources';
-import S3BucketStorage from '../../lib/S3BucketStorage';
-import { Environment, getInternalResourceInfo } from '../../runtime';
+import { RuntimeFlags, getInternalResourceInfo } from '../../runtime';
 import BaseResource from './shared/BaseResource';
 
 const inMemoryCache: Record<
@@ -24,7 +23,7 @@ export default class InternalResource extends BaseResource {
 
         const fileName = this.uri;
 
-        if (Environment.isLocal) {
+        if (RuntimeFlags.isLocal) {
             const resource = await InternalResources.getResourcePassThrough(fileName);
             if (resource) {
                 inMemoryCache[this.uri] = {
@@ -39,7 +38,9 @@ export default class InternalResource extends BaseResource {
 
         const bucketName = getInternalResourceInfo().name;
         const bucketKey = `resources/${fileName}`;
-        inMemoryCache[this.uri] = await S3BucketStorage.retrieve(bucketName, bucketKey);
+
+        if (!this.requestApp?.storage) throw new Error('Internal storage not initialized');
+        inMemoryCache[this.uri] = await this.requestApp.storage.retrieve(bucketName, bucketKey);
         return inMemoryCache[this.uri];
     }
 }

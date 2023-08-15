@@ -1,4 +1,5 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2, CloudFrontHeaders, CloudFrontRequestEvent, CloudFrontRequestResult, CloudFrontResultResponse } from "aws-lambda";
+import { ValiError } from "valibot";
 import { cutTooLongString } from "../utils/helpers";
 
 export type LogPackage = {
@@ -29,6 +30,7 @@ export type RequestLoggerSettings = {
 export default class RequestLogger {
     private readonly request: APIGatewayProxyEventV2 | CloudFrontRequestEvent;
     private readonly configuration: RequestLoggerSettings;
+    private readonly errors: string[] = [];
 
     constructor(request: APIGatewayProxyEventV2 | CloudFrontRequestEvent, configuration?: RequestLoggerSettings) {
         this.request = request;
@@ -45,9 +47,34 @@ export default class RequestLogger {
         if (typeof log.response.statusCode !== "number" || log.response.statusCode >= 400) {
             log.response.body = cutTooLongString(log.response.body, 1000); // Limit logged body length to 1000 characters
             console.error(JSON.stringify(log));
+            console.debug(JSON.stringify(this.errors));
         } else {
             delete log.response.body; // Remove body from successful requests logs
             console.log(JSON.stringify(log));
+        }
+    }
+
+    public catchError(error: any) {
+        if (error instanceof ValiError)  {
+            // Cleanup the vali error to make it more accessible: only show the first issue and remove the input
+            this.errors.push(
+                JSON.stringify(error.issues.slice(0, 1).map(i => {
+                    return {
+                    ...i,
+                        path: i.path?.map(p => {
+                            return {
+                                ...p,
+                                input: undefined 
+                            }
+                        })
+                    }
+                }), null, 4)            
+            );
+        } else {
+            this.errors.push(JSON.stringify({
+                message: error.message,
+                stack: error.stack,
+            }, null, 4));
         }
     }
 
