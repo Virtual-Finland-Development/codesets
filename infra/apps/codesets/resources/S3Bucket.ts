@@ -74,7 +74,7 @@ function publicReadPolicyForBucket(bucketName: string, originAccessArn: string, 
 }
 export function uploadAssetsToBucket(bucketResource: aws.s3.Bucket) {
     process.chdir('../../../'); // navigate to project root folder
-    uploadDirToS3(`${process.cwd()}/src/resources/internal`, bucketResource, '', 'resources');
+    uploadDirToS3(`${process.cwd()}/src/resources/internal`, bucketResource, '', 'resources', ['ts', 'js']);
     uploadDirToS3(`${process.cwd()}/src/build/webroot`, bucketResource);
 }
 
@@ -82,14 +82,15 @@ function uploadDirToS3(
     buildDir: string,
     bucket: aws.s3.Bucket,
     subDir = '',
-    bucketSubDir = '' // if provided, all subdir(s) files concatenated to this
+    bucketSubDir = '', // if provided, all subdir(s) files concatenated to this
+    denyFileExtensions?: string[],
 ) {
     for (const item of fs.readdirSync(`${buildDir}${subDir}`)) {
         const filePath = path.join(buildDir, subDir, item);
 
         if (fs.statSync(filePath).isDirectory()) {
             // eg. /resources/internal
-            uploadDirToS3(buildDir, bucket, `${subDir}/${item}`, bucketSubDir);
+            uploadDirToS3(buildDir, bucket, `${subDir}/${item}`, bucketSubDir, denyFileExtensions);
         } else {
             // eg. /resources/internal/file.txt -> /file.txt
             // eg. /resources/internal/bazz/file.txt -> /bazz/file.txt
@@ -97,6 +98,10 @@ function uploadDirToS3(
             // eg. /resources/internal/file.txt -> /alt/file.txt
             // eg. /resources/internal/bazz/file.txt -> /alt/bazz/file.txt
             const bucketFile = bucketSubDir.length > 0 ? `${bucketSubDir}/${item}` : file;
+            
+            if (denyFileExtensions && denyFileExtensions.includes(path.extname(file))) {
+                continue;
+            }
 
             new aws.s3.BucketObject(bucketFile, {
                 bucket: bucket,

@@ -1,11 +1,17 @@
 import { getResources } from './utils/data/repositories/ResourceRepository';
-import { Environment } from './utils/runtime';
+import { RuntimeFlags } from './utils/runtime';
 import ExternalResourceCache from './utils/services/ExternalResourceCache';
+import S3BucketStorage from './utils/services/S3BucketStorage';
 
 export async function handler() {
-    Environment.isSystemTask = true; // Flag the resources system to skip existing cache usage
+    RuntimeFlags.isSystemTask = true; // Flag the resources system to skip existing cache usage
     
     const externalResources = getResources('external');
+    const appStorage = new S3BucketStorage({
+        region: 'us-east-1', // Codesets bucket must be stored in us-east-1 for CloudFront to access it
+    });
+    const externalResourceCache = new ExternalResourceCache(appStorage);
+
     for (const resourceName in externalResources) {
         const resource = externalResources[resourceName];
         
@@ -17,7 +23,7 @@ export async function handler() {
             await resource.parseRawData(dataPackage.data, dataPackage.mime);
             
             // Store data in cache
-            await ExternalResourceCache.store(resource.name, dataPackage);
+            await externalResourceCache.store(resource.name, dataPackage);
             
         } catch (error) {
             console.error(error);

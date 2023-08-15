@@ -1,8 +1,8 @@
 import IDataPackage from '../data/models/shared/IDataPackage';
-import { Environment, getStorageBucketInfo } from '../runtime';
-import S3BucketStorage from './S3BucketStorage';
+import { RuntimeFlags, getStorageBucketInfo } from '../runtime';
+import { IStorage } from './IStorage';
 
-class ExternalResourceCache {
+export default class ExternalResourceCache {
 
     private readonly bucketName = getStorageBucketInfo().name;
     private readonly keyPrefix = 'external-cache';
@@ -15,20 +15,26 @@ class ExternalResourceCache {
         }
     > = {};
 
+    private readonly requestAppStorage: IStorage;
+
+    public constructor(requestAppStorage: IStorage) {
+        this.requestAppStorage = requestAppStorage;
+    }
+
     public async store(key: string, dataPackage: IDataPackage): Promise<void> {
-        if (Environment.isLocal) {
+        if (RuntimeFlags.isLocal) {
             console.log(`Caching resource in-memory: ${key}`);
             this.localInMemoryCache[key] = dataPackage;
             return;
         }  
-        return S3BucketStorage.store(this.bucketName, `${this.keyPrefix}/${key}.json`, JSON.stringify(dataPackage), "application/json");
+        return this.requestAppStorage.store(this.bucketName, `${this.keyPrefix}/${key}.json`, JSON.stringify(dataPackage), "application/json");
     }
 
     public async retrieve(key: string): Promise<{ data: string; mime: string }> {
-        if (Environment.isLocal) {
+        if (RuntimeFlags.isLocal) {
             return this.localInMemoryCache[key];
         }  
-        const stored = await S3BucketStorage.retrieve(this.bucketName, `${this.keyPrefix}/${key}.json`);
+        const stored = await this.requestAppStorage.retrieve(this.bucketName, `${this.keyPrefix}/${key}.json`);
         return JSON.parse(stored.data);
     }
     
@@ -36,14 +42,12 @@ class ExternalResourceCache {
         exists: boolean,
         expired: boolean,
     }> {
-        if (Environment.isLocal) {
+        if (RuntimeFlags.isLocal) {
             return {
                 exists: typeof this.localInMemoryCache[key] !== 'undefined',
                 expired: false,
             };
         }
-        return S3BucketStorage.getExistsAndExpiredInfo(this.bucketName, `${this.keyPrefix}/${key}.json`, this.cacheDuration);
+        return this.requestAppStorage.getExistsAndExpiredInfo(this.bucketName, `${this.keyPrefix}/${key}.json`, this.cacheDuration);
     }
 }
-
-export default new ExternalResourceCache();

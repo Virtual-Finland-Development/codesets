@@ -4,15 +4,15 @@ import {
     CloudFrontRequestEvent,
     CloudFrontRequestResult
 } from 'aws-lambda';
-import RequestLogger from './app/RequestLogger';
-import { engageResourcesAction } from './app/resources-controller';
+import RequestApp from './app/RequestApp';
+import { engageResourcesAction } from './app/resources-controller-actions';
 import { InternalResources } from './resources/index';
-import { resolveErrorPackage, resolveUri } from './utils/api';
+import { resolveErrorResponse, resolveUri } from './utils/api';
 import { decodeBase64, parseRequestInputParams } from './utils/helpers';
-import { Environment, getStorageBucketInfo } from './utils/runtime';
+import { getStorageBucketInfo } from './utils/runtime';
 import S3BucketStorage from './utils/services/S3BucketStorage';
 
-const loggerConfiguration = {
+const loggerSettings = {
     disable: {
         sourceIp: true,
     },
@@ -25,13 +25,19 @@ const loggerConfiguration = {
  * @returns
  */
 export async function handler(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
-    const requestLogger = new RequestLogger(event, loggerConfiguration);
-    const response = await handleLiveRequest(event);
-    requestLogger.log(response);
+    const app = new RequestApp(event, {
+        loggerSettings: loggerSettings,
+        storage: new S3BucketStorage({
+            region: 'us-east-1', // Codesets bucket must be stored in us-east-1 for CloudFront to access it
+        })
+    });
+    
+    const response = await handleLiveRequest(app, event);
+    app.logger.log(response);
     return response;
 }
 
-async function handleLiveRequest(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
+async function handleLiveRequest(app: RequestApp, event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
     try {
         const request = event.Records[0].cf.request;
         let uri = resolveUri(request.uri);
@@ -47,16 +53,15 @@ async function handleLiveRequest(event: CloudFrontRequestEvent): Promise<CloudFr
             }
         }
 
-
         if (uri.startsWith('/resources')) {
-            const routerResponse = await engageResourcesAction(uri, params);
+            const routerResponse = await engageResourcesAction(app, uri, params);
             if (routerResponse.response) {
                 return routerResponse.response;
             }
 
             if (routerResponse.cacheable) {
                 const bucketName = getStorageBucketInfo().name;
-                await S3BucketStorage.store(
+                await app.storage.store(
                     bucketName,
                     routerResponse.cacheable.filepath,
                     routerResponse.cacheable.data,
@@ -85,7 +90,8 @@ async function handleLiveRequest(event: CloudFrontRequestEvent): Promise<CloudFr
         request.uri = uri; // Pass through to origin
         return request;
     } catch (error: any) {
-        const errorPackage = resolveErrorPackage(error);
+        app.logger.catchError(error);
+        const errorPackage = resolveErrorResponse(error);
         return {
             status: errorPackage.statusCode.toString(),
             statusDescription: errorPackage.description,
@@ -101,10 +107,16 @@ async function handleLiveRequest(event: CloudFrontRequestEvent): Promise<CloudFr
  * @returns
  */
 export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
-    Environment.isLocal = true;
-    const requestLogger = new RequestLogger(event, loggerConfiguration);
-    const response = await handleLocalEvent(event);
-    requestLogger.log(response);
+    
+    const app = new RequestApp(event, {
+        loggerSettings: loggerSettings,
+        runtimeFlags: {
+            isLocal: true,
+        }
+    });
+    
+    const response = await handleLocalEvent(app, event);
+    app.logger.log(response);
     return response;
 }
 
@@ -114,7 +126,7 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
  * @param event
  * @returns
  */
-async function handleLocalEvent(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
+async function handleLocalEvent(app: RequestApp,event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
     try {
         const handle = async (event: APIGatewayProxyEventV2) => {
             let uri = resolveUri(event.rawPath);
@@ -131,7 +143,7 @@ async function handleLocalEvent(event: APIGatewayProxyEventV2): Promise<APIGatew
             }
 
             if (uri.startsWith('/resources')) {
-                const routerResponse: any = await engageResourcesAction(uri, params);
+                const routerResponse: any = await engageResourcesAction(app, uri, params);
                 if (routerResponse.response) {
                     return {
                         statusCode: parseInt(routerResponse.response.status),
@@ -178,6 +190,7 @@ async function handleLocalEvent(event: APIGatewayProxyEventV2): Promise<APIGatew
 
         return await Promise.race([handle(event), internalTimeoutEnforcer() as any]); // Return the first to resolve
     } catch (error: any) {
-        return resolveErrorPackage(error);
+        app.logger.catchError(error);
+        return resolveErrorResponse(error);
     }
 }

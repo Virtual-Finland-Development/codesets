@@ -4,8 +4,8 @@ export function getStorageBucketInfo(): { name: string } {
     return bucketInfo;
 }
 
-// Lambda@edge does not have access to environment variables, so we mock them here to separate local and live environments
-export const Environment = {
+// Static mutable runtime flags reference
+export const RuntimeFlags = {
     isLocal: false,
     isSystemTask: false,
 };

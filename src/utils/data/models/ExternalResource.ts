@@ -1,17 +1,26 @@
-import { Environment } from '../../runtime';
+import { RuntimeFlags } from '../../runtime';
 import ExternalResourceCache from '../../services/ExternalResourceCache';
 import BaseResource from './shared/BaseResource';
 
 export default class ExternalResource extends BaseResource {
     public type = 'external';
 
+    private extrenalResourceCache?: ExternalResourceCache;
+    private getExternalResourceCache(): ExternalResourceCache {
+        if (!this.extrenalResourceCache) {
+            if (!this.requestApp?.storage) throw new Error('ExternalResource requires a storage service');
+            this.extrenalResourceCache = new ExternalResourceCache(this.requestApp.storage);
+        }
+        return this.extrenalResourceCache;
+    }
+
     public async retrieveDataPackage(params?: Record<string, string>): Promise<{
         data: string;
         mime: string;
     }> {
         
-        if (!Environment.isSystemTask) {
-            const { exists, expired } = await ExternalResourceCache.getExistsAndExpiredInfo(this.name);
+        if (!RuntimeFlags.isSystemTask) {
+            const { exists, expired } = await this.getExternalResourceCache().getExistsAndExpiredInfo(this.name);
             if (exists) {
                 if (expired) {
                     console.log(`Cache expired for resource: ${this.name}`);
@@ -21,7 +30,7 @@ export default class ExternalResource extends BaseResource {
                         // Validate input/output by parsing
                         await this.parseRawData(freshDataPackage.data, freshDataPackage.mime);
                         // Store data in cache
-                        await ExternalResourceCache.store(this.name, freshDataPackage);
+                        await this.getExternalResourceCache().store(this.name, freshDataPackage);
                         // Short circuit to return fresh data
                         return freshDataPackage;
                     } catch (error) {
@@ -30,15 +39,15 @@ export default class ExternalResource extends BaseResource {
                     }
                 }
                 console.log(`Using externals cache for resource: ${this.name}`);
-                return ExternalResourceCache.retrieve(this.name);
+                return this.getExternalResourceCache().retrieve(this.name);
             }
         }
 
         const dataPackage = await super.retrieveDataPackage(params);
 
-        if (!Environment.isSystemTask) {
+        if (!RuntimeFlags.isSystemTask) {
             console.log(`Caching resource in externals store: ${this.name}`);
-            await ExternalResourceCache.store(this.name, dataPackage);
+            await this.getExternalResourceCache().store(this.name, dataPackage);
         }
 
         return dataPackage;

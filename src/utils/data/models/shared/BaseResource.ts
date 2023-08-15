@@ -1,8 +1,28 @@
 import { BaseSchema, parse } from 'valibot';
+import RequestApp from '../../../../app/RequestApp';
 import IDataPackage from './IDataPackage';
 import IResource from './IResource';
 
 export type ResourceData = Response | string | ReadableStream<Uint8Array> | null;
+
+export interface IResourceConstructorParams<I = any, O = any> {
+    name: string;
+    type?: 'external' | 'library' | 'internal';
+    uri?: string;
+    mime?: string;
+    dataGetter?: (params?: Record<string, string>) => Promise<{ data: string; mime: string }>;
+    parsers?: IResourceParserParams<I, O>;
+    settings?: Record<string, string | number | boolean>;
+}
+
+export interface IResourceParserParams<I = any, O = any> {
+    rawInput?: (data: string) => unknown;
+    input?: BaseSchema<I> | ((data: unknown) => I);
+    transform?: (data: I, params?: Record<string, string>) => Promise<O>;
+    output?: BaseSchema<O> | ((data: O) => O);
+    rawOutput?: (data: O) => string;
+}
+
 
 export default abstract class BaseResource<I = any, O = any> implements IResource {
     public name: string;
@@ -10,16 +30,12 @@ export default abstract class BaseResource<I = any, O = any> implements IResourc
     public type = 'external';
     protected _mime: string | undefined;
 
-    protected _parsers: {
-        rawInput?: (data: string) => unknown;
-        input?: BaseSchema<I> | ((data: unknown) => I);
-        transform?: (data: I, params?: Record<string, string>) => Promise<O>;
-        output?: BaseSchema<O> | ((data: O) => O);
-        rawOutput?: (data: O) => string;
-    };
+    protected _parsers: IResourceParserParams;
 
     protected _dataGetter: ((params?: Record<string, string>) => Promise<{ data: string; mime: string }>) | undefined;
     protected _settings: Record<string, string | number | boolean>;
+
+    protected requestApp?: RequestApp;
 
     constructor({
         name,
@@ -29,21 +45,7 @@ export default abstract class BaseResource<I = any, O = any> implements IResourc
         dataGetter,
         parsers,
         settings,
-    }: {
-        name: string;
-        type?: 'external' | 'library' | 'internal';
-        uri?: string;
-        mime?: string;
-        dataGetter?: (params?: Record<string, string>) => Promise<{ data: string; mime: string }>;
-        parsers?: {
-            rawInput?: (data: string) => unknown;
-            input?: BaseSchema<I> | ((data: unknown) => I);
-            transform?: (data: I, params?: Record<string, string>) => Promise<O>;
-            output?: BaseSchema<O> | ((data: O) => O);
-            rawOutput?: (data: O) => string;
-        };
-        settings?: Record<string, string | number | boolean>;
-    }) {
+    }: IResourceConstructorParams) {
         this.name = name;
         this.uri = uri || '';
         this.type = type || this.type;
@@ -53,12 +55,12 @@ export default abstract class BaseResource<I = any, O = any> implements IResourc
         this._settings = settings || {};
     }
 
-    public async retrieve(params: Record<string, string>): Promise<{
+    public async retrieve(requestApp: RequestApp, params: Record<string, string>): Promise<{
         data: string;
         mime: string;
         size: number;
     }> {
-        this.validateSelf();
+        this.initializeSelf(requestApp);
         const dataPackage = await this.retrieveDataPackage(params);
         const mime = this._mime || dataPackage.mime;
         const finalData = await this.parseRawData(dataPackage.data, mime, params);
@@ -69,10 +71,11 @@ export default abstract class BaseResource<I = any, O = any> implements IResourc
         };
     }
 
-    private validateSelf(): void {
+    protected initializeSelf(requestApp: RequestApp): void {
         if (this.type === 'external' && !this.uri) {
             throw new Error('External resources must have a URI');
         }
+        this.requestApp = requestApp;
     }
 
     /**

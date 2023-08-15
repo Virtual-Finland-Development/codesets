@@ -3,8 +3,10 @@ import mime from "mime";
 import { InternalResources } from "../resources";
 import { getResource, listResources } from "../utils/data/repositories/ResourceRepository";
 import { generateSimpleHash } from "../utils/helpers";
+import RequestApp from "./RequestApp";
 
 export async function engageResourcesAction(
+    app: RequestApp,
     resourceURI: string,
     params: Record<string, string>
 ): Promise<{
@@ -25,7 +27,7 @@ export async function engageResourcesAction(
 
     const resource = getResource(resourceName);
     if (resource) {
-        const resourceResponse = await resource.retrieve(params);
+        const resourceResponse = await resource.retrieve(app, params);
 
         // If resource size is larger than 1MB, store it in S3 and redirect to it instead
         // This is a workaround to avoid CloudFront cache limit
