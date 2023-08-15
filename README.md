@@ -47,58 +47,17 @@ The external resource parsers can be defined using the `parsers` attribute of th
 {
     ...,
     parsers: {
-        input?: (data: string) => unknown; // Raw data intake -> data
-        transform?: (data: unknown) => Promise<unknown>; // Data intake -> transformed data
-        output?: (data: unknown) => string; // Transformed data intake -> raw output data
+        rawInput?: (data: string) => unknown; // Raw input string -> data (e.g. JSON.parse)
+        input?: BaseSchema || (data: unknown) => unknown; // data intake -> parsed data schema
+        transform?: (data: unknown, params: Record<string, string>) => Promise<unknown>; // Parsed data intake with query params obj -> transformed data
+        output?: BaseSchema || (data: unknown) => unknown; // Transformed data intake -> output data schema
+        rawOutput?: (data: unknown) => string; // Output data intake -> raw output string (e.g. JSON.stringify)
     }
 }
 
 ```
 
-By default for the JSON-type resource the `input` and `output` parsers are defined as follows:
-
-```typescript
-parsers: {
-    input: (data: string) => JSON.parse(data),
-    output: (data: unknown) => JSON.stringify(data)
-}
-```
-
-#### I/O and validation helpers
-
-For the external resource data validation there is helper functions for the input/ouput parsers:
-
-```typescript
-// resources/external/Test.ts
-import { getInput, getOutput } from '../../utils/data/parsers';
-
-interface MyDataInputInterface {
-    tunniste: string;
-    nimi: string;
-}
-
-interface MyDataOutputInterface {
-    id: string;
-    name: string;
-}
-
-...
-    ...
-    parsers: {
-        input(responseItem: string) {
-            return getInput()<MyDataInputInterface>(responseItem); // Parse/validate JSON string as object
-        },
-        transform(data: any) { // at this point the data should be of type MyDataInputInterface (if the input parser defined), but typescript doesn't know that
-            return {
-                id: data.tunniste,
-                name: data.nimi,
-            };
-        },
-        output(data: any): MyDataOutputInterface { // at this point the data-param should be of type MyDataOutputInterface, but typescript doesn't know
-            return getOutput()<MyDataOutputInterface>(data); // Parse/validate output model and stringify
-        },
-    }
-```
+Where `BaseSchema` is a [valibot](https://valibot.dev) schema object.
 
 ## Filter parameters
 
@@ -129,7 +88,7 @@ Example response:
 
 ## Input/Output data validation tools
 
--   [typia](https://github.com/samchon/typia)
+-   [valibot](https://valibot.dev) - data schema parser library
 
 ## Deployment
 

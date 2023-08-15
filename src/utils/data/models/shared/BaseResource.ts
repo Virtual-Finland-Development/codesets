@@ -1,3 +1,5 @@
+import { BaseSchema, parse } from 'valibot';
+
 export interface IResource {
     uri: string;
     name: string;
@@ -10,16 +12,18 @@ export interface IResource {
 
 export type ResourceData = Response | string | ReadableStream<Uint8Array> | null;
 
-export default abstract class BaseResource implements IResource {
+export default class BaseResource<I = any, O = any> implements IResource {
     public name: string;
     public uri: string;
     public type = 'external';
     protected _mime: string | undefined;
 
     protected _parsers: {
-        input?: (data: string) => unknown;
-        transform?: (data: unknown, params: Record<string, string>) => Promise<unknown>;
-        output?: (data: unknown) => string;
+        rawInput?: (data: string) => unknown;
+        input?: BaseSchema<I> | ((data: unknown) => I);
+        transform?: (data: I, params: Record<string, string>) => Promise<O>;
+        output?: BaseSchema<O> | ((data: O) => O);
+        rawOutput?: (data: O) => string;
     };
 
     protected _dataGetter: ((params: Record<string, string>) => Promise<{ data: string; mime: string }>) | undefined;
@@ -40,9 +44,11 @@ export default abstract class BaseResource implements IResource {
         mime?: string;
         dataGetter?: (params: Record<string, string>) => Promise<{ data: string; mime: string }>;
         parsers?: {
-            input?: (data: string) => unknown; // Raw data intake -> data
-            transform?: (data: unknown, params: Record<string, string>) => Promise<unknown>; // Data intake -> transformed data
-            output?: (data: unknown) => string; // Transformed data intake -> raw output data
+            rawInput?: (data: string) => unknown;
+            input?: BaseSchema<I> | ((data: unknown) => I);
+            transform?: (data: I, params: Record<string, string>) => Promise<O>;
+            output?: BaseSchema<O> | ((data: O) => O);
+            rawOutput?: (data: O) => string;
         };
         settings?: Record<string, string | number | boolean>;
     }) {
@@ -77,6 +83,12 @@ export default abstract class BaseResource implements IResource {
         }
     }
 
+    /**
+     * The retriever
+     * 
+     * @param params 
+     * @returns 
+     */
     protected async _retrieveDataPackage(params: Record<string, string>): Promise<{
         data: string;
         mime: string;
@@ -114,35 +126,64 @@ export default abstract class BaseResource implements IResource {
         return typeof data === 'string' ? data : data !== null ? data.toString() : '';
     }
 
-    protected async _parseRawData(data: string, mime: string, params: Record<string, string>): Promise<string> {
-        let rawData = this._parseRawData_input(data, mime);
-        rawData = await this._parseRawData_transform(rawData, params);
-        return this._parseRawData_output(rawData, mime);
+    /**
+     * The data parser / transformer
+     * 
+     * @param data 
+     * @param mime 
+     * @param params 
+     * @returns 
+     */
+    protected async _parseRawData(rawData: string, mime: string, params: Record<string, string>): Promise<string> {
+        let parsedData = this._parseRawData_input(rawData, mime);
+        parsedData = this._parseRawData_parseInputSchema(parsedData);
+        parsedData = await this._parseRawData_transform(parsedData as I, params);
+        parsedData = this._parseRawData_parseOutputSchema(parsedData as O);
+        return this._parseRawData_output(parsedData as O, mime);
     }
 
-    protected _parseRawData_input(rawData: string, mime: string): any {
-        if (typeof this._parsers.input === 'function') {
-            rawData = this._parsers.input(rawData) as any;
+    protected _parseRawData_input(rawData: string, mime: string): unknown {
+        if (typeof this._parsers.rawInput === 'function') {
+            rawData = this._parsers.rawInput(rawData) as any;
         } else if (mime.startsWith('application/json')) {
             rawData = JSON.parse(rawData);
         }
         return rawData;
     }
 
-    protected async _parseRawData_transform(rawData: any, params: Record<string, string>): Promise<any> {
-        if (typeof this._parsers.transform === 'function') {
-            rawData = await this._parsers.transform(rawData, params);
+    protected _parseRawData_parseInputSchema(rawData: unknown): I {
+        if (typeof this._parsers.input === "object" && typeof this._parsers.input.parse === "function") { // Identify BaseSchema type
+            rawData = parse(this._parsers.input, rawData);
+        } else if (typeof this._parsers.input === "function") {
+            rawData = this._parsers.input(rawData);
         }
-
-        return rawData;
+        return rawData as I;
     }
 
-    protected _parseRawData_output(rawData: any, mime: string): string {
-        if (typeof this._parsers.output === 'function') {
-            return this._parsers.output(rawData);
-        } else if (mime.startsWith('application/json')) {
-            return JSON.stringify(rawData);
+    protected async _parseRawData_transform(data: I, params: Record<string, string>): Promise<O> {
+        if (typeof this._parsers.transform === 'function') {
+            return await this._parsers.transform(data, params);
         }
-        return rawData;
+        return Promise.resolve(data as unknown as O);
+    }
+
+    protected _parseRawData_parseOutputSchema(data: O): O {
+        if (typeof this._parsers.output === "object" && typeof this._parsers.output.parse === "function") { // Identify BaseSchema type
+            data = parse(this._parsers.output, data);
+        } else if (typeof this._parsers.output === "function") {
+            data = this._parsers.output(data);
+        }
+        return data;
+    }
+
+    protected _parseRawData_output(data: O, mime: string): string {
+        if (typeof this._parsers.rawOutput === 'function') {
+            return this._parsers.rawOutput(data);
+        } else if (mime.startsWith('application/json')) {
+            return JSON.stringify(data);
+        } else if (typeof data === 'object' && data !== null && typeof data.toString === 'function') {
+            return data.toString();
+        }
+        return data as unknown as string;
     }
 }
