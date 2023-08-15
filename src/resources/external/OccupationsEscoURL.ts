@@ -1,4 +1,4 @@
-import Resource from '../../utils/data/models/Resource';
+import ExternalResource from '../../utils/data/models/ExternalResource';
 import { getOutput } from '../../utils/data/parsers';
 
 type ISCO = {
@@ -19,7 +19,7 @@ type ISCO = {
     narrower?: ISCO[];
 };
 
-export default new Resource({
+export default new ExternalResource({
     name: 'OccupationsEscoURL',
     uri: 'https://tyomarkkinatori.fi/api/codes/v1/isco',
     parsers: {
