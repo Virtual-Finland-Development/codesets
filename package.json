@@ -56,9 +56,9 @@
     "npm-run-all": "^4.1.5"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.383.0",
     "@iso4217/json": "^20230101.1.6",
     "@transcend-io/conflux": "^4.0.3",
-    "aws-sdk": "^2.1326.0",
     "directory-import": "^2.3.1",
     "iso-3166": "^4.2.0",
     "iso-639": "^0.2.2",
