@@ -1,6 +1,6 @@
 const { Reader } = require('@transcend-io/conflux');
 
-import BaseResource, { ResourceData } from './internal/BaseResource';
+import BaseResource, { ResourceData } from './shared/BaseResource';
 
 export default class ZipResource extends BaseResource {
     protected async _parseResponseRawData(data: ResourceData) {

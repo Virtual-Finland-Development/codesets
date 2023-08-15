@@ -1,4 +1,4 @@
-import Resource from '../../utils/data/models/Resource';
+import ExternalResource from '../../utils/data/models/Resource';
 import { getInput, getOutput } from '../../utils/data/parsers';
 import ISO639Languages from '../library/ISO639Languages';
 
@@ -22,7 +22,7 @@ interface EscoLanguageOutput {
     escoUri: string;
 }
 
-export default new Resource({
+export default new ExternalResource({
     name: 'EscoLanguages',
     uri: 'https://esco.ec.europa.eu/sites/default/files/languages.json',
     parsers: {

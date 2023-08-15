@@ -9,7 +9,7 @@ import { engageResourcesAction } from './app/resources-controller';
 import { InternalResources } from './resources/index';
 import { resolveErrorPackage, resolveUri } from './utils/api';
 import { decodeBase64, parseRequestInputParams } from './utils/helpers';
-import { storeToS3 } from './utils/lib/S3Bucket';
+import S3BucketStorage from './utils/lib/S3BucketStorage';
 import { Environment, getInternalResourceInfo } from './utils/runtime';
 
 const loggerConfiguration = {
@@ -56,7 +56,7 @@ async function handleLiveRequest(event: CloudFrontRequestEvent): Promise<CloudFr
 
             if (routerResponse.cacheable) {
                 const bucketName = getInternalResourceInfo().name;
-                await storeToS3(
+                await S3BucketStorage.store(
                     bucketName,
                     routerResponse.cacheable.filepath,
                     routerResponse.cacheable.data,

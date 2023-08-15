@@ -46,7 +46,7 @@ export function createEscoApiLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulum
             runtime: 'nodejs18.x',
             handler: 'index.handler',
             timeout: 30,
-            memorySize: 256,
+            memorySize: 1024,
             code: new pulumi.asset.FileArchive('./dist/escoApi'),
             tags: escoApiLambdaFunctionConfig.tags,
             environment: {
@@ -74,44 +74,9 @@ export function createEscoApiLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulum
         { provider: escoApiRegion }
     );
 
-    // Warmup scheduler for lambda function
-    if (setup.isProductionLikeEnvironment()) {
-        createProvisionedConcurrencyConfig(setup, escoApiLambdaFunction, escoApiRegion);
-    }
-
     return {
         lambdaFunctionExecRoleRole: escoApiLambdaFunctionExecRoleRole,
         lambdaFunction: escoApiLambdaFunction,
         lambdaFunctionUrl: escoApiLambdaFunctionUrl,
     };
-}
-
-function createProvisionedConcurrencyConfig(
-    setup: ISetup,
-    escoApiLambdaFunction: aws.lambda.Function,
-    escoApiRegion: aws.Provider
-) {
-    const aliasForFunctionConfig = setup.getResourceConfig(
-        'EscoApiLambdaAlias'
-    );
-    const aliasForFunction = new aws.lambda.Alias(aliasForFunctionConfig.name, {
-        functionName: escoApiLambdaFunction.name,
-        functionVersion: escoApiLambdaFunction.version,
-        name: aliasForFunctionConfig.name,
-    });
-
-    const escoApiLambdaFunctionProvisionedConcurrencyConfig = setup.getResourceConfig(
-        'EscoApiLambdaProvisionedConcurrency'
-    );
-    const escoApiLambdaFunctionProvisionedConcurrency = new aws.lambda.ProvisionedConcurrencyConfig(
-        escoApiLambdaFunctionProvisionedConcurrencyConfig.name,
-        {
-            functionName: escoApiLambdaFunction.name,
-            provisionedConcurrentExecutions: 1,
-            qualifier: aliasForFunction.name,
-        },
-        { provider: escoApiRegion }
-    );
-
-    return escoApiLambdaFunctionProvisionedConcurrency;
 }
