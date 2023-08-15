@@ -10,7 +10,7 @@ import { InternalResources } from './resources/index';
 import { resolveError, resolveUri } from './utils/api';
 import { getResource, listResources } from './utils/data/repositories/ResourceRepository';
 import { cutTooLongString, decodeBase64, generateSimpleHash, parseRequestInputParams } from './utils/helpers';
-import { storeToS3 } from './utils/lib/S3Bucket';
+import S3BucketStorage from './utils/lib/S3BucketStorage';
 import { Environment, getInternalResourceInfo } from './utils/runtime';
 
 async function engageResourcesRouter(
@@ -27,7 +27,7 @@ async function engageResourcesRouter(
             response: {
                 status: '200',
                 statusDescription: 'OK: list of resources',
-                body: JSON.stringify([...listResources(), ...InternalResources.listResources()]),
+                body: JSON.stringify([...listResources(), ...InternalResources.listResources()].sort()),
             },
         };
     }
@@ -131,7 +131,7 @@ export async function handler(event: CloudFrontRequestEvent): Promise<CloudFront
                     mime: routerResponse.cacheable.mime,
                 });
                 const bucketName = getInternalResourceInfo().name;
-                await storeToS3(
+                await S3BucketStorage.store(
                     bucketName,
                     routerResponse.cacheable.filepath,
                     routerResponse.cacheable.data,
@@ -209,6 +209,7 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
 
                 if (routerResponse.cacheable) {
                     console.log('Cacheable: ', routerResponse.cacheable.filepath);
+
                     return {
                         statusCode: 200,
                         body: routerResponse.cacheable.data,

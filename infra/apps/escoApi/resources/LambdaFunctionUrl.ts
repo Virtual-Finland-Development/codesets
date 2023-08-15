@@ -1,6 +1,6 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
-import { ISetup } from '../utils/Setup';
+import { ISetup } from '../../../utils/Setup';
 
 export function createEscoApiLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulumi.Output<string>) {
     const escoApiLambdaFunctionExecRoleConfig = setup.getResourceConfig('EscoApiLambdaFunctionExecRole');
@@ -35,11 +35,8 @@ export function createEscoApiLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulum
         }),
     });
 
-    const escoApiConfig = new pulumi.Config('escoApi');
     const escoApiRegionConfig = setup.getResourceConfig('EscoApiRegion');
-    const escoApiRegion = new aws.Provider(escoApiRegionConfig.name, {
-        region: escoApiConfig.require('awsRegion') as aws.Region,
-    });
+    const escoApiRegion = new aws.Provider(escoApiRegionConfig.name);
 
     const escoApiLambdaFunctionConfig = setup.getResourceConfig('EscoApiLambdaFunction');
     const escoApiLambdaFunction = new aws.lambda.Function(
@@ -49,7 +46,7 @@ export function createEscoApiLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulum
             runtime: 'nodejs18.x',
             handler: 'index.handler',
             timeout: 30,
-            memorySize: 256,
+            memorySize: 1024,
             code: new pulumi.asset.FileArchive('./dist/escoApi'),
             tags: escoApiLambdaFunctionConfig.tags,
             environment: {
@@ -57,6 +54,7 @@ export function createEscoApiLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulum
                     CODESETS_API_ENDPOINT: pulumi.interpolate`${codesetsUrl}`,
                 },
             },
+            publish: true,
         },
         { provider: escoApiRegion }
     );
@@ -76,55 +74,9 @@ export function createEscoApiLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulum
         { provider: escoApiRegion }
     );
 
-    // Warmup scheduler for lambda function
-    if (setup.isProductionLikeEnvironment()) {
-        setupLambdaWarmerScheduler(setup, escoApiLambdaFunction, escoApiRegion);
-    }
-
     return {
         lambdaFunctionExecRoleRole: escoApiLambdaFunctionExecRoleRole,
         lambdaFunction: escoApiLambdaFunction,
         lambdaFunctionUrl: escoApiLambdaFunctionUrl,
     };
-}
-
-function setupLambdaWarmerScheduler(
-    setup: ISetup,
-    escoApiLambdaFunction: aws.lambda.Function,
-    escoApiRegion: aws.Provider
-) {
-    const escoApiWarmupSchedulerEventConfig = setup.getResourceConfig('EscoApiWarmupSchedulerEvent');
-    const escoApiWarmupSchedulerEvent = new aws.cloudwatch.EventRule(
-        escoApiWarmupSchedulerEventConfig.name,
-        {
-            scheduleExpression: 'rate(5 minutes)',
-            description: 'Warmup scheduler for Esco API lambda function',
-            tags: escoApiWarmupSchedulerEventConfig.tags,
-        },
-        { provider: escoApiRegion }
-    );
-
-    const escoApiWarmupSchedulerTargetConfig = setup.getResourceConfig('EscoApiWarmupSchedulerTarget');
-    new aws.cloudwatch.EventTarget(
-        escoApiWarmupSchedulerTargetConfig.name,
-        {
-            rule: escoApiWarmupSchedulerEvent.name,
-            arn: escoApiLambdaFunction.arn,
-            input: JSON.stringify({ source: 'warmup' }),
-        },
-        { provider: escoApiRegion }
-    );
-
-    // Permission for the warmup scheduler to invoke the lambda function
-    const escoApiWarmupSchedulerPermissionConfig = setup.getResourceConfig('EscoApiWarmupSchedulerPermission');
-    new aws.lambda.Permission(
-        escoApiWarmupSchedulerPermissionConfig.name,
-        {
-            action: 'lambda:InvokeFunction',
-            function: escoApiLambdaFunction.name,
-            principal: 'events.amazonaws.com',
-            sourceArn: escoApiWarmupSchedulerEvent.arn,
-        },
-        { provider: escoApiRegion }
-    );
 }

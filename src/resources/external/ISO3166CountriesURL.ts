@@ -1,15 +1,29 @@
-import Resource from '../../utils/data/models/Resource';
-import { getOutput } from '../../utils/data/parsers';
+import { Output, array, length, object, string } from 'valibot';
+import ExternalResource from '../../utils/data/models/ExternalResource';
 import { isEnabledFilter } from '../../utils/filters';
 
-interface Country {
-    id: string;
-    displayName: string;
-    englishName: string;
-    nativeName: string;
-    twoLetterISORegionName: string;
-    threeLetterISORegionName: string;
-}
+const CountriesInputDataSchema = array(
+    object({
+        cca2: string([length(2)]),
+        cca3: string([length(3)]),
+        name: object({
+            common: string(),
+            official: string(),
+        }),
+    })
+);
+type CountriesInputData = Output<typeof CountriesInputDataSchema>;
+
+const CountrySchema = object({
+    id: string(),
+    displayName: string(),
+    englishName: string(),
+    nativeName: string(),
+    twoLetterISORegionName: string([length(2)]),
+    threeLetterISORegionName: string([length(3)]),
+});
+type Country = Output<typeof CountrySchema>;
+const CountriesResponseSchema = array(CountrySchema);
 
 async function fetchTestbedCountryIds(): Promise<string[]> {
     const response = await fetch(
@@ -19,13 +33,14 @@ async function fetchTestbedCountryIds(): Promise<string[]> {
     return data.components.schemas.ISO_3166_1_Alpha_3.enum;
 }
 
-export default new Resource({
+export default new ExternalResource({
     name: 'ISO3166CountriesURL',
     uri: 'https://github.com/mledoze/countries/blob/master/countries.json?raw=true',
     mime: 'application/json; charset=utf-8',
     parsers: {
-        async transform(countriesRaw: any, params: Record<string, string>) {
-            const countries = countriesRaw.map((countryData: any) => {
+        input: CountriesInputDataSchema,
+        async transform(countriesRaw: CountriesInputData, params: Record<string, string>) {
+            const countries = countriesRaw.map((countryData) => {
                 return {
                     id: countryData.cca2,
                     displayName: countryData.name.common,
@@ -42,11 +57,8 @@ export default new Resource({
                     TestbedCountryIds.includes(country.threeLetterISORegionName)
                 );
             }
-
             return countries;
         },
-        output(data: any) {
-            return getOutput()<Country[]>(data); // Parse and stringify
-        },
-    },
+        output: CountriesResponseSchema,
+    }
 });

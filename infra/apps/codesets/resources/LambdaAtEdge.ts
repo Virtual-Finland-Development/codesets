@@ -1,7 +1,7 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 import * as fs from 'fs';
-import { ISetup } from '../utils/Setup';
+import { ISetup } from '../../../utils/Setup';
 export default function createLambdaAtEdgeFunction(
     setup: ISetup,
     s3BucketSetup: { name: string; bucket: aws.s3.Bucket }

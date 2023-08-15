@@ -1,42 +1,42 @@
-import Resource from '../../utils/data/models/Resource';
-import { getInput, getOutput } from '../../utils/data/parsers';
+import { Output, array, equal, length, object, string } from 'valibot';
+import ExternalResource from '../../utils/data/models/ExternalResource';
 import ISO639Languages from '../library/ISO639Languages';
 
-interface EscoLanguagesInput {
-    title: 'languages';
-    links: {
-        narrowerSkill: Array<{
-            href: string;
-            uri: string;
-            title: string;
-            skillType: string;
-        }>;
-    };
-}
+const EscoLanguagesInputSchema = object({
+    title: string([equal('languages')]),
+    links: object({
+        narrowerSkill: array(object({
+            href: string(),
+            uri: string(),
+            title: string(),
+            skillType: string(),
+        })),
+    }),
+});
 
-interface EscoLanguageOutput {
-    id: string;
-    name: string;
-    twoLetterISOLanguageName: string;
-    threeLetterISOLanguageName: string;
-    escoUri: string;
-}
+type EscoLanguagesInput = Output<typeof EscoLanguagesInputSchema>;
 
-export default new Resource({
+const EscoLanguageOutputSchema = array(object({
+    id: string(),
+    name: string(),
+    twoLetterISOLanguageName: string([length(2)]),
+    threeLetterISOLanguageName: string([length(3)]),
+    escoUri: string(),
+}));
+
+export default new ExternalResource({
     name: 'EscoLanguages',
     uri: 'https://esco.ec.europa.eu/sites/default/files/languages.json',
     parsers: {
-        input(data: any) {
-            return getInput()<EscoLanguagesInput>(data);
-        },
-        async transform(escoResponse: any) {
+        input: EscoLanguagesInputSchema,
+        async transform(escoResponse: EscoLanguagesInput) {
             const escoCodeMap = escoResponse.links.narrowerSkill.reduce((acc: any, language: any) => {
                 const code = language.title.toLocaleLowerCase();
                 acc[code] = language.uri;
                 return acc;
             }, {});
 
-            return ISO639Languages.map((language: any) => {
+            return ISO639Languages.map((language) => {
                 const mapCode = language.englishName.toLocaleLowerCase();
                 return {
                     id: language.id,
@@ -47,8 +47,6 @@ export default new Resource({
                 };
             });
         },
-        output(data: any) {
-            return getOutput()<EscoLanguageOutput[]>(data);
-        },
+        output: EscoLanguageOutputSchema,
     },
 });
