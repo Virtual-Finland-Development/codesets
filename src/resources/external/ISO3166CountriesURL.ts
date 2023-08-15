@@ -1,5 +1,5 @@
 import { Output, array, length, object, string } from 'valibot';
-import ExternalResource from '../../utils/data/models/Resource';
+import ExternalResource from '../../utils/data/models/ExternalResource';
 import { isEnabledFilter } from '../../utils/filters';
 
 const CountriesInputDataSchema = array(

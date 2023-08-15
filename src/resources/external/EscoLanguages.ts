@@ -1,5 +1,5 @@
 import { Output, array, equal, length, object, string } from 'valibot';
-import ExternalResource from '../../utils/data/models/Resource';
+import ExternalResource from '../../utils/data/models/ExternalResource';
 import ISO639Languages from '../library/ISO639Languages';
 
 const EscoLanguagesInputSchema = object({

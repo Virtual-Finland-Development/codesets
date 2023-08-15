@@ -1,5 +1,5 @@
 import { array, object, string } from 'valibot';
-import ExternalResource from '../../utils/data/models/Resource';
+import ExternalResource from '../../utils/data/models/ExternalResource';
 import { SuomiKoodistotInput, SuomiKoodistotInputSchema } from '../../utils/data/models/SuomiFiKoodistotResource';
 
 const MunicipalitiesOutputSchema = array(object({
