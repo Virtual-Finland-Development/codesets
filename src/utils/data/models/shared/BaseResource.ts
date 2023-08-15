@@ -98,7 +98,6 @@ export default class BaseResource<I = any, O = any> implements IResource {
         mime: string;
     }> {
         if (typeof this._dataGetter === 'function') {
-            console.log("FORTS, datagetter");
             return await this._dataGetter(params);
         }
 
@@ -151,7 +150,6 @@ export default class BaseResource<I = any, O = any> implements IResource {
         if (typeof this._parsers.rawInput === 'function') {
             rawData = this._parsers.rawInput(rawData) as any;
         } else if (mime.startsWith('application/json')) {
-            console.log("HOITS", typeof rawData, JSON.stringify(rawData));
             rawData = JSON.parse(rawData);
         }
         return rawData;
