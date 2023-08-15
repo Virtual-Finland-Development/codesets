@@ -1,5 +1,5 @@
 import { BaseSchema, Output, array, length, merge, object, optional, record, recursive, string } from 'valibot';
-import Resource from '../../utils/data/models/Resource';
+import ExternalResource from '../../utils/data/models/ExternalResource';
 
 // Build a recursive object type with children of self-likes
 // @see: https://github.com/fabian-hiller/valibot/issues/72
@@ -23,7 +23,7 @@ const IscoItemSchema: BaseSchema<IscoItem> = merge([
     })
 ]);
 
-export default new Resource({
+export default new ExternalResource({
     name: 'OccupationsEscoURL',
     uri: 'https://tyomarkkinatori.fi/api/codes/v1/isco',
     parsers: {

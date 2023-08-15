@@ -4,7 +4,7 @@ import * as pulumi from '@pulumi/pulumi';
 import * as fs from 'fs';
 import * as mime from 'mime';
 import * as path from 'path';
-import { ISetup } from '../utils/Setup';
+import { ISetup } from '../../../utils/Setup';
 
 export default function createS3Bucket(setup: ISetup) {
     const bucketConfig = setup.getResourceConfig('s3bucket');
@@ -72,9 +72,8 @@ function publicReadPolicyForBucket(bucketName: string, originAccessArn: string, 
         ],
     });
 }
-
 export function uploadAssetsToBucket(bucketResource: aws.s3.Bucket) {
-    process.chdir('../'); // navigate to project root folder
+    process.chdir('../../../'); // navigate to project root folder
     uploadDirToS3(`${process.cwd()}/src/resources/internal`, bucketResource, '', 'resources');
     uploadDirToS3(`${process.cwd()}/src/build/webroot`, bucketResource);
 }

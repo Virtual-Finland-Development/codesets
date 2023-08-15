@@ -1,6 +1,6 @@
 import * as aws from "@pulumi/aws";
-import {Bucket} from "@pulumi/aws/s3";
-import {ISetup} from "../utils/Setup";
+import { Bucket } from "@pulumi/aws/s3";
+import { ISetup } from "../../../utils/Setup";
 
 export function createStandardLogsBucket(setup: ISetup): Bucket {
     const awsEuNorth1 = new aws.Provider("aws-eu-north-1", {region: "eu-north-1"});

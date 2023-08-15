@@ -1,5 +1,5 @@
 import { Output, array, equal, length, object, string } from 'valibot';
-import Resource from '../../utils/data/models/Resource';
+import ExternalResource from '../../utils/data/models/Resource';
 import ISO639Languages from '../library/ISO639Languages';
 
 const EscoLanguagesInputSchema = object({
@@ -24,7 +24,7 @@ const EscoLanguageOutputSchema = array(object({
     escoUri: string(),
 }));
 
-export default new Resource({
+export default new ExternalResource({
     name: 'EscoLanguages',
     uri: 'https://esco.ec.europa.eu/sites/default/files/languages.json',
     parsers: {

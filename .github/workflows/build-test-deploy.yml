@@ -7,13 +7,32 @@ on:
                 description: Environment where to deploy the stack (dev, staging)
                 type: environment
                 required: true
+            deploy_codesets:
+                description: Deploy codesets
+                type: boolean
+                required: false
+                default: true
+            deploy_esco_api:
+                description: Deploy Esco API
+                type: boolean
+                required: false
+                default: true
     workflow_call:
         inputs:
             environment:
                 description: Environment where to deploy the stack (dev, staging)
                 type: string
                 required: true
-
+            deploy_codesets:
+                description: Deploy codesets
+                type: boolean
+                required: false
+                default: true
+            deploy_esco_api:
+                description: Deploy Esco API
+                type: boolean
+                required: false
+                default: true
 jobs:
     build-test-deploy:
         name: Build, test and deploy ${{ inputs.environment }}
@@ -44,11 +63,21 @@ jobs:
                   environment: ${{ inputs.environment }}
                   aws-region: ${{ secrets.AWS_REGION }}
                   pulumi-access-token: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-            - name: Deploy with Pulumi
-              id: pulumi
+            - name: Deploy codesets
+              if: ${{ inputs.deploy_codesets }}
               uses: pulumi/actions@v4
               with:
-                  work-dir: ./infra
+                  work-dir: ./infra/apps/codesets
+                  command: up
+                  stack-name: virtualfinland/${{ inputs.environment }}
+                  upsert: true
+              env:
+                  PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+            - name: Deploy Esco API
+              if: ${{ inputs.deploy_esco_api }}
+              uses: pulumi/actions@v4
+              with:
+                  work-dir: ./infra/apps/escoApi
                   command: up
                   stack-name: virtualfinland/${{ inputs.environment }}
                   upsert: true

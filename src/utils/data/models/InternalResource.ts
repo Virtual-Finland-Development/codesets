@@ -1,7 +1,7 @@
 import { InternalResources } from '../../../resources';
-import { retrieveFromS3 } from '../../lib/S3Bucket';
+import S3BucketStorage from '../../lib/S3BucketStorage';
 import { Environment, getInternalResourceInfo } from '../../runtime';
-import BaseResource from './internal/BaseResource';
+import BaseResource from './shared/BaseResource';
 
 const inMemoryCache: Record<
     string,
@@ -40,7 +40,7 @@ export default class InternalResource extends BaseResource {
 
         const bucketName = getInternalResourceInfo().name;
         const bucketKey = `resources/${fileName}`;
-        inMemoryCache[this.uri] = await retrieveFromS3(bucketName, bucketKey);
+        inMemoryCache[this.uri] = await S3BucketStorage.retrieve(bucketName, bucketKey);
         return inMemoryCache[this.uri];
     }
 }

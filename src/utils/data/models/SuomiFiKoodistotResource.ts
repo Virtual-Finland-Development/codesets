@@ -1,5 +1,5 @@
 import { BaseSchema, Output, array, length, merge, number, object, optional, parse, record, recursive, string } from 'valibot';
-import BaseResource from './internal/BaseResource';
+import ExternalResource from './ExternalResource';
 
 // Build a recursive object type with children of self-likes
 // @see: https://github.com/fabian-hiller/valibot/issues/72
@@ -40,7 +40,7 @@ export const SuomiKoodistotOutputSchema = array(object({
 }));
 export type SuomiKoodistotOutput = Output<typeof SuomiKoodistotOutputSchema>;
 
-export default class SuomiFiKoodistotResource extends BaseResource {
+export default class SuomiFiKoodistotResource extends ExternalResource {
     
     protected _parseRawData_parseInputSchema(rawData: unknown) {
         return parse(SuomiKoodistotInputSchema, rawData);

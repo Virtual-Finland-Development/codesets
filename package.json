@@ -4,16 +4,23 @@
   "description": "A shared codesets / resources router for virtual finland projects",
   "scripts": {
     "prebuild": "npm i && npm run clean",
-    "build": "npm run build:codesets && npm run build:escoapi",
+    "build": "npm run build:codesets && npm run build:escoApi",
     "build:codesets": "tsc",
-    "build:escoapi": "ncc build src/escoApi.ts -o dist/escoApi --minify",
+    "build:escoApi": "ncc build src/escoApi.ts -o dist/escoApi --minify",
     "postbuild": "ts-node src/build/finalize-build.ts",
     "build:infra": "npm -C infra install && npm -C infra run build",
     "clean": "rimraf dist",
     "predeploy": "npm run build && npm run build:infra",
-    "deploy": "pulumi -C infra up --yes",
+    "deploy": "npm run deploy:codesets && npm run deploy:escoapi",
+    "deploy:codesets": "pulumi -C infra/apps/codesets up",
+    "deploy:escoapi": "pulumi -C infra/apps/escoApi up",
+    "dev": "npm run-all --parallel dev:codesets dev:escoApi",
+    "dev:codesets": "nodemon --delay 80ms --watch 'src' -e 'ts' --ignore src/escoApi.ts --exec \"npm run build:codesets && npm run serve:codesets\"",
+    "dev:escoApi": "nodemon --delay 80ms --watch src/escoApi.ts --watch src/utils -e 'ts'  --exec \"npm run build:escoApi && npm run serve:escoApi\"",
+    "serve": "npm run-all --parallel serve:codesets serve:escoApi",
+    "serve:codesets": "serverless offline --config ./serverless-offline.codesets.yml",
+    "serve:escoApi": "serverless offline --config ./serverless-offline.escoApi.yml",
     "start": "nodemon --delay 80ms --watch 'src' -e 'ts'  --exec \"npm run build && npm run serve\"",
-    "serve": "serverless offline --config ./serverless-offline.yml",
     "test": "jest",
     "format": "prettier --write \"./**/*.ts\"",
     "lint": "eslint --ext .ts ."
@@ -45,7 +52,8 @@
     "serverless-offline": "^12.0.4",
     "ts-jest": "^29.0.5",
     "ts-node": "^10.9.1",
-    "typescript": "^4.9.5"
+    "typescript": "^4.9.5",
+    "npm-run-all": "^4.1.5"
   },
   "dependencies": {
     "@iso4217/json": "^20230101.1.6",
@@ -55,6 +63,7 @@
     "iso-3166": "^4.2.0",
     "iso-639": "^0.2.2",
     "mime": "^3.0.0",
-    "valibot": "^0.8.0"
+    "valibot": "^0.8.0",
+    "ts-mixer": "^6.0.3"
   }
 }
