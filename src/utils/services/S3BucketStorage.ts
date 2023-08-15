@@ -1,18 +1,20 @@
-import aws from 'aws-sdk';
+import { GetObjectCommand, HeadObjectCommand, NotFound, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { leftTrimSlash } from '../helpers';
 import { IStorage } from './IStorage';
 
 class S3BucketStorage implements IStorage {
     public async store(bucketName: string, key: string, data: string, mime: string) {
         try {
-            const s3 = new aws.S3();
+            const s3Client = new S3Client({});
             const params = {
                 Bucket: bucketName,
                 Key: leftTrimSlash(key),
                 Body: data,
                 ContentType: mime,
             };
-            await s3.putObject(params).promise();
+
+            await s3Client.send(new PutObjectCommand(params));
+        
         } catch (error: any) {
             console.error(error?.message, error?.stack);
             throw new Error('An error occurred while storing to S3');
@@ -21,12 +23,13 @@ class S3BucketStorage implements IStorage {
 
     public async retrieve(bucketName: string, key: string): Promise<{ data: string; mime: string }> {
         try {
-            const s3 = new aws.S3();
+            const s3Client = new S3Client({});
             const params = {
                 Bucket: bucketName,
                 Key: leftTrimSlash(key),
             };
-            const data = await s3.getObject(params).promise();
+
+            const data  = await s3Client.send(new GetObjectCommand(params));
 
             if (!data.Body) throw new Error('No data found in S3');
 
@@ -42,15 +45,17 @@ class S3BucketStorage implements IStorage {
 
     public async exists(bucketName: string, key: string): Promise<boolean> {
         try {
-            const s3 = new aws.S3();
+            const s3Client = new S3Client({});
             const params = {
                 Bucket: bucketName,
                 Key: leftTrimSlash(key),
             };
-            await s3.headObject(params).promise();
+
+            await s3Client.send(new HeadObjectCommand(params));
+            
             return true;
         } catch (error: any) {
-            if (error.code === 'NotFound') return false;
+            if (error instanceof NotFound) return false;
             console.error(error?.message, error?.stack);
             throw new Error('An error occurred while checking for resource in S3');
         }
@@ -61,13 +66,13 @@ class S3BucketStorage implements IStorage {
         expired: boolean,
     }> {
         try {
-            const s3 = new aws.S3();
+            const s3Client = new S3Client({});
             const params = {
                 Bucket: bucketName,
                 Key: leftTrimSlash(key),
             };
 
-            const data = await s3.headObject(params).promise();
+            const data = await s3Client.send(new HeadObjectCommand(params));
             if (typeof data?.LastModified === "undefined") throw new Error('Invalid data returned from S3');
             
             const lastModified = data.LastModified.getTime();
@@ -79,7 +84,7 @@ class S3BucketStorage implements IStorage {
                 expired,
             };
         } catch (error: any) {
-            if (error.code === 'NotFound') return { exists: false, expired: false };
+            if (error instanceof NotFound) return { exists: false, expired: false };
             console.error(error?.message, error?.stack);
             throw new Error('An error occurred while checking for resource in S3');
         }

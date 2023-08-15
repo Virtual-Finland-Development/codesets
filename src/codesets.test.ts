@@ -5,19 +5,6 @@ import { offlineHandler } from './codesets';
 jest.mock('node:fetch');
 
 test('Basic router test', async () => {
-    /* const event = {
-        Records: [
-            {
-                cf: {
-                    request: {
-                        uri: "/resources/bazz",
-                    },
-                },
-            },
-        ],
-    } as CloudFrontRequestEvent;
-    */
-
     // Mock event
     const event = {
         rawPath: '/resources/bazz',
@@ -25,6 +12,9 @@ test('Basic router test', async () => {
             http: {
                 method: 'GET',
             },
+        },
+        headers: {
+            'x-amzn-trace-id': "Root=1-abba-1234",
         },
     } as unknown as APIGatewayProxyEventV2;
 

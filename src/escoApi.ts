@@ -1,5 +1,6 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { resolveError } from './utils/api';
+import RequestLogger from './app/RequestLogger';
+import { resolveErrorPackage } from './utils/api';
 import { transformOccupations } from './utils/data/transformers';
 import { ValidationError } from './utils/exceptions';
 
@@ -12,6 +13,13 @@ const internalMemory: any = {
 
 // AWS Lambda function handler for the ESCO API
 export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
+    const requestLogger = new RequestLogger(event);
+    const response = await handleEvent(event);
+    requestLogger.log(response);
+    return response;
+}
+
+async function handleEvent(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
     try {
         const request = parseRequest(event);
         const uri = `${CODESETS_API_ENDPOINT}${request.path}`;
@@ -36,7 +44,7 @@ export async function handler(event: APIGatewayProxyEventV2): Promise<APIGateway
             body: responseBody,
         };
     } catch (error: any) {
-        const errorPackage = resolveError(error);
+        const errorPackage = resolveErrorPackage(error);
         return {
             statusCode: errorPackage.statusCode,
             body: errorPackage.body,

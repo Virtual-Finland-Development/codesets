@@ -19,7 +19,6 @@ export default class InternalResource extends BaseResource {
         mime: string;
     }> {
         if (typeof inMemoryCache[this.uri] !== 'undefined') {
-            console.log('Using in-memory cache for resource');
             return inMemoryCache[this.uri];
         }
 

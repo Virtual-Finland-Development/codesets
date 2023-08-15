@@ -9,28 +9,22 @@ export function resolveUri(uri: string): string {
     return UriRedirects[uri] || uri;
 }
 
-export function resolveError(error: Error): { statusCode: number; body: string; description: string } {
-    const errorPackage = resolveErrorPackage(error);
-    console.error('Error: ', errorPackage);
-    if (error instanceof ValiError) {
-        // Cleanup the vali error to make it more accessible: only show the first issue and remove the input
-        console.error('Validation errors: ', JSON.stringify(error.issues.slice(0, 1).map(i => {
-            return {
-               ...i,
-                path: i.path?.map(p => {
-                    return {
-                        ...p,
-                        input: undefined 
-                    }
-                })
-            }
-        }), null, 4));
-    }
-    return errorPackage;
-}
-
-function resolveErrorPackage(error: Error): { statusCode: number; body: string; description: string } {
+export function resolveErrorPackage(error: Error): { statusCode: number; body: string; description: string } {
     if (error instanceof ValidationError || error instanceof ValiError) {
+        if (error instanceof ValiError) {
+            // Cleanup the vali error to make it more accessible: only show the first issue and remove the input
+            console.debug('Validation errors: ', JSON.stringify(error.issues.slice(0, 1).map(i => {
+                return {
+                   ...i,
+                    path: i.path?.map(p => {
+                        return {
+                            ...p,
+                            input: undefined 
+                        }
+                    })
+                }
+            }), null, 4));
+        }
         return {
             statusCode: 400,
             description: 'Bad Request',
