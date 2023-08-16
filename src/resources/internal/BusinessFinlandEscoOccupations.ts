@@ -11,7 +11,7 @@ const OccupationSchema = object({
     escoDescription: string(),
     escoIdentifier: string(),
 });
-const OccupationsResponseSchema = object({
+export const OccupationsResponseSchema = object({
     totalCount: number(),
     occupations: array(OccupationSchema),
 });

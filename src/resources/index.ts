@@ -7,6 +7,11 @@ function isFunctionalInternalResourceFile(resource: string): boolean {
     return resource.endsWith('.js') || resource.endsWith('.ts');
 }
 
+function cleanupResourceName(resourceName: string): string {
+    return resourceName.replace('/', '').replace(/\.js$/, '').replace(/\.ts$/, '');
+}
+
+
 const importDir = require('directory-import');
 const externalResourcesImport = importDir({ directoryPath: './external' });
 const internalResourcesImport = importDir({
@@ -15,7 +20,7 @@ const internalResourcesImport = importDir({
 const libraryResourcesImport = importDir({ directoryPath: './library' });
 
 const externalResources = Object.keys(externalResourcesImport).reduce((acc, key) => {
-    const resourceKey: string = key.replace('/', '').replace(/\.js$/, '');
+    const resourceKey = cleanupResourceName(key);
     const resource = externalResourcesImport[key].default;
 
     return {
@@ -29,7 +34,7 @@ const functionalInternalResources = Object.keys(internalResourcesImport).reduce(
         return acc;
     }
 
-    const resourceKey: string = key.replace('/', '').replace(/\.js$/, '');
+    const resourceKey = cleanupResourceName(key);
     const resource = internalResourcesImport[key].default;
 
     return {
@@ -39,7 +44,7 @@ const functionalInternalResources = Object.keys(internalResourcesImport).reduce(
 }, {});
 
 const libraryResources = Object.keys(libraryResourcesImport).reduce((acc, key) => {
-    const resourceKey: string = key.replace('/', '').replace(/\.js$/, '');
+    const resourceKey = cleanupResourceName(key);
     const resource = libraryResourcesImport[key].default;
 
     if (resource instanceof LibraryResource) {
