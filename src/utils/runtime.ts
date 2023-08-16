@@ -4,7 +4,7 @@ export function getInternalResourceInfo(): { name: string } {
     return bucketInfo;
 }
 
-// Static mutable runtime flags reference
+// Lambda@edge does not have access to environment variables, so we mock them here to separate local and live environments
 export const RuntimeFlags = {
     isLocal: false,
 };
