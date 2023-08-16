@@ -28,7 +28,7 @@ services:
     ports:
       - 3580:3580
     environment:
-      - CODESETS_API_ENDPOINT=codesets:3166
+      - CODESETS_API_ENDPOINT=http://codesets:3166
     networks:
       - vfd-network
     labels:
