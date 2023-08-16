@@ -5,6 +5,6 @@ export function getInternalResourceInfo(): { name: string } {
 }
 
 // Lambda@edge does not have access to environment variables, so we mock them here to separate local and live environments
-export const Environment = {
+export const RuntimeFlags = {
     isLocal: false,
 };

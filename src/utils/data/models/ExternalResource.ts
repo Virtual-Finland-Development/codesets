@@ -1,4 +1,4 @@
-import { Environment } from '../../runtime';
+import { RuntimeFlags } from '../../runtime';
 import BaseResource from './shared/BaseResource';
 
 const inMemoryCache: Record<
@@ -16,14 +16,14 @@ export default class ExternalResource extends BaseResource {
         data: string;
         mime: string;
     }> {
-        if (Environment.isLocal && typeof inMemoryCache[this.uri] !== 'undefined') {
+        if (RuntimeFlags.isLocal && typeof inMemoryCache[this.uri] !== 'undefined') {
             console.log(`Using in-memory cache for resource: ${this.name}`);
             return inMemoryCache[this.uri];
         }
 
         const dataPackage = await super._retrieveDataPackage(params);
 
-        if (Environment.isLocal) {
+        if (RuntimeFlags.isLocal) {
             console.log(`Caching resource in-memory: ${this.name}`);
             inMemoryCache[this.uri] = dataPackage;
         }

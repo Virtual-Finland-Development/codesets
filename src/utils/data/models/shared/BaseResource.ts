@@ -1,4 +1,5 @@
 import { BaseSchema, parse } from 'valibot';
+import RequestApp from '../../../../app/RequestApp';
 
 export interface IResource {
     uri: string;
@@ -7,7 +8,7 @@ export interface IResource {
     /**
      * Retrieve the data from the resource
      */
-    retrieve(params: Record<string, string>): Promise<{ data: string; mime: string; size: number }>;
+    retrieve(requestApp: RequestApp, params: Record<string, string>): Promise<{ data: string; mime: string; size: number }>;
 }
 
 export type ResourceData = Response | string | ReadableStream<Uint8Array> | null;
@@ -28,6 +29,8 @@ export default class BaseResource<I = any, O = any> implements IResource {
 
     protected _dataGetter: ((params: Record<string, string>) => Promise<{ data: string; mime: string }>) | undefined;
     protected _settings: Record<string, string | number | boolean>;
+
+    protected requestApp?: RequestApp;
 
     constructor({
         name,
@@ -61,12 +64,12 @@ export default class BaseResource<I = any, O = any> implements IResource {
         this._settings = settings || {};
     }
 
-    public async retrieve(params: Record<string, string>): Promise<{
+    public async retrieve(requestApp: RequestApp, params: Record<string, string>): Promise<{
         data: string;
         mime: string;
         size: number;
     }> {
-        this.validateSelf();
+        this.initializeSelf(requestApp);
         const dataPackage = await this._retrieveDataPackage(params);
         const mime = this._mime || dataPackage.mime;
         const finalData = await this._parseRawData(dataPackage.data, mime, params);
@@ -77,10 +80,11 @@ export default class BaseResource<I = any, O = any> implements IResource {
         };
     }
 
-    private validateSelf(): void {
+    protected initializeSelf(requestApp: RequestApp): void {
         if (this.type === 'external' && !this.uri) {
             throw new Error('External resources must have a URI');
         }
+        this.requestApp = requestApp;
     }
 
     /**
