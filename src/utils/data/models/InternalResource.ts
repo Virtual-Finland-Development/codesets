@@ -26,7 +26,7 @@ export default class InternalResource extends BaseResource {
             if (resource) {
                 inMemoryCache[this.uri] = {
                     data: resource.body,
-                    mime: resource.mime || 'application/json',
+                    mime: this._mime || resource.mime || 'application/json',
                 };
 
                 return inMemoryCache[this.uri];
@@ -38,7 +38,11 @@ export default class InternalResource extends BaseResource {
         const bucketKey = `resources/${fileName}`;
 
         if (!this.requestApp?.storage) throw new Error('Internal storage not initialized');
-        inMemoryCache[this.uri] = await this.requestApp.storage.retrieve(bucketName, bucketKey);
+        const result = await this.requestApp.storage.retrieve(bucketName, bucketKey);
+        inMemoryCache[this.uri] = {
+            data: result.data,
+            mime: this._mime || result.mime || 'application/json',
+        };
         return inMemoryCache[this.uri];
     }
 }

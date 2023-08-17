@@ -62,11 +62,10 @@ export default abstract class BaseResource<I = any, O = any> implements IResourc
     }> {
         this.initializeSelf(requestApp);
         const dataPackage = await this.retrieveDataPackage(params);
-        const mime = this._mime || dataPackage.mime;
-        const finalData = await this.parseRawData(dataPackage.data, mime, params);
+        const finalData = await this.parseRawData(dataPackage.data, dataPackage.mime, params);
         return {
             data: finalData,
-            mime: mime,
+            mime: dataPackage.mime,
             size: Buffer.byteLength(finalData, 'utf8'),
         };
     }
@@ -93,7 +92,7 @@ export default abstract class BaseResource<I = any, O = any> implements IResourc
         const rawData = await this._parseResponseRawData(response.data);
         return {
             data: rawData,
-            mime: response.mime,
+            mime: this._mime || response.mime,
         };
     }
 
