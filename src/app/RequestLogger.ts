@@ -18,8 +18,7 @@ export type LogPackage = {
         statusCode: number;
         contentLength: number;
     };
-    errors: any[],
-    debugs: string[],
+    errors?: any[],
 };
 
 export type RequestLoggerSettings = {
@@ -32,7 +31,6 @@ export default class RequestLogger {
     private readonly request: APIGatewayProxyEventV2 | CloudFrontRequestEvent;
     private readonly configuration: RequestLoggerSettings;
     private readonly errors: any[] = [];
-    private readonly debugs: string[] = [];
 
     constructor(request: APIGatewayProxyEventV2 | CloudFrontRequestEvent, configuration?: RequestLoggerSettings) {
         this.request = request;
@@ -51,10 +49,6 @@ export default class RequestLogger {
         } else {
             console.log(JSON.stringify(log));
         }
-    }
-
-    public debug(message: string): void {
-        this.debugs.push(message);
     }
 
     public catchError(error: Error | ValiError | any) {
@@ -120,8 +114,7 @@ export default class RequestLogger {
                 statusCode: statusCode || 500,
                 contentLength: body ? body.length : 0,
             },
-            errors: this.errors,
-            debugs: this.debugs,
+            errors: this.errors.length > 0 ? this.errors : undefined,
         };
     }
 
@@ -144,8 +137,7 @@ export default class RequestLogger {
                 query: eventRequest.querystring,
             },
             response: eventResponse,
-            errors: this.errors,
-            debugs: this.debugs,
+            errors: this.errors.length > 0 ? this.errors : undefined,
         };
     }
 

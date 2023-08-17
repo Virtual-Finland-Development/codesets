@@ -23,7 +23,6 @@ export default class ExternalResource extends BaseResource {
             const { exists, expired } = await this.getExternalResourceCache().getExistsAndExpiredInfo(this.name);
             if (exists) {
                 if (expired) {
-                    this.requestApp?.logger.debug(`Cache expired for resource: ${this.name}`);
                     try {
                         // Retrieve data package from source
                         const freshDataPackage = await super.retrieveDataPackage(params);
@@ -38,7 +37,6 @@ export default class ExternalResource extends BaseResource {
                         this.requestApp?.logger.catchError(error); // Flag as error for alerts // @TODO: alerts to admin
                     }
                 }
-                this.requestApp?.logger.debug(`Using externals cache for resource: ${this.name}`);
                 return this.getExternalResourceCache().retrieve(this.name);
             }
         }
@@ -46,7 +44,6 @@ export default class ExternalResource extends BaseResource {
         const dataPackage = await super.retrieveDataPackage(params);
 
         if (!RuntimeFlags.isSystemTask) {
-            this.requestApp?.logger.debug(`Caching resource in externals store: ${this.name}`);
             await this.getExternalResourceCache().store(this.name, dataPackage);
         }
 
