@@ -7,7 +7,7 @@ import { getPaginationParams } from '../filters';
  * @param params
  * @returns
  */
-export async function transformOccupations(occupations: any, params: Record<string, string>) {
+export async function transformOccupations(occupations: any, params?: Record<string, string>) {
     const totalCount = occupations.length;
     const pagination = getPaginationParams(params);
     if (pagination.isPaginated) {

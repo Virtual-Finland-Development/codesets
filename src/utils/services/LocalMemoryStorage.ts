@@ -16,4 +16,17 @@ export default class LocalMemoryStorage implements IStorage {
         if (data === undefined) throw new Error(`Key ${key} not found in bucket ${bucketName}`);
         return Promise.resolve({ data, mime: mime.getType(key) || 'application/json' });
     }
+
+    async exists(bucketName: string, key: string): Promise<boolean> {
+        return Promise.resolve(this.storage.has(`${bucketName}/${key}`));
+    }
+
+    async getExistsAndExpiredInfo(bucketName: string, key: string): Promise<{
+        exists: boolean,
+        expired: boolean,
+    }> {
+        const exists = this.storage.has(`${bucketName}/${key}`);
+        const expired = false;
+        return Promise.resolve({ exists, expired });
+    }
 }

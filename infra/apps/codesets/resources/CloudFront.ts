@@ -42,7 +42,7 @@ export function createCloudFrontDistribution(
                 queryString: true,
             },
             minTtl: 0,
-            defaultTtl: 2628000,
+            defaultTtl: 2628000, // 1 month
             maxTtl: 31536000,
             compress: true,
             lambdaFunctionAssociations: [
@@ -100,7 +100,7 @@ export function createCloudFrontDistribution(
     return cloudFrontDistribution;
 }
 
-export function createCacheInvalidation(setup: ISetup, distribution: aws.cloudfront.Distribution) {
+export function createEdgeCacheInvalidation(setup: ISetup, distribution: aws.cloudfront.Distribution) {
     const cacheInvalidationConfig = setup.getResourceConfig('CacheInvalidation');
     const triggerToken = new Date().getTime().toString();
     new local.Command(

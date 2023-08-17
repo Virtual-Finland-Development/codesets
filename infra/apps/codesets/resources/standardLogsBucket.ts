@@ -20,7 +20,7 @@ export function createStandardLogsBucket(setup: ISetup): Bucket {
         provider: awsEuNorth1
     });
 
-    const bucketOwnershipControls = new aws.s3.BucketOwnershipControls('controls', {
+    new aws.s3.BucketOwnershipControls('controls', {
         bucket: bucket.id,
         rule: {
             objectOwnership: "BucketOwnerPreferred"

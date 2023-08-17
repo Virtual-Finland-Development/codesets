@@ -1,33 +1,38 @@
 import { BaseSchema, parse } from 'valibot';
 import RequestApp from '../../../../app/RequestApp';
-
-export interface IResource {
-    uri: string;
-    name: string;
-    type: string;
-    /**
-     * Retrieve the data from the resource
-     */
-    retrieve(requestApp: RequestApp, params: Record<string, string>): Promise<{ data: string; mime: string; size: number }>;
-}
+import IDataPackage from './IDataPackage';
+import IResource from './IResource';
 
 export type ResourceData = Response | string | ReadableStream<Uint8Array> | null;
 
-export default class BaseResource<I = any, O = any> implements IResource {
+export interface IResourceConstructorParams<I = any, O = any> {
+    name: string;
+    type?: 'external' | 'library' | 'internal';
+    uri?: string;
+    mime?: string;
+    dataGetter?: (params?: Record<string, string>) => Promise<{ data: string; mime: string }>;
+    parsers?: IResourceParserParams<I, O>;
+    settings?: Record<string, string | number | boolean>;
+}
+
+export interface IResourceParserParams<I = any, O = any> {
+    rawInput?: (data: string) => unknown;
+    input?: BaseSchema<I> | ((data: unknown) => I);
+    transform?: (data: I, params?: Record<string, string>) => Promise<O>;
+    output?: BaseSchema<O> | ((data: O) => O);
+    rawOutput?: (data: O) => string;
+}
+
+
+export default abstract class BaseResource<I = any, O = any> implements IResource {
     public name: string;
     public uri: string;
     public type = 'external';
     protected _mime: string | undefined;
 
-    protected _parsers: {
-        rawInput?: (data: string) => unknown;
-        input?: BaseSchema<I> | ((data: unknown) => I);
-        transform?: (data: I, params: Record<string, string>) => Promise<O>;
-        output?: BaseSchema<O> | ((data: O) => O);
-        rawOutput?: (data: O) => string;
-    };
+    protected _parsers: IResourceParserParams;
 
-    protected _dataGetter: ((params: Record<string, string>) => Promise<{ data: string; mime: string }>) | undefined;
+    protected _dataGetter: ((params?: Record<string, string>) => Promise<{ data: string; mime: string }>) | undefined;
     protected _settings: Record<string, string | number | boolean>;
 
     protected requestApp?: RequestApp;
@@ -40,21 +45,7 @@ export default class BaseResource<I = any, O = any> implements IResource {
         dataGetter,
         parsers,
         settings,
-    }: {
-        name: string;
-        type?: 'external' | 'library' | 'internal';
-        uri?: string;
-        mime?: string;
-        dataGetter?: (params: Record<string, string>) => Promise<{ data: string; mime: string }>;
-        parsers?: {
-            rawInput?: (data: string) => unknown;
-            input?: BaseSchema<I> | ((data: unknown) => I);
-            transform?: (data: I, params: Record<string, string>) => Promise<O>;
-            output?: BaseSchema<O> | ((data: O) => O);
-            rawOutput?: (data: O) => string;
-        };
-        settings?: Record<string, string | number | boolean>;
-    }) {
+    }: IResourceConstructorParams) {
         this.name = name;
         this.uri = uri || '';
         this.type = type || this.type;
@@ -70,12 +61,11 @@ export default class BaseResource<I = any, O = any> implements IResource {
         size: number;
     }> {
         this.initializeSelf(requestApp);
-        const dataPackage = await this._retrieveDataPackage(params);
-        const mime = this._mime || dataPackage.mime;
-        const finalData = await this._parseRawData(dataPackage.data, mime, params);
+        const dataPackage = await this.retrieveDataPackage(params);
+        const finalData = await this.parseRawData(dataPackage.data, dataPackage.mime, params);
         return {
             data: finalData,
-            mime: mime,
+            mime: dataPackage.mime,
             size: Buffer.byteLength(finalData, 'utf8'),
         };
     }
@@ -93,31 +83,27 @@ export default class BaseResource<I = any, O = any> implements IResource {
      * @param params 
      * @returns 
      */
-    protected async _retrieveDataPackage(params: Record<string, string>): Promise<{
-        data: string;
-        mime: string;
-    }> {
+    public async retrieveDataPackage(params?: Record<string, string>): Promise<IDataPackage> {
         if (typeof this._dataGetter === 'function') {
             return await this._dataGetter(params);
         }
 
-        const response = await this._fetchData(this.uri);
-        const resolved = await this._resolveDataResponse(response.response);
-        const rawData = await this._parseResponseRawData(resolved);
+        const response = await this._fetchData();
+        const rawData = await this._parseResponseRawData(response.data);
         return {
             data: rawData,
-            mime: response.mime,
+            mime: this._mime || response.mime,
         };
     }
 
-    protected async _fetchData(uri: string): Promise<{ response: Response; mime: string }> {
-        const response = await fetch(uri);
+    protected async _fetchData(): Promise<{ data: ResourceData; mime: string }> {
+        const response = await fetch(this.uri);
         if (response.status !== 200) {
             throw new Error(`Failed to fetch resource: ${response.status} ${response.statusText}`);
         }
 
         return {
-            response: response,
+            data: await this._resolveDataResponse(response),
             mime: response.headers.get('content-type') || 'application/json',
         };
     }
@@ -138,7 +124,7 @@ export default class BaseResource<I = any, O = any> implements IResource {
      * @param params 
      * @returns 
      */
-    protected async _parseRawData(rawData: string, mime: string, params: Record<string, string>): Promise<string> {
+    public async parseRawData(rawData: string, mime: string, params?: Record<string, string>): Promise<string> {
         let parsedData = this._parseRawData_input(rawData, mime);
         parsedData = this._parseRawData_parseInputSchema(parsedData);
         parsedData = await this._parseRawData_transform(parsedData as I, params);
@@ -164,7 +150,7 @@ export default class BaseResource<I = any, O = any> implements IResource {
         return rawData as I;
     }
 
-    protected async _parseRawData_transform(data: I, params: Record<string, string>): Promise<O> {
+    protected async _parseRawData_transform(data: I, params?: Record<string, string>): Promise<O> {
         if (typeof this._parsers.transform === 'function') {
             return await this._parsers.transform(data, params);
         }

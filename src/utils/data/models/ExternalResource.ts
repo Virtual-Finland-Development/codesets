@@ -1,31 +1,50 @@
 import { RuntimeFlags } from '../../runtime';
+import ExternalResourceCache from '../../services/ExternalResourceCache';
 import BaseResource from './shared/BaseResource';
-
-const inMemoryCache: Record<
-    string,
-    {
-        data: string;
-        mime: string;
-    }
-> = {};
 
 export default class ExternalResource extends BaseResource {
     public type = 'external';
 
-    protected async _retrieveDataPackage(params: Record<string, string>): Promise<{
+    private extrenalResourceCache?: ExternalResourceCache;
+    private getExternalResourceCache(): ExternalResourceCache {
+        if (!this.extrenalResourceCache) {
+            if (!this.requestApp?.storage) throw new Error('ExternalResource requires a storage service');
+            this.extrenalResourceCache = new ExternalResourceCache(this.requestApp.storage);
+        }
+        return this.extrenalResourceCache;
+    }
+
+    public async retrieveDataPackage(params?: Record<string, string>): Promise<{
         data: string;
         mime: string;
     }> {
-        if (RuntimeFlags.isLocal && typeof inMemoryCache[this.uri] !== 'undefined') {
-            console.log(`Using in-memory cache for resource: ${this.name}`);
-            return inMemoryCache[this.uri];
+        
+        if (!RuntimeFlags.isSystemTask) {
+            const { exists, expired } = await this.getExternalResourceCache().getExistsAndExpiredInfo(this.name);
+            if (exists) {
+                if (expired) {
+                    try {
+                        // Retrieve data package from source
+                        const freshDataPackage = await super.retrieveDataPackage(params);
+                        // Validate input/output by parsing
+                        await this.parseRawData(freshDataPackage.data, freshDataPackage.mime);
+                        // Store data in cache
+                        await this.getExternalResourceCache().store(this.name, freshDataPackage);
+                        // Short circuit to return fresh data
+                        return freshDataPackage;
+                    } catch (error) {
+                        // Pass: If there is an error, we don't want to overwrite the cache, pass the expired cache through instead
+                        this.requestApp?.logger.catchError(error); // Flag as error for alerts // @TODO: alerts to admin
+                    }
+                }
+                return this.getExternalResourceCache().retrieve(this.name);
+            }
         }
 
-        const dataPackage = await super._retrieveDataPackage(params);
+        const dataPackage = await super.retrieveDataPackage(params);
 
-        if (RuntimeFlags.isLocal) {
-            console.log(`Caching resource in-memory: ${this.name}`);
-            inMemoryCache[this.uri] = dataPackage;
+        if (!RuntimeFlags.isSystemTask) {
+            await this.getExternalResourceCache().store(this.name, dataPackage);
         }
 
         return dataPackage;

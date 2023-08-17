@@ -7,6 +7,8 @@
   "scripts": {
     "build": "npm run build:codesets && npm run build:escoApi",
     "build:codesets": "npm -C apps/codesets install && npm -C apps/codesets run build",
-    "build:escoApi": "npm -C apps/escoApi install && npm -C apps/escoApi run build"
+    "build:escoApi": "npm -C apps/escoApi install && npm -C apps/escoApi run build",
+    "deploy:codesets": "npm install && npm run build:codesets && pulumi -C apps/codesets up",
+    "deploy:escoApi": "npm install && npm run build:escoApi && pulumi -C apps/escoApi up"
   }
 }

@@ -39,7 +39,7 @@ export default new ExternalResource({
     mime: 'application/json; charset=utf-8',
     parsers: {
         input: CountriesInputDataSchema,
-        async transform(countriesRaw: CountriesInputData, params: Record<string, string>) {
+        async transform(countriesRaw: CountriesInputData, params?: Record<string, string>) {
             const countries = countriesRaw.map((countryData) => {
                 return {
                     id: countryData.cca2,

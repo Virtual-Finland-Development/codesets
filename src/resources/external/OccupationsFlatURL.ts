@@ -1,5 +1,5 @@
 import { Output, array, length, object, optional, record, string } from 'valibot';
-import ExternalZipResource from '../../utils/data/models/ZipResource';
+import ExternalZipResource from '../../utils/data/models/ExternalZipResource';
 
 const IscoInputSchema = array(object({
     uri: string(),

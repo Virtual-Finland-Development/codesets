@@ -1,6 +1,7 @@
 import { InternalResources } from '../../../resources';
-import { RuntimeFlags, getInternalResourceInfo } from '../../runtime';
+import { RuntimeFlags, getStorageBucketInfo } from '../../runtime';
 import BaseResource from './shared/BaseResource';
+import IDataPackage from './shared/IDataPackage';
 
 const inMemoryCache: Record<
     string,
@@ -13,10 +14,7 @@ const inMemoryCache: Record<
 export default class InternalResource extends BaseResource {
     public type = 'internal';
 
-    protected async _retrieveDataPackage(): Promise<{
-        data: string;
-        mime: string;
-    }> {
+    public async retrieveDataPackage(): Promise<IDataPackage> {
         if (typeof inMemoryCache[this.uri] !== 'undefined') {
             return inMemoryCache[this.uri];
         }
@@ -28,7 +26,7 @@ export default class InternalResource extends BaseResource {
             if (resource) {
                 inMemoryCache[this.uri] = {
                     data: resource.body,
-                    mime: resource.mime || 'application/json',
+                    mime: this._mime || resource.mime || 'application/json',
                 };
 
                 return inMemoryCache[this.uri];
@@ -36,11 +34,15 @@ export default class InternalResource extends BaseResource {
             throw new Error(`Resource ${fileName} not found`);
         }
 
-        const bucketName = getInternalResourceInfo().name;
+        const bucketName = getStorageBucketInfo().name;
         const bucketKey = `resources/${fileName}`;
 
         if (!this.requestApp?.storage) throw new Error('Internal storage not initialized');
-        inMemoryCache[this.uri] = await this.requestApp.storage.retrieve(bucketName, bucketKey);
+        const result = await this.requestApp.storage.retrieve(bucketName, bucketKey);
+        inMemoryCache[this.uri] = {
+            data: result.data,
+            mime: this._mime || result.mime || 'application/json',
+        };
         return inMemoryCache[this.uri];
     }
 }
