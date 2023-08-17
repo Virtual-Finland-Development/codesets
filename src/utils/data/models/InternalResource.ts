@@ -1,6 +1,7 @@
 import { InternalResources } from '../../../resources';
 import { RuntimeFlags, getStorageBucketInfo } from '../../runtime';
 import BaseResource from './shared/BaseResource';
+import IDataPackage from './shared/IDataPackage';
 
 const inMemoryCache: Record<
     string,
@@ -13,10 +14,7 @@ const inMemoryCache: Record<
 export default class InternalResource extends BaseResource {
     public type = 'internal';
 
-    protected async _retrieveDataPackage(): Promise<{
-        data: string;
-        mime: string;
-    }> {
+    public async retrieveDataPackage(): Promise<IDataPackage> {
         if (typeof inMemoryCache[this.uri] !== 'undefined') {
             return inMemoryCache[this.uri];
         }

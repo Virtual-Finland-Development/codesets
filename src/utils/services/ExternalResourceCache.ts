@@ -23,7 +23,6 @@ export default class ExternalResourceCache {
 
     public async store(key: string, dataPackage: IDataPackage): Promise<void> {
         if (RuntimeFlags.isLocal) {
-            console.log(`Caching resource in-memory: ${key}`);
             this.localInMemoryCache[key] = dataPackage;
             return;
         }  

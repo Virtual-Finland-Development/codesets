@@ -61,9 +61,10 @@ export default class S3BucketStorage implements IStorage {
             
             return true;
         } catch (error: any) {
-            if (error instanceof NotFound) return false;
-            console.error(error?.message, error?.stack);
-            throw new Error('An error occurred while checking for resource in S3');
+            if (!(error instanceof NotFound)) {
+                console.error(error);
+            }
+            return false;
         }
     }
 
@@ -89,9 +90,10 @@ export default class S3BucketStorage implements IStorage {
                 expired,
             };
         } catch (error: any) {
-            if (error instanceof NotFound) return { exists: false, expired: false };
-            console.error(error?.message, error?.stack);
-            throw new Error('An error occurred while checking for resource in S3');
+            if (!(error instanceof NotFound)) {
+                console.error(error);
+            }
+            return { exists: false, expired: false };
         }
     }
 

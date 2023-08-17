@@ -1,3 +1,4 @@
+import RequestLogger from './app/RequestLogger';
 import { getResources } from './utils/data/repositories/ResourceRepository';
 import { RuntimeFlags } from './utils/runtime';
 import ExternalResourceCache from './utils/services/ExternalResourceCache';
@@ -26,7 +27,7 @@ export async function handler() {
             await externalResourceCache.store(resource.name, dataPackage);
             
         } catch (error) {
-            console.error(error);
+            console.error(resourceName, RequestLogger.formatError(error));
             // @TODO: alerts to admin
         }
     }

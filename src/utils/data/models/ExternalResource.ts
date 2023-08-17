@@ -23,7 +23,7 @@ export default class ExternalResource extends BaseResource {
             const { exists, expired } = await this.getExternalResourceCache().getExistsAndExpiredInfo(this.name);
             if (exists) {
                 if (expired) {
-                    console.log(`Cache expired for resource: ${this.name}`);
+                    this.requestApp?.logger.debug(`Cache expired for resource: ${this.name}`);
                     try {
                         // Retrieve data package from source
                         const freshDataPackage = await super.retrieveDataPackage(params);
@@ -35,10 +35,10 @@ export default class ExternalResource extends BaseResource {
                         return freshDataPackage;
                     } catch (error) {
                         // Pass: If there is an error, we don't want to overwrite the cache, pass the expired cache through instead
-                        console.error(error); // Flag as error for alerts // @TODO: alerts to admin
+                        this.requestApp?.logger.catchError(error); // Flag as error for alerts // @TODO: alerts to admin
                     }
                 }
-                console.log(`Using externals cache for resource: ${this.name}`);
+                this.requestApp?.logger.debug(`Using externals cache for resource: ${this.name}`);
                 return this.getExternalResourceCache().retrieve(this.name);
             }
         }
@@ -46,7 +46,7 @@ export default class ExternalResource extends BaseResource {
         const dataPackage = await super.retrieveDataPackage(params);
 
         if (!RuntimeFlags.isSystemTask) {
-            console.log(`Caching resource in externals store: ${this.name}`);
+            this.requestApp?.logger.debug(`Caching resource in externals store: ${this.name}`);
             await this.getExternalResourceCache().store(this.name, dataPackage);
         }
 

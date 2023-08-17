@@ -1,5 +1,6 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2, CloudFrontHeaders, CloudFrontRequestEvent, CloudFrontRequestResult, CloudFrontResultResponse } from "aws-lambda";
 import { ValiError } from "valibot";
+import { cutTooLongString } from "../utils/helpers";
 
 export type LogPackage = {
     trace: {
@@ -18,6 +19,7 @@ export type LogPackage = {
         contentLength: number;
     };
     errors: any[],
+    debugs: string[],
 };
 
 export type RequestLoggerSettings = {
@@ -30,6 +32,7 @@ export default class RequestLogger {
     private readonly request: APIGatewayProxyEventV2 | CloudFrontRequestEvent;
     private readonly configuration: RequestLoggerSettings;
     private readonly errors: any[] = [];
+    private readonly debugs: string[] = [];
 
     constructor(request: APIGatewayProxyEventV2 | CloudFrontRequestEvent, configuration?: RequestLoggerSettings) {
         this.request = request;
@@ -50,32 +53,41 @@ export default class RequestLogger {
         }
     }
 
+    public debug(message: string): void {
+        this.debugs.push(message);
+    }
+
     public catchError(error: Error | ValiError | any) {
+        this.errors.push(RequestLogger.formatError(error));
+    }
+
+    static formatError(error: Error | ValiError | any): any {
         if (error instanceof ValiError)  {
             // Cleanup the vali error to make it more accessible: only show the first issue and remove the input
-            this.errors.push(
+            return (
                 error.issues.slice(0, 1).map(i => {
                     return {
-                    ...i,
+                        ...i,
+                        input: cutTooLongString(JSON.stringify(i.input), 500),
                         path: i.path?.map(p => {
                             return {
                                 ...p,
-                                input: undefined 
+                                input: cutTooLongString(JSON.stringify(p.input), 500) 
                             }
                         })
                     }
                 }           
             ));
         } else if (error instanceof Error)  {
-            this.errors.push({
+            return ({
                 message: error.message,
                 stack: error.stack,
             });
         } else {
             try {
-                this.errors.push(JSON.stringify(error));
+                return (JSON.stringify(error));
             } catch (e) {
-                this.errors.push(error);
+                return (error);
             }
         }
     }
@@ -109,6 +121,7 @@ export default class RequestLogger {
                 contentLength: body ? body.length : 0,
             },
             errors: this.errors,
+            debugs: this.debugs,
         };
     }
 
@@ -132,6 +145,7 @@ export default class RequestLogger {
             },
             response: eventResponse,
             errors: this.errors,
+            debugs: this.debugs,
         };
     }
 
