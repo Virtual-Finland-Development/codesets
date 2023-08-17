@@ -1,13 +1,13 @@
 import * as pulumi from '@pulumi/pulumi';
 import { getSetup } from '../../utils/Setup';
+import { createCacheUpdaterLambdaFunction, invokeTheCacheUpdatingFunction } from './resources/CacheUpdaterLambdaFunction';
 import {
-    createEdgeCacheInvalidation,
     createCloudFrontDistribution,
+    createEdgeCacheInvalidation,
     createOriginAccessIdentity,
 } from './resources/CloudFront';
 import createLambdaAtEdgeFunction from './resources/LambdaAtEdge';
 import createS3Bucket, { createS3BucketPermissions, uploadAssetsToBucket } from './resources/S3Bucket';
-import { createCacheUpdaterLambdaFunction, invokeTheCacheUpdatingFunction } from './resources/createCacheUpdaterLambdaFunction';
 import { createStandardLogsBucket } from "./resources/standardLogsBucket";
 
 const setup = getSetup();
@@ -16,7 +16,7 @@ const originAccessIdentity = createOriginAccessIdentity(setup);
 const s3bucketSetup = createS3Bucket(setup);
 const edgeLambdaPackage = createLambdaAtEdgeFunction(setup, s3bucketSetup);
 createS3BucketPermissions(setup, s3bucketSetup.bucket, originAccessIdentity, edgeLambdaPackage.lambdaAtEdgeRole);
-const cacheUpdaterFunction = createCacheUpdaterLambdaFunction(setup, s3bucketSetup.bucket);
+const cacheUpdaterFunction = createCacheUpdaterLambdaFunction(setup, s3bucketSetup.name);
 
 const standardLogsBucket = createStandardLogsBucket(setup);
 
