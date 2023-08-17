@@ -15,7 +15,8 @@ export async function handler() {
 
     for (const resourceName in externalResources) {
         const resource = externalResources[resourceName];
-        
+        console.log("Updating resource..", resourceName);
+
         try {
             // Fetch data response string
             const dataPackage = await resource.retrieveDataPackage();
