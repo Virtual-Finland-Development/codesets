@@ -5,7 +5,7 @@ import { ISetup } from '../../../utils/Setup';
 
 export async function createCloudWatchAlarm(
     setup: ISetup,
-    codesetsLambda: aws.lambda.Function,
+    edgeLambda: aws.lambda.Function,
     cloudWatchAlarmLambda: aws.lambda.Function
 ) {
     // Define the custom metric
@@ -25,13 +25,13 @@ export async function createCloudWatchAlarm(
         threshold: 1,
     });
 
-    const codesetsLogGroupName = pulumi.interpolate`/aws/lambda/us-east-1.${codesetsLambda.name}`;
+    const edgeLambdaLogGroupName = pulumi.interpolate`/aws/lambda/us-east-1.${edgeLambda.name}`;
 
     // Create the subscription for the Lambda function
     const lambdaSubscription = new aws.cloudwatch.LogSubscriptionFilter(
         setup.getResourceName('CloudWatcCustomAlarmSubscription'),
         {
-            logGroup: codesetsLogGroupName,
+            logGroup: edgeLambdaLogGroupName,
             filterPattern: 'ERROR',
             destinationArn: cloudWatchAlarmLambda.arn,
             // roleArn: ''
