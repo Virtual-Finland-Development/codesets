@@ -25,7 +25,7 @@ export async function createCloudWatchAlarm(
         threshold: 1,
     });
 
-    const codesetsLogGroupName = pulumi.interpolate`/aws/lambda/${codesetsLambda.name}`;
+    const codesetsLogGroupName = pulumi.interpolate`/aws/lambda/us-east-1.${codesetsLambda.name}`;
 
     // Create the subscription for the Lambda function
     const lambdaSubscription = new aws.cloudwatch.LogSubscriptionFilter(
