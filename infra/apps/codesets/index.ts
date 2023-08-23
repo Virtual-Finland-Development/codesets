@@ -43,7 +43,7 @@ createEdgeCacheInvalidation(setup, cloudFrontDistribution); // Invalidate the ed
 const SnsTopic = createSnsTopicAndSubscriptions(setup);
 const cloudWatchAlarmLambdaFunction = createCloudWatchAlarmLambdaFunction(setup, SnsTopic);
 createChatbotSlackConfig(setup, SnsTopic);
-createCloudWatchAlarm(setup, cloudWatchAlarmLambdaFunction);
+createCloudWatchAlarm(setup, edgeLambdaPackage.lambdaAtEdgeFunction, cloudWatchAlarmLambdaFunction);
 
 // Outputs
 export const url = pulumi.interpolate`https://${cloudFrontDistribution.domainName}`;
