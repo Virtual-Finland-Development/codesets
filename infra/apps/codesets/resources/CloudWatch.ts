@@ -1,8 +1,13 @@
+import * as pulumi from '@pulumi/pulumi';
 import * as aws from '@pulumi/aws';
 import * as awsx from '@pulumi/awsx';
 import { ISetup } from '../../../utils/Setup';
 
-export function createCloudWatchAlarm(setup: ISetup, lambdaFunc: aws.lambda.Function) {
+export async function createCloudWatchAlarm(
+    setup: ISetup,
+    codesetsLambda: aws.lambda.Function,
+    cloudWatchAlarmLambda: aws.lambda.Function
+) {
     // Define the custom metric
     const customMetric = new awsx.classic.cloudwatch.Metric({
         name: 'Custom metric',
@@ -20,13 +25,15 @@ export function createCloudWatchAlarm(setup: ISetup, lambdaFunc: aws.lambda.Func
         threshold: 1,
     });
 
+    const codesetsLogGroupName = pulumi.interpolate`/aws/lambda/${codesetsLambda.name}`;
+
     // Create the subscription for the Lambda function
     const lambdaSubscription = new aws.cloudwatch.LogSubscriptionFilter(
         setup.getResourceName('CloudWatcCustomAlarmSubscription'),
         {
-            logGroup: '/aws/lambda/CloudWatchAlarmLambdaFunction',
-            filterPattern: 'SOME CUSTOM PATTERN HERE',
-            destinationArn: lambdaFunc.arn,
+            logGroup: codesetsLogGroupName,
+            filterPattern: 'ERROR',
+            destinationArn: cloudWatchAlarmLambda.arn,
             // roleArn: ''
         }
     );

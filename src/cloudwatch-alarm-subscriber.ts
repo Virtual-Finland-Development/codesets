@@ -27,12 +27,6 @@ export const handler = async (event: any) => {
 
         await snsClient.send(publishCommand);
         console.log(`Published message to SNS: ${message}`);
-
-        /**
-         * @TODO
-         * Slack???
-         * Either SNS -> Chatbot integration OR somekind of webhook implementation
-         */
     } catch (error) {
         console.error('Error:', error);
         throw error;
