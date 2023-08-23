@@ -15,6 +15,7 @@ import { createStandardLogsBucket } from './resources/standardLogsBucket';
 import { createSnsTopicAndSubscriptions } from './resources/SNS';
 import { createCloudWatchAlarmLambdaFunction } from './resources/CloudWatchAlarmLambdaFunction';
 import { createCloudWatchAlarm } from './resources/CloudWatch';
+import { createChatbotSlackConfig } from './resources/Chatbot';
 
 const setup = getSetup();
 const originAccessIdentity = createOriginAccessIdentity(setup);
@@ -41,6 +42,7 @@ createEdgeCacheInvalidation(setup, cloudFrontDistribution); // Invalidate the ed
 // SNS / CloudWatch custom alarm / Lambda handler
 const SnsTopic = createSnsTopicAndSubscriptions(setup);
 const cloudWatchAlarmLambdaFunction = createCloudWatchAlarmLambdaFunction(setup, SnsTopic);
+createChatbotSlackConfig(setup, SnsTopic);
 createCloudWatchAlarm(setup, cloudWatchAlarmLambdaFunction);
 
 // Outputs

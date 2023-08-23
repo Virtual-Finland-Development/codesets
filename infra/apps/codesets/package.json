@@ -3,6 +3,7 @@
   "main": "index.ts",
   "dependencies": {
     "@pulumi/aws": "^5.41.0",
+    "@pulumi/aws-native": "^0.73.1",
     "@pulumi/awsx": "^1.0.4",
     "@pulumi/command": "^0.7.2",
     "@pulumi/pulumi": "^3.69.0",
