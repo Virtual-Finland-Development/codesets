@@ -1,5 +1,8 @@
+import * as pulumi from '@pulumi/pulumi';
 import * as aws from '@pulumi/aws';
 import { ISetup } from '../../../utils/Setup';
+
+const config = new pulumi.Config();
 
 export function createSnsTopicAndSubscriptions(setup: ISetup) {
     // SNS topic
@@ -20,7 +23,7 @@ export function createSnsTopicAndSubscriptions(setup: ISetup) {
     // create sub for slackbot
     new aws.sns.TopicSubscription(setup.getResourceName('SnsSlackSub'), {
         protocol: 'https', // chatbot has no dedicated protocol defined, https should suffice
-        endpoint: 'https://hooks.slack.com/services/XXXXXXXXX/XXXXXXXXX/XXXXXXXXXXXXXXXXXXXXXXXX', // SLACK WEBHOOK URL
+        endpoint: config.require('slackWebhookUrl'), // Slack webhook url
         topic: SnSTopic.arn,
     });
 

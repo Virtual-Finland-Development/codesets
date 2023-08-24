@@ -1,0 +1,6 @@
+# // At this time, the pulumi config set command does not support project level configuration. Therefore the configuration values are entered directly in the Pulumi.yaml file.
+# // Also, project level configuration only supports clear text configuration. Support for pulumi config and project-level secrets and other features are planned.
+# // https://www.pulumi.com/docs/concepts/config/#setting-project-level-configuration
+config:
+    codesets:slackWebhookUrl:
+        secure: AAABABqp84o9zBmhwkZWJwLg2H/VEdLUIRVBfzcbbBB+Dlym55tQRwts46zSkAUGZvuTjegQRkdqiozzZmR/9AcBaRg+SOXAniihtK8EncF8J7lkYif9BJFBSt5VdtZukrNZwiRV5EYWsPnpdBXhvQY=
