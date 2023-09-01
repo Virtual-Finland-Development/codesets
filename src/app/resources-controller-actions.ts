@@ -2,6 +2,7 @@ import { CloudFrontResultResponse } from "aws-lambda";
 import mime from "mime";
 import { InternalResources } from "../resources";
 import { getResource, listResources } from "../utils/data/repositories/ResourceRepository";
+import { NotFoundError } from "../utils/exceptions";
 import { generateSimpleHash } from "../utils/helpers";
 import RequestApp from "./RequestApp";
 
@@ -66,14 +67,5 @@ export async function engageResourcesAction(
         };
     }
 
-    return {
-        response: {
-            status: '404',
-            statusDescription: 'Not Found: resource not found',
-            body: JSON.stringify({ message: 'Resource not found', type: 'Not Found' }),
-            headers: {
-                'content-type': [{ key: 'Content-Type', value: 'application/json' }],
-            },
-        },
-    };
+    throw new NotFoundError("Resource not found");
 }
