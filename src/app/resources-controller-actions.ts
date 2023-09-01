@@ -70,7 +70,7 @@ export async function engageResourcesAction(
         response: {
             status: '404',
             statusDescription: 'Not Found: resource not found',
-            body: JSON.stringify({ message: 'Resource not found' }),
+            body: JSON.stringify({ message: 'Resource not found', type: 'Not Found' }),
             headers: {
                 'content-type': [{ key: 'Content-Type', value: 'application/json' }],
             },
