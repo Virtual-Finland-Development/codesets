@@ -1,4 +1,5 @@
 import { ValiError } from "valibot";
+import { NotFoundError } from "./exceptions";
 
 export const UriRedirects: Record<string, string> = {
     '/productizer/draft/Employment/EscoOccupations': '/resources/BusinessFinlandEscoOccupations',
@@ -9,16 +10,26 @@ export function resolveUri(uri: string): string {
 }
 
 export function resolveErrorResponse(error: Error): { statusCode: number; body: string; description: string } {
+    let statusCode = 500;
+    let description = 'Internal Server Error';
+    let message = error.message || description;
+
     if (error instanceof ValiError) {
-        return {
-            statusCode: 400,
-            description: 'Bad Request',
-            body: error.message || 'Bad Request',
-        };
+        statusCode = 400;
+        description = 'Bad Request';
+        message = error.message || description;
+    } else if (error instanceof NotFoundError) {
+        statusCode = 404;
+        description = 'Not Found';
+        message = error.message || description;
     }
+
     return {
-        statusCode: 500,
-        description: 'Internal Server Error',
-        body: error.message || 'Internal Server Error',
+        statusCode: statusCode,
+        description: description,
+        body: JSON.stringify({
+            message: message,
+            type: description,
+        }),
     };
 }
