@@ -1,8 +1,9 @@
-import { ValiError } from "valibot";
-import { NotFoundError } from "./exceptions";
+import { ValiError } from 'valibot';
+import { NotFoundError } from './exceptions';
 
 export const UriRedirects: Record<string, string> = {
     '/productizer/draft/Employment/EscoOccupations': '/resources/BusinessFinlandEscoOccupations',
+    '/Employment/EscoOccupations_v0.1': '/resources/BusinessFinlandEscoOccupations',
 };
 
 export function resolveUri(uri: string): string {
