@@ -8,6 +8,7 @@ const config = new pulumi.Config();
 export function createChatbotSlackConfig(setup: ISetup, SnsTopic: aws.sns.Topic) {
     // Create an IAM role for Chatbot configuration
     const chatbotRole = new aws.iam.Role(setup.getResourceName('ChatBotRole'), {
+        description: 'IAM role for AWS Chatbot',
         assumeRolePolicy: JSON.stringify({
             Version: '2012-10-17',
             Statement: [
@@ -23,9 +24,19 @@ export function createChatbotSlackConfig(setup: ISetup, SnsTopic: aws.sns.Topic)
     });
 
     // Attach policies to the role as needed (e.g., AWS managed policies or custom policies)
-    /* const chatbotPolicy = new aws.iam.RolePolicyAttachment('chatbotPolicy', {
-        policyArn: '',
-        role: chatbotRole.name,
+    /* new aws.iam.RolePolicy(setup.getResourceName('ChatBotPolicy'), {
+        role: chatbotRole.id,
+        policy: JSON.stringify({
+            Version: '2012-10-17',
+            Statement: [
+                {
+                    Sid: 'AllowReadActionsOnSNS',
+                    Effect: 'Allow',
+                    Action: ['sns:ListTopics', 'sns:GetTopicAttributes', 'sns:Receive'],
+                    Resource: '*',
+                },
+            ],
+        }),
     }); */
 
     const slackChannelConfig = new awsNative.chatbot.SlackChannelConfiguration(
