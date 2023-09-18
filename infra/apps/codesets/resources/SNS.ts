@@ -12,20 +12,20 @@ export function createSnsTopicAndSubscriptions(setup: ISetup) {
     const emailEndpoints = ['email1@email.com', 'email2@email.com'];
 
     // create sub for each subscriber
-    emailEndpoints.map((email, i) => {
+    /*  emailEndpoints.map((email, i) => {
         new aws.sns.TopicSubscription(setup.getResourceName(`SnsEmailSub-${i + 1}`), {
             protocol: 'email',
             endpoint: email,
             topic: SnSTopic.arn,
         });
-    });
+    }); */
 
     // create sub for slackbot
-    new aws.sns.TopicSubscription(setup.getResourceName('SnsSlackSub'), {
+    /* new aws.sns.TopicSubscription(setup.getResourceName('SnsSlackSub'), {
         protocol: 'https', // chatbot has no dedicated protocol defined, https should suffice
         endpoint: config.require('slackWebhookUrl'), // Slack webhook url
         topic: SnSTopic.arn,
-    });
+    }); */
 
     return SnSTopic;
 }

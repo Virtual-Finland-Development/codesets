@@ -9,13 +9,13 @@ export async function createCloudWatchAlarm(
     cloudWatchAlarmLambda: aws.lambda.Function
 ) {
     // Define the custom metric
-    const customMetric = new awsx.classic.cloudwatch.Metric({
+    /* const customMetric = new awsx.classic.cloudwatch.Metric({
         name: 'Custom metric',
         namespace: 'Custom namespace',
-    });
+    }); */
 
     // Create the alarm for the custom metric
-    const metricAlarm = new aws.cloudwatch.MetricAlarm(setup.getResourceName('CloudWatchCustomAlarm'), {
+    /* const metricAlarm = new aws.cloudwatch.MetricAlarm(setup.getResourceName('CloudWatchCustomAlarm'), {
         comparisonOperator: 'GreaterThanOrEqualToThreshold',
         metricName: customMetric.name,
         namespace: customMetric.namespace,
@@ -23,7 +23,7 @@ export async function createCloudWatchAlarm(
         period: 300, // 5 minutes,
         evaluationPeriods: 1,
         threshold: 1,
-    });
+    }); */
 
     const edgeLambdaLogGroupName = pulumi.interpolate`/aws/lambda/us-east-1.${edgeLambda.name}`;
 
@@ -39,7 +39,7 @@ export async function createCloudWatchAlarm(
     );
 
     return {
-        metricAlarm,
+        // metricAlarm,
         lambdaSubscription,
     };
 }

@@ -2,5 +2,9 @@
 # // Also, project level configuration only supports clear text configuration. Support for pulumi config and project-level secrets and other features are planned.
 # // https://www.pulumi.com/docs/concepts/config/#setting-project-level-configuration
 config:
-    codesets:slackWebhookUrl:
-        secure: AAABABqp84o9zBmhwkZWJwLg2H/VEdLUIRVBfzcbbBB+Dlym55tQRwts46zSkAUGZvuTjegQRkdqiozzZmR/9AcBaRg+SOXAniihtK8EncF8J7lkYif9BJFBSt5VdtZukrNZwiRV5EYWsPnpdBXhvQY=
+  codesets:slackChannelId:
+    secure: AAABAFcd+/pmNIHxK6/hcku5hpT742aa8tl47TaOujAWF33p9oFDnRfA2A==
+  codesets:slackWebhookUrl:
+    secure: AAABABqp84o9zBmhwkZWJwLg2H/VEdLUIRVBfzcbbBB+Dlym55tQRwts46zSkAUGZvuTjegQRkdqiozzZmR/9AcBaRg+SOXAniihtK8EncF8J7lkYif9BJFBSt5VdtZukrNZwiRV5EYWsPnpdBXhvQY=
+  codesets:slackWorkspaceId:
+    secure: AAABAK33HWdCUyZtHkW4rJ6GI37bsEl4ah0Sa8+ASOcX15z74fDnby9ywA==
