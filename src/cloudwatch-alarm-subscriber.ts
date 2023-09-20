@@ -4,39 +4,50 @@ import { gunzip } from 'zlib';
 
 const snsClient = new SNSClient({ region: 'eu-north-1' });
 
+const isHandlingTimeout = 1000 * 60; // 1 minute
+let isHandlingEvent = false;
+
 // https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/SubscriptionFilters.html#LambdaFunctionExample
 export const handler = async (event: CloudWatchLogsEvent) => {
-    try {
-        const snsTopicArn = process.env.SNS_TOPIC_ARN || undefined;
+    if (!isHandlingEvent) {
+        isHandlingEvent = true;
 
-        if (!snsTopicArn) {
-            throw new Error('SNS topic arn could not be read from env.');
-        }
+        try {
+            const snsTopicArn = process.env.SNS_TOPIC_ARN || undefined;
 
-        const payload = Buffer.from(event.awslogs.data, 'base64');
-
-        gunzip(payload, async (err, result) => {
-            if (err) {
-                throw err;
+            if (!snsTopicArn) {
+                throw new Error('SNS topic arn could not be read from env.');
             }
 
-            const data = JSON.parse(result.toString());
-            console.log('Event Data:', JSON.stringify(data, null, 2));
+            const payload = Buffer.from(event.awslogs.data, 'base64');
 
-            const message = 'Test 123 123.';
+            gunzip(payload, async (err, result) => {
+                if (err) {
+                    throw err;
+                }
 
-            const publishCommand = new PublishCommand({
-                TopicArn: snsTopicArn,
-                Message: message,
-                Subject: `CloudWatch Alarm: ${message}`,
+                const data = JSON.parse(result.toString());
+                console.log('Event Data:', JSON.stringify(data, null, 2));
+
+                const message = 'Test 123 123.';
+
+                const publishCommand = new PublishCommand({
+                    TopicArn: snsTopicArn,
+                    Message: message,
+                    Subject: `Alarm: ${message}`,
+                });
+
+                await snsClient.send(publishCommand);
+                console.log(`Published message to SNS: ${message}`);
             });
-
-            await snsClient.send(publishCommand);
-            console.log(`Published message to SNS: ${message}`);
-        });
-    } catch (err) {
-        console.error(err);
-        throw err;
+        } catch (err) {
+            console.error(err);
+            throw err;
+        } finally {
+            setTimeout(() => {
+                isHandlingEvent = false;
+            }, isHandlingTimeout);
+        }
     }
 };
 
