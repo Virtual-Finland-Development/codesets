@@ -28,15 +28,12 @@ export async function createCloudWatchLogSubFilter(
     const edgeLambdaLogGroupName = pulumi.interpolate`/aws/lambda/us-east-1.${codesetsLambda.name}`;
 
     // Create the subscription for the Lambda function
-    const lambdaSubscription = new aws.cloudwatch.LogSubscriptionFilter(
-        setup.getResourceName('CloudWatcCustomAlarmSubscription'),
-        {
-            logGroup: edgeLambdaLogGroupName,
-            filterPattern: 'ERROR',
-            destinationArn: errorSubLambda.arn,
-            // roleArn: ''
-        }
-    );
+    const lambdaSubscription = new aws.cloudwatch.LogSubscriptionFilter(setup.getResourceName('CloudWatchSubFilter'), {
+        logGroup: edgeLambdaLogGroupName,
+        filterPattern: 'ERROR',
+        destinationArn: errorSubLambda.arn,
+        // roleArn: ''
+    });
 
     return {
         // metricAlarm,

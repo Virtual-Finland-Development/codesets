@@ -9,6 +9,7 @@ let isHandlingEvent = false;
 
 // https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/SubscriptionFilters.html#LambdaFunctionExample
 export const handler = async (event: CloudWatchLogsEvent) => {
+    console.log('[Received Event]:', event);
     if (!isHandlingEvent) {
         isHandlingEvent = true;
 
@@ -29,7 +30,7 @@ export const handler = async (event: CloudWatchLogsEvent) => {
                 const data = JSON.parse(result.toString());
                 console.log('Event Data:', JSON.stringify(data, null, 2));
 
-                const message = 'Test 123 123.';
+                /* const message = 'Test 123 123.';
 
                 const publishCommand = new PublishCommand({
                     TopicArn: snsTopicArn,
@@ -38,7 +39,7 @@ export const handler = async (event: CloudWatchLogsEvent) => {
                 });
 
                 await snsClient.send(publishCommand);
-                console.log(`Published message to SNS: ${message}`);
+                console.log(`Published message to SNS: ${message}`); */
             });
         } catch (err) {
             console.error(err);
@@ -46,7 +47,7 @@ export const handler = async (event: CloudWatchLogsEvent) => {
         } finally {
             setTimeout(() => {
                 isHandlingEvent = false;
-            }, isHandlingTimeout);
+            }, 0);
         }
     }
 };
