@@ -13,7 +13,7 @@ import createLambdaAtEdgeFunction from './resources/LambdaAtEdge';
 import createS3Bucket, { createS3BucketPermissions, uploadAssetsToBucket } from './resources/S3Bucket';
 import { createStandardLogsBucket } from './resources/standardLogsBucket';
 import { createSnsTopicAndSubscriptions } from './resources/SNS';
-import { createErrorSubLambdaFunction } from './resources/ErrorSubLambdaFunction';
+import { createErrorSubLambdaFunction, grantLambdaPermissionForCloudWatch } from './resources/ErrorSubLambdaFunction';
 import { createCloudWatchLogSubFilter } from './resources/CloudWatch';
 import { createChatbotSlackConfig } from './resources/Chatbot';
 
@@ -41,7 +41,12 @@ createEdgeCacheInvalidation(setup, cloudFrontDistribution); // Invalidate the ed
 
 const snsTopic = createSnsTopicAndSubscriptions(setup); // Create SNS topic and subscriptions
 const errorSubLambdaFunction = createErrorSubLambdaFunction(setup, snsTopic); // Create Lambda function that will handle errors coming from codesets lambda
-createCloudWatchLogSubFilter(setup, edgeLambdaPackage.lambdaAtEdgeFunction, errorSubLambdaFunction); // Create CloudWatch log subscription filter between codesets lambda and errorSubLambdaFunction
+const lambdaPermission = grantLambdaPermissionForCloudWatch(
+    setup,
+    edgeLambdaPackage.lambdaAtEdgeFunction,
+    errorSubLambdaFunction
+);
+createCloudWatchLogSubFilter(setup, edgeLambdaPackage.lambdaAtEdgeFunction, errorSubLambdaFunction, lambdaPermission); // Create CloudWatch log subscription filter between codesets lambda and errorSubLambdaFunction
 // createChatbotSlackConfig(setup, snsTopic); // Create AWS Chatbot Slack configuration for alerting
 
 // Outputs
@@ -54,3 +59,4 @@ export const standardLogsBucketDetails = {
     id: standardLogsBucket.id,
 };
 export const cacheUpdaterFunctionArn = cacheUpdaterFunction.arn;
+export const errorSubLambdaFunctionId = pulumi.interpolate`${errorSubLambdaFunction.name}:${errorSubLambdaFunction.version}`;

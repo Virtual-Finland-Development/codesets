@@ -44,19 +44,30 @@ export function createErrorSubLambdaFunction(setup: ISetup, SnsTopic: aws.sns.To
         },
     });
 
+    return lambdaFunction;
+}
+
+export function grantLambdaPermissionForCloudWatch(
+    setup: ISetup,
+    codesetsLambda: aws.lambda.Function,
+    errorSubLambda: aws.lambda.Function
+) {
     /**
      * FROM aws.cloudwatch.LogSubscriptionFilter.roleArn
      * The ARN of an IAM role that grants Amazon CloudWatch Logs permissions to deliver ingested log events to the destination.
      * If you use Lambda as a destination, you should skip this argument and use aws.lambda.Permission resource for granting access from CloudWatch logs to the destination Lambda function.
-     *
-     * ----- not sure if needed. If cloudwatch related stuff should be refined as sourceArn, might create circular deps situation
      */
-    new aws.lambda.Permission(setup.getResourceName('ErrorSubLambdaFunctionPermission'), {
+    const edgeLambdaLogGroupName = pulumi.interpolate`/aws/lambda/us-east-1.${codesetsLambda.name}`;
+    const logGroupSourceArn = edgeLambdaLogGroupName.apply((name) =>
+        aws.cloudwatch.getLogGroup({ name }).then((logGroup) => logGroup.arn)
+    );
+
+    const lambdaPermission = new aws.lambda.Permission(setup.getResourceName('ErrorSubLambdaFunctionPermission'), {
         action: 'lambda:InvokeFunction',
-        function: lambdaFunction.name,
-        principal: 'events.amazonaws.com',
-        // sourceArn: '???'
+        function: errorSubLambda.name,
+        principal: 'logs.us-east-1.amazonaws.com',
+        sourceArn: logGroupSourceArn,
     });
 
-    return lambdaFunction;
+    return lambdaPermission;
 }
