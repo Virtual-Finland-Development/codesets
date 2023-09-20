@@ -1,8 +1,8 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import RequestApp from './app/RequestApp';
-import { resolveErrorResponse } from './utils/api';
+import { UriRedirects, resolveErrorResponse } from './utils/api';
 import { transformOccupations } from './utils/data/transformers';
-import { ValidationError } from './utils/exceptions';
+import { NotFoundError, ValidationError } from './utils/exceptions';
 
 const CODESETS_API_ENDPOINT = process.env.CODESETS_API_ENDPOINT;
 
@@ -69,9 +69,8 @@ function parseRequest(event: APIGatewayProxyEventV2): { method: string; path: st
         throw new ValidationError('Missing request body');
     }
 
-    const knownPaths = ['/productizer/draft/Employment/EscoOccupations'];
-    if (!knownPaths.includes(rawPath)) {
-        throw new ValidationError('Unknown request path');
+    if (!rawPath.includes('EscoOccupations') || !Object.keys(UriRedirects).includes(rawPath)) {
+        throw new NotFoundError('Unknown request path');
     }
 
     let requestData: Record<string, any>;
