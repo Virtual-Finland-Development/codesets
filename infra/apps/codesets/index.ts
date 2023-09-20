@@ -13,8 +13,8 @@ import createLambdaAtEdgeFunction from './resources/LambdaAtEdge';
 import createS3Bucket, { createS3BucketPermissions, uploadAssetsToBucket } from './resources/S3Bucket';
 import { createStandardLogsBucket } from './resources/standardLogsBucket';
 import { createSnsTopicAndSubscriptions } from './resources/SNS';
-import { createCloudWatchAlarmLambdaFunction } from './resources/CloudWatchAlarmLambdaFunction';
-import { createCloudWatchAlarm } from './resources/CloudWatch';
+import { createErrorSubLambdaFunction } from './resources/ErrorSubLambdaFunction';
+import { createCloudWatchLogSubFilter } from './resources/CloudWatch';
 import { createChatbotSlackConfig } from './resources/Chatbot';
 
 const setup = getSetup();
@@ -39,11 +39,10 @@ uploadAssetsToBucket(s3bucketSetup.bucket);
 invokeTheCacheUpdatingFunction(setup, cacheUpdaterFunction); // Regenerate external resources cache
 createEdgeCacheInvalidation(setup, cloudFrontDistribution); // Invalidate the edge-cache of cloudfront
 
-// SNS / CloudWatch custom alarm / Lambda handler
-const SnsTopic = createSnsTopicAndSubscriptions(setup);
-const cloudWatchAlarmLambdaFunction = createCloudWatchAlarmLambdaFunction(setup, SnsTopic);
-createChatbotSlackConfig(setup, SnsTopic);
-createCloudWatchAlarm(setup, edgeLambdaPackage.lambdaAtEdgeFunction, cloudWatchAlarmLambdaFunction);
+const snsTopic = createSnsTopicAndSubscriptions(setup); // Create SNS topic and subscriptions
+const errorSubLambdaFunction = createErrorSubLambdaFunction(setup, snsTopic); // Create Lambda function that will handle errors coming from codesets lambda
+createCloudWatchLogSubFilter(setup, edgeLambdaPackage.lambdaAtEdgeFunction, errorSubLambdaFunction); // Create CloudWatch log subscription filter between codesets lambda and errorSubLambdaFunction
+createChatbotSlackConfig(setup, snsTopic); // Create AWS Chatbot Slack configuration for alerting
 
 // Outputs
 export const url = pulumi.interpolate`https://${cloudFrontDistribution.domainName}`;

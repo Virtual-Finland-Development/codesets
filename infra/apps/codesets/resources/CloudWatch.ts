@@ -3,10 +3,10 @@ import * as aws from '@pulumi/aws';
 import * as awsx from '@pulumi/awsx';
 import { ISetup } from '../../../utils/Setup';
 
-export async function createCloudWatchAlarm(
+export async function createCloudWatchLogSubFilter(
     setup: ISetup,
-    edgeLambda: aws.lambda.Function,
-    cloudWatchAlarmLambda: aws.lambda.Function
+    codesetsLambda: aws.lambda.Function,
+    errorSubLambda: aws.lambda.Function
 ) {
     // Define the custom metric
     /* const customMetric = new awsx.classic.cloudwatch.Metric({
@@ -25,7 +25,7 @@ export async function createCloudWatchAlarm(
         threshold: 1,
     }); */
 
-    const edgeLambdaLogGroupName = pulumi.interpolate`/aws/lambda/us-east-1.${edgeLambda.name}`;
+    const edgeLambdaLogGroupName = pulumi.interpolate`/aws/lambda/us-east-1.${codesetsLambda.name}`;
 
     // Create the subscription for the Lambda function
     const lambdaSubscription = new aws.cloudwatch.LogSubscriptionFilter(
@@ -33,7 +33,7 @@ export async function createCloudWatchAlarm(
         {
             logGroup: edgeLambdaLogGroupName,
             filterPattern: 'ERROR',
-            destinationArn: cloudWatchAlarmLambda.arn,
+            destinationArn: errorSubLambda.arn,
             // roleArn: ''
         }
     );
