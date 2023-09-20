@@ -42,7 +42,7 @@ createEdgeCacheInvalidation(setup, cloudFrontDistribution); // Invalidate the ed
 const snsTopic = createSnsTopicAndSubscriptions(setup); // Create SNS topic and subscriptions
 const errorSubLambdaFunction = createErrorSubLambdaFunction(setup, snsTopic); // Create Lambda function that will handle errors coming from codesets lambda
 createCloudWatchLogSubFilter(setup, edgeLambdaPackage.lambdaAtEdgeFunction, errorSubLambdaFunction); // Create CloudWatch log subscription filter between codesets lambda and errorSubLambdaFunction
-createChatbotSlackConfig(setup, snsTopic); // Create AWS Chatbot Slack configuration for alerting
+// createChatbotSlackConfig(setup, snsTopic); // Create AWS Chatbot Slack configuration for alerting
 
 // Outputs
 export const url = pulumi.interpolate`https://${cloudFrontDistribution.domainName}`;
