@@ -66,7 +66,7 @@ export function grantLambdaPermissionForCloudWatch(
         action: 'lambda:InvokeFunction',
         function: errorSubLambda.name,
         principal: 'logs.us-east-1.amazonaws.com',
-        sourceArn: logGroupSourceArn,
+        sourceArn: `${logGroupSourceArn}:*`,
     });
 
     return lambdaPermission;
