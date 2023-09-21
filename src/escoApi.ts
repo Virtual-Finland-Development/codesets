@@ -3,7 +3,7 @@ import RequestApp from './app/RequestApp';
 import { UriRedirects, resolveErrorResponse } from './utils/api';
 import { transformOccupations } from './utils/data/transformers';
 import { NotFoundError, ValidationError } from './utils/exceptions';
-import { isPingEvent } from './utils/runtime';
+import { pingEventMiddleware } from './utils/runtime';
 
 const CODESETS_API_ENDPOINT = process.env.CODESETS_API_ENDPOINT;
 
@@ -13,16 +13,14 @@ const internalMemory: any = {
 };
 
 // AWS Lambda function handler for the ESCO API
-export async function handler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2 | undefined> {
-    if (isPingEvent(event)) {
-        return;
+export const handler = pingEventMiddleware(
+    async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> => {
+        const app = new RequestApp(event);
+        const response = await handleEvent(app, event);
+        app.logger.log(response);
+        return response;
     }
-
-    const app = new RequestApp(event);
-    const response = await handleEvent(app, event);
-    app.logger.log(response);
-    return response;
-}
+);
 
 async function handleEvent(app: RequestApp, event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
     try {

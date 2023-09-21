@@ -1,14 +1,10 @@
 import RequestLogger from './app/RequestLogger';
 import { getResources } from './utils/data/repositories/ResourceRepository';
-import { RuntimeFlags, isPingEvent } from './utils/runtime';
+import { RuntimeFlags, pingEventMiddleware } from './utils/runtime';
 import ExternalResourceCache from './utils/services/ExternalResourceCache';
 import S3BucketStorage from './utils/services/S3BucketStorage';
 
-export async function handler(event: any) {
-    if (isPingEvent(event)) {
-        return;
-    }
-
+export const handler = pingEventMiddleware(async () => {
     RuntimeFlags.isSystemTask = true; // Flag the resources system to skip existing cache usage
 
     const externalResources = getResources('external');
@@ -35,4 +31,4 @@ export async function handler(event: any) {
             // @TODO: alerts to admin
         }
     }
-}
+});

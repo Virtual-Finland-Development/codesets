@@ -10,23 +10,12 @@ export const RuntimeFlags = {
     isSystemTask: false,
 };
 
-/**
- *
- * @param event
- * @returns - true if the event is a ping event, false otherwise
- */
-export function isPingEvent(event: any): boolean {
-    if (event.body) {
-        try {
-            const body = JSON.parse(event.body);
-            if (body.action === 'ping') {
-                console.log('pong');
-                return true;
-            }
-        } catch (e) {
-            console.error('Invalid event body', event.body);
-            return true;
+export function pingEventMiddleware(next: (event: any, context?: any) => Promise<any>) {
+    return async function (event: any, context?: any) {
+        if (event.action === 'ping') {
+            console.log('pong');
+            return;
         }
-    }
-    return false;
+        return next(event, context);
+    };
 }
