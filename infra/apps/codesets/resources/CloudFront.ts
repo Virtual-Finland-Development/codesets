@@ -74,7 +74,7 @@ export function createCloudFrontDistribution(
             bucket: standardLogsBucket.bucketDomainName,
             prefix: 'std-cf-logs',
             includeCookies: false,
-        }
+        },
     });
 
     // Extended monitoring
@@ -89,13 +89,16 @@ export function createCloudFrontDistribution(
     });
 
     // Permissions for Lambda@Edge
-    const LambdaAtEdgePermissionConfig = setup.getResourceConfig('LambdaAtEdgePermission');
-    new aws.lambda.Permission(LambdaAtEdgePermissionConfig.name, {
-        action: 'lambda:GetFunction',
-        function: lambdaAtEdgeFunction.name,
-        principal: 'edgelambda.amazonaws.com',
-        sourceArn: cloudFrontDistribution.arn,
-    });
+    new aws.lambda.Permission(
+        setup.getResourceName('LambdaAtEdgePermission'),
+        {
+            action: 'lambda:GetFunction',
+            function: lambdaAtEdgeFunction.name,
+            principal: 'edgelambda.amazonaws.com',
+            sourceArn: cloudFrontDistribution.arn,
+        },
+        { provider: setup.edgeRegion }
+    );
 
     return cloudFrontDistribution;
 }

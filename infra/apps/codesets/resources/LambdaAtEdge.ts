@@ -7,36 +7,44 @@ export default function createLambdaAtEdgeFunction(
     s3BucketSetup: { name: string; bucket: aws.s3.Bucket }
 ) {
     const lambdaAtEdgeRoleConfig = setup.getResourceConfig('LambdaAtEdgeRole');
-    const lambdaAtEdgeRole = new aws.iam.Role(lambdaAtEdgeRoleConfig.name, {
-        assumeRolePolicy: JSON.stringify({
-            Version: '2012-10-17',
-            Statement: [
-                {
-                    Action: 'sts:AssumeRole',
-                    Principal: {
-                        Service: ['lambda.amazonaws.com', 'edgelambda.amazonaws.com'],
+    const lambdaAtEdgeRole = new aws.iam.Role(
+        lambdaAtEdgeRoleConfig.name,
+        {
+            assumeRolePolicy: JSON.stringify({
+                Version: '2012-10-17',
+                Statement: [
+                    {
+                        Action: 'sts:AssumeRole',
+                        Principal: {
+                            Service: ['lambda.amazonaws.com', 'edgelambda.amazonaws.com'],
+                        },
+                        Effect: 'Allow',
                     },
-                    Effect: 'Allow',
-                },
-            ],
-        }),
-        tags: lambdaAtEdgeRoleConfig.tags,
-    });
+                ],
+            }),
+            tags: lambdaAtEdgeRoleConfig.tags,
+        },
+        { provider: setup.edgeRegion }
+    );
 
     const lambdaAtEdgeRolePolicyConfig = setup.getResourceConfig('LambdaAtEdgeRolePolicy');
-    new aws.iam.RolePolicy(lambdaAtEdgeRolePolicyConfig.name, {
-        role: lambdaAtEdgeRole.id,
-        policy: JSON.stringify({
-            Version: '2012-10-17',
-            Statement: [
-                {
-                    Action: ['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],
-                    Resource: 'arn:aws:logs:*:*:*',
-                    Effect: 'Allow',
-                },
-            ],
-        }),
-    });
+    new aws.iam.RolePolicy(
+        lambdaAtEdgeRolePolicyConfig.name,
+        {
+            role: lambdaAtEdgeRole.id,
+            policy: JSON.stringify({
+                Version: '2012-10-17',
+                Statement: [
+                    {
+                        Action: ['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],
+                        Resource: 'arn:aws:logs:*:*:*',
+                        Effect: 'Allow',
+                    },
+                ],
+            }),
+        },
+        { provider: setup.edgeRegion }
+    );
 
     // pass the bucket name to the lambda function dist folder
     fs.writeFileSync(

@@ -7,7 +7,7 @@ import * as path from 'path';
 import { ISetup } from '../../../utils/Setup';
 
 export default function createS3Bucket(setup: ISetup) {
-    const { name, tags } = setup.getResourceConfig('S3BucketStorage');
+    const { name, tags } = setup.getResourceConfig('storage-bucket');
     const s3bucket = new aws.s3.Bucket(name, {
         bucket: name, // Need a static bucket name for lambda@edge does not support the passing of environment variables
         website: {
