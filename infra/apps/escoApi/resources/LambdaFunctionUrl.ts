@@ -1,4 +1,5 @@
 import * as aws from '@pulumi/aws';
+import { local } from '@pulumi/command';
 import * as pulumi from '@pulumi/pulumi';
 import { ISetup } from '../../../utils/Setup';
 
@@ -35,48 +36,59 @@ export function createEscoApiLambdaFunctionUrl(setup: ISetup, codesetsUrl: pulum
         }),
     });
 
-    const escoApiRegionConfig = setup.getResourceConfig('EscoApiRegion');
-    const escoApiRegion = new aws.Provider(escoApiRegionConfig.name);
-
     const escoApiLambdaFunctionConfig = setup.getResourceConfig('EscoApiLambdaFunction');
-    const escoApiLambdaFunction = new aws.lambda.Function(
-        escoApiLambdaFunctionConfig.name,
-        {
-            role: escoApiLambdaFunctionExecRoleRole.arn,
-            runtime: 'nodejs18.x',
-            handler: 'index.handler',
-            timeout: 30,
-            memorySize: 1024,
-            code: new pulumi.asset.FileArchive('./dist/escoApi'),
-            tags: escoApiLambdaFunctionConfig.tags,
-            environment: {
-                variables: {
-                    CODESETS_API_ENDPOINT: pulumi.interpolate`${codesetsUrl}`,
-                },
+    const escoApiLambdaFunction = new aws.lambda.Function(escoApiLambdaFunctionConfig.name, {
+        role: escoApiLambdaFunctionExecRoleRole.arn,
+        runtime: 'nodejs18.x',
+        handler: 'index.handler',
+        timeout: 30,
+        memorySize: 1024,
+        code: new pulumi.asset.FileArchive('./dist/escoApi'),
+        tags: escoApiLambdaFunctionConfig.tags,
+        environment: {
+            variables: {
+                CODESETS_API_ENDPOINT: pulumi.interpolate`${codesetsUrl}`,
             },
-            publish: true,
         },
-        { provider: escoApiRegion }
-    );
+        publish: true,
+    });
+
+    const initialInvokeCommand = invokeInitialExecution(setup, escoApiLambdaFunction);
 
     const escoApiLambdaFunctionUrlConfig = setup.getResourceConfig('EscoApiLambdaFunctionUrl');
-    const escoApiLambdaFunctionUrl = new aws.lambda.FunctionUrl(
-        escoApiLambdaFunctionUrlConfig.name,
-        {
-            functionName: escoApiLambdaFunction.name,
-            authorizationType: 'NONE',
-            cors: {
-                allowCredentials: false,
-                allowOrigins: ['*'],
-                allowMethods: ['POST'],
-            },
+    const escoApiLambdaFunctionUrl = new aws.lambda.FunctionUrl(escoApiLambdaFunctionUrlConfig.name, {
+        functionName: escoApiLambdaFunction.name,
+        authorizationType: 'NONE',
+        cors: {
+            allowCredentials: false,
+            allowOrigins: ['*'],
+            allowMethods: ['POST'],
         },
-        { provider: escoApiRegion }
-    );
+    });
 
     return {
         lambdaFunctionExecRoleRole: escoApiLambdaFunctionExecRoleRole,
         lambdaFunction: escoApiLambdaFunction,
         lambdaFunctionUrl: escoApiLambdaFunctionUrl,
+        initialInvokeCommand,
     };
+}
+
+/**
+ * Invokes the function once to ensure the creation of the log group
+ *
+ * @param setup
+ * @param lambdaFunction
+ */
+function invokeInitialExecution(setup: ISetup, lambdaFunction: aws.lambda.Function) {
+    const invokeConfig = setup.getResourceConfig('EscoApiInitialInvoke');
+    const awsConfig = new pulumi.Config('aws');
+    const region = awsConfig.require('region');
+    return new local.Command(
+        invokeConfig.name,
+        {
+            create: pulumi.interpolate`aws lambda invoke --payload '{"action": "ping"}' --cli-binary-format raw-in-base64-out --function-name ${lambdaFunction.name} --region ${region} /dev/null`,
+        },
+        { dependsOn: [lambdaFunction] }
+    );
 }
