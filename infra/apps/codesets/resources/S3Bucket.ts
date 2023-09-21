@@ -72,13 +72,14 @@ function publicReadPolicyForBucket(bucketName: string, originAccessArn: string, 
         ],
     });
 }
-export function uploadAssetsToBucket(bucketResource: aws.s3.Bucket) {
+export function uploadAssetsToBucket(setup: ISetup, bucketResource: aws.s3.Bucket) {
     process.chdir('../../../'); // navigate to project root folder
-    uploadDirToS3(`${process.cwd()}/src/resources/internal`, bucketResource, '', 'resources', ['ts', 'js']);
-    uploadDirToS3(`${process.cwd()}/src/build/webroot`, bucketResource);
+    uploadDirToS3(setup, `${process.cwd()}/src/resources/internal`, bucketResource, '', 'resources', ['ts', 'js']);
+    uploadDirToS3(setup, `${process.cwd()}/src/build/webroot`, bucketResource);
 }
 
 function uploadDirToS3(
+    setup: ISetup,
     buildDir: string,
     bucket: aws.s3.Bucket,
     subDir = '',
@@ -90,7 +91,7 @@ function uploadDirToS3(
 
         if (fs.statSync(filePath).isDirectory()) {
             // eg. /resources/internal
-            uploadDirToS3(buildDir, bucket, `${subDir}/${item}`, bucketSubDir, denyFileExtensions);
+            uploadDirToS3(setup, buildDir, bucket, `${subDir}/${item}`, bucketSubDir, denyFileExtensions);
         } else {
             // eg. /resources/internal/file.txt -> /file.txt
             // eg. /resources/internal/bazz/file.txt -> /bazz/file.txt
@@ -103,7 +104,8 @@ function uploadDirToS3(
                 continue;
             }
 
-            new aws.s3.BucketObject(bucketFile, {
+            new aws.s3.BucketObject(setup.getResourceName(bucketFile), {
+                key: bucketFile,
                 bucket: bucket,
                 source: new pulumi.asset.FileAsset(filePath),
                 contentType: mime.getType(filePath) || undefined,
