@@ -45,19 +45,22 @@ export default function createLambdaAtEdgeFunction(
             name: s3BucketSetup.name,
         })
     );
-    console.log('Wrote bucket info to dist folder');
 
     const lambdaAtEdgeFunctionConfig = setup.getResourceConfig('LambdaAtEdge');
-    const lambdaAtEdgeFunction = new aws.lambda.Function(lambdaAtEdgeFunctionConfig.name, {
-        code: new pulumi.asset.FileArchive('./dist/codesets'),
-        handler: 'codesets.handler',
-        runtime: 'nodejs18.x',
-        memorySize: 256,
-        timeout: 30,
-        role: lambdaAtEdgeRole.arn,
-        tags: lambdaAtEdgeFunctionConfig.tags,
-        publish: true,
-    });
+    const lambdaAtEdgeFunction = new aws.lambda.Function(
+        lambdaAtEdgeFunctionConfig.name,
+        {
+            code: new pulumi.asset.FileArchive('./dist/codesets'),
+            handler: 'codesets.handler',
+            runtime: 'nodejs18.x',
+            memorySize: 256,
+            timeout: 30,
+            role: lambdaAtEdgeRole.arn,
+            tags: lambdaAtEdgeFunctionConfig.tags,
+            publish: true,
+        },
+        { provider: setup.edgeRegion }
+    );
 
     return {
         lambdaAtEdgeFunction,
