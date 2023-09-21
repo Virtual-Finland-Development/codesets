@@ -11,9 +11,11 @@ let isHandlingEvent = false;
 // https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/SubscriptionFilters.html#LambdaFunctionExample
 export const handler = async (event: CloudWatchLogsEvent) => {
     console.log('[Received Event]:', event);
+
     if (!isHandlingEvent) {
+        // prevent consecutive executions (at least in theory)
         isHandlingEvent = true;
-        console.log('[Try catch]');
+
         try {
             if (!snsTopicArn) {
                 throw new Error('SNS topic arn could not be read from env.');
@@ -23,20 +25,31 @@ export const handler = async (event: CloudWatchLogsEvent) => {
             const decompressedData = gunzipSync(buffer).toString('utf-8');
             const parsed = JSON.parse(decompressedData);
             console.log('[Parsed]:', parsed);
-            const message = parsed?.logEvents[0]?.message;
-            console.log(JSON.stringify(message, null, 2));
+            const message = parsed?.logEvents[0]?.message ?? 'Message could not be parsed.';
             const messageString = JSON.stringify(message, null, 2);
             console.log('[Message]:', messageString);
 
-            const publishCommand = new PublishCommand({
-                TopicArn: snsTopicArn,
-                Message: message,
-                Subject: `Alarm Testing`,
-            });
+            // for chatbot / slack integration, custom format needed
+            // https://docs.aws.amazon.com/chatbot/latest/adminguide/custom-notifs.html
+            const chatbotCustomFormat = {
+                version: '1.0',
+                source: 'custom',
+                content: {
+                    title: 'Codesets Error!',
+                    description: messageString,
+                },
+            };
 
-            await snsClient.send(publishCommand);
-            console.log(`Published message to SNS: ${message}`);
+            // publish to sns topic
+            await snsClient.send(
+                new PublishCommand({
+                    TopicArn: snsTopicArn,
+                    Subject: 'Codesets Error',
+                    Message: JSON.stringify(chatbotCustomFormat),
+                })
+            );
 
+            // clear flag after timeout
             setTimeout(() => (isHandlingEvent = false), isHandlingTimeout);
         } catch (err) {
             isHandlingEvent = false;

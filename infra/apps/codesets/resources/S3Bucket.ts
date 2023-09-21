@@ -83,7 +83,7 @@ function uploadDirToS3(
     bucket: aws.s3.Bucket,
     subDir = '',
     bucketSubDir = '', // if provided, all subdir(s) files concatenated to this
-    denyFileExtensions?: string[],
+    denyFileExtensions?: string[]
 ) {
     for (const item of fs.readdirSync(`${buildDir}${subDir}`)) {
         const filePath = path.join(buildDir, subDir, item);
@@ -98,7 +98,7 @@ function uploadDirToS3(
             // eg. /resources/internal/file.txt -> /alt/file.txt
             // eg. /resources/internal/bazz/file.txt -> /alt/bazz/file.txt
             const bucketFile = bucketSubDir.length > 0 ? `${bucketSubDir}/${item}` : file;
-            
+
             if (denyFileExtensions && denyFileExtensions.includes(path.extname(file))) {
                 continue;
             }
