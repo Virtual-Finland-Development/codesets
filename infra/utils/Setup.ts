@@ -1,4 +1,5 @@
 import * as pulumi from '@pulumi/pulumi';
+import * as aws from '@pulumi/aws';
 
 const setup = {
     stage: pulumi.getStack(),
@@ -19,6 +20,9 @@ const setup = {
     isProductionLikeEnvironment() {
         return this.stage.endsWith('production') || this.stage.endsWith('staging');
     },
+    awsNorthProvider: new aws.Provider('AwsEuNorthProvider', {
+        region: 'eu-north-1',
+    }),
 };
 
 type ISetup = typeof setup;
@@ -27,4 +31,3 @@ function getSetup() {
 }
 
 export { ISetup, getSetup };
-

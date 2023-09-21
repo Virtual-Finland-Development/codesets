@@ -1,86 +1,51 @@
 import { CloudWatchLogsEvent } from 'aws-lambda';
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
-import { gunzip } from 'zlib';
+import { gunzipSync } from 'node:zlib';
 
+const snsTopicArn = process.env.SNS_TOPIC_ARN;
 const snsClient = new SNSClient({ region: 'eu-north-1' });
-
 const isHandlingTimeout = 1000 * 60; // 1 minute
 let isHandlingEvent = false;
 
+// Logs that are sent to a receiving service through a subscription filter are base64 encoded and compressed with the gzip format.
 // https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/SubscriptionFilters.html#LambdaFunctionExample
 export const handler = async (event: CloudWatchLogsEvent) => {
     console.log('[Received Event]:', event);
     if (!isHandlingEvent) {
         isHandlingEvent = true;
-
+        console.log('[Try catch]');
         try {
-            const snsTopicArn = process.env.SNS_TOPIC_ARN || undefined;
-
             if (!snsTopicArn) {
                 throw new Error('SNS topic arn could not be read from env.');
             }
 
-            const payload = Buffer.from(event.awslogs.data, 'base64');
+            const buffer = Buffer.from(event.awslogs.data, 'base64');
+            const decompressedData = gunzipSync(buffer).toString('utf-8');
+            const parsed = JSON.parse(decompressedData);
+            console.log('[Parsed]:', parsed);
+            const message = parsed?.logEvents[0]?.message;
+            console.log(JSON.stringify(message, null, 2));
+            const messageString = JSON.stringify(message, null, 2);
+            console.log('[Message]:', messageString);
 
-            gunzip(payload, async (err, result) => {
-                if (err) {
-                    throw err;
-                }
-
-                const data = JSON.parse(result.toString());
-                console.log('Event Data:', JSON.stringify(data, null, 2));
-
-                /* const message = 'Test 123 123.';
-
-                const publishCommand = new PublishCommand({
-                    TopicArn: snsTopicArn,
-                    Message: message,
-                    Subject: `Alarm: ${message}`,
-                });
-
-                await snsClient.send(publishCommand);
-                console.log(`Published message to SNS: ${message}`); */
+            const publishCommand = new PublishCommand({
+                TopicArn: snsTopicArn,
+                Message: message,
+                Subject: `Alarm Testing`,
             });
+
+            await snsClient.send(publishCommand);
+            console.log(`Published message to SNS: ${message}`);
+
+            setTimeout(() => (isHandlingEvent = false), isHandlingTimeout);
         } catch (err) {
-            console.error(err);
-            throw err;
-        } finally {
-            setTimeout(() => {
-                isHandlingEvent = false;
-            }, 0);
+            isHandlingEvent = false;
+            console.error('Error:', err);
+
+            return {
+                statusCode: 500,
+                body: JSON.stringify({ error: 'Internal Server Error' }),
+            };
         }
     }
 };
-
-/* export const handler = async (event: any) => {
-    try {
-        console.log(event);
-        const snsTopicArn = process.env.SNS_TOPIC_ARN || undefined;
-
-        if (!snsTopicArn) {
-            throw new Error('SNS topic arn could not be read from env.');
-        }
-
-        // https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-alarm.html
-        // ????
-        const alarmName: string = event.detail['alarmName'];
-        const alarmDescription: string = event.detail['alarmDescription'];
-        const alarmStateValue: string = event.detail['newStateValue'];
-
-         const message = `Alarm "${alarmName}" has entered state "${alarmStateValue}" - ${alarmDescription}`;
-        const message = 'Test 123 123.';
-
-        const publishCommand = new PublishCommand({
-            TopicArn: snsTopicArn,
-            Message: message,
-            Subject: `CloudWatch Alarm: ${message}`,
-        });
-
-        await snsClient.send(publishCommand);
-        console.log(`Published message to SNS: ${message}`);
-    } catch (error) {
-        console.error('Error:', error);
-        throw error;
-    }
-};
- */

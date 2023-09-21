@@ -45,9 +45,9 @@ const lambdaPermission = grantLambdaPermissionForCloudWatch(
     setup,
     edgeLambdaPackage.lambdaAtEdgeFunction,
     errorSubLambdaFunction
-);
-createCloudWatchLogSubFilter(setup, edgeLambdaPackage.lambdaAtEdgeFunction, errorSubLambdaFunction, lambdaPermission); // Create CloudWatch log subscription filter between codesets lambda and errorSubLambdaFunction
-// createChatbotSlackConfig(setup, snsTopic); // Create AWS Chatbot Slack configuration for alerting
+); // Grant Lambda permission for CloudWatch
+createCloudWatchLogSubFilter(setup, edgeLambdaPackage.lambdaAtEdgeFunction, errorSubLambdaFunction, lambdaPermission); // Create CloudWatch log subscription filter for errorSubLambdaFunction
+createChatbotSlackConfig(setup, snsTopic); // Create AWS Chatbot Slack configuration for alerting
 
 // Outputs
 export const url = pulumi.interpolate`https://${cloudFrontDistribution.domainName}`;

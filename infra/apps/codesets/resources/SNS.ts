@@ -6,19 +6,29 @@ const config = new pulumi.Config();
 
 export function createSnsTopicAndSubscriptions(setup: ISetup) {
     // SNS topic
-    const SnSTopic = new aws.sns.Topic(setup.getResourceName('SnsTopic'));
+    const SnSTopic = new aws.sns.Topic(
+        setup.getResourceName('SnsTopic'),
+        {},
+        {
+            provider: setup.awsNorthProvider,
+        }
+    );
 
     // email subscribers
-    const emailEndpoints = ['email1@email.com', 'email2@email.com'];
+    const emailEndpoints = [''];
 
     // create sub for each subscriber
-    /*  emailEndpoints.map((email, i) => {
-        new aws.sns.TopicSubscription(setup.getResourceName(`SnsEmailSub-${i + 1}`), {
-            protocol: 'email',
-            endpoint: email,
-            topic: SnSTopic.arn,
-        });
-    }); */
+    emailEndpoints.forEach((email, i) => {
+        new aws.sns.TopicSubscription(
+            setup.getResourceName(`SnsEmailSub-${i + 1}`),
+            {
+                protocol: 'email',
+                endpoint: email,
+                topic: SnSTopic.arn,
+            },
+            { provider: setup.awsNorthProvider }
+        );
+    });
 
     // create sub for slackbot
     /* new aws.sns.TopicSubscription(setup.getResourceName('SnsSlackSub'), {
