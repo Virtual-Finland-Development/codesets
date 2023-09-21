@@ -8,21 +8,25 @@ import { ISetup } from '../../../utils/Setup';
 
 export default function createS3Bucket(setup: ISetup) {
     const bucketConfig = setup.getResourceConfig('s3bucket');
-    const s3bucket = new aws.s3.Bucket(bucketConfig.name, {
-        bucket: bucketConfig.name, // Need a static bucket name for lambda@edge does not support the passing of environment variables
-        website: {
-            indexDocument: 'index.html',
-            errorDocument: 'index.html',
-        },
-        tags: bucketConfig.tags,
-        corsRules: [
-            {
-                allowedHeaders: ['*'],
-                allowedMethods: ['GET', 'POST'],
-                allowedOrigins: ['*'],
+    const s3bucket = new aws.s3.Bucket(
+        bucketConfig.name,
+        {
+            bucket: bucketConfig.name, // Need a static bucket name for lambda@edge does not support the passing of environment variables
+            website: {
+                indexDocument: 'index.html',
+                errorDocument: 'index.html',
             },
-        ],
-    });
+            tags: bucketConfig.tags,
+            corsRules: [
+                {
+                    allowedHeaders: ['*'],
+                    allowedMethods: ['GET', 'POST'],
+                    allowedOrigins: ['*'],
+                },
+            ],
+        },
+        { provider: setup.region }
+    );
 
     return {
         bucket: s3bucket,
@@ -83,7 +87,7 @@ function uploadDirToS3(
     bucket: aws.s3.Bucket,
     subDir = '',
     bucketSubDir = '', // if provided, all subdir(s) files concatenated to this
-    denyFileExtensions?: string[],
+    denyFileExtensions?: string[]
 ) {
     for (const item of fs.readdirSync(`${buildDir}${subDir}`)) {
         const filePath = path.join(buildDir, subDir, item);
@@ -98,7 +102,7 @@ function uploadDirToS3(
             // eg. /resources/internal/file.txt -> /alt/file.txt
             // eg. /resources/internal/bazz/file.txt -> /alt/bazz/file.txt
             const bucketFile = bucketSubDir.length > 0 ? `${bucketSubDir}/${item}` : file;
-            
+
             if (denyFileExtensions && denyFileExtensions.includes(path.extname(file))) {
                 continue;
             }

@@ -1,4 +1,9 @@
+import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
+
+const codesetsConfig = new pulumi.Config('codesets');
+const codesetsRegion = codesetsConfig.require('region') as pulumi.Input<aws.Region> | undefined;
+const region = new aws.Provider('codesets-region', { region: codesetsRegion });
 
 const setup = {
     stage: pulumi.getStack(),
@@ -19,6 +24,7 @@ const setup = {
     isProductionLikeEnvironment() {
         return this.stage.endsWith('production') || this.stage.endsWith('staging');
     },
+    region,
 };
 
 type ISetup = typeof setup;
@@ -27,4 +33,3 @@ function getSetup() {
 }
 
 export { ISetup, getSetup };
-
