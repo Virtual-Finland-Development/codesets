@@ -3,7 +3,7 @@ import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 import { gunzipSync } from 'node:zlib';
 
 const snsTopicArn = process.env.SNS_TOPIC_ARN;
-const snsClient = new SNSClient({ region: 'eu-north-1' });
+const snsClient = new SNSClient({ region: 'us-east-1' });
 const isHandlingTimeout = 1000 * 60; // 1 minute
 let isHandlingEvent = false;
 

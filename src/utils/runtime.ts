@@ -9,3 +9,13 @@ export const RuntimeFlags = {
     isLocal: false,
     isSystemTask: false,
 };
+
+export function pingEventMiddleware(next: (event: any, context?: any) => Promise<any>) {
+    return async function (event: any, context?: any) {
+        if (event.action === 'ping') {
+            console.log('pong');
+            return;
+        }
+        return next(event, context);
+    };
+}
