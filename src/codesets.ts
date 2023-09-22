@@ -25,10 +25,11 @@ const loggerSettings = {
  * @returns
  */
 export const handler = pingEventMiddleware(async (event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> => {
+    const bucketInfo = getStorageBucketInfo();
     const app = new RequestApp(event, {
         loggerSettings: loggerSettings,
         storage: new S3BucketStorage({
-            region: 'us-east-1', // Codesets bucket must be stored in us-east-1 for CloudFront to access it
+            region: bucketInfo.region,
         }),
     });
 

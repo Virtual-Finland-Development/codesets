@@ -1,6 +1,9 @@
 import * as pulumi from '@pulumi/pulumi';
 import { getSetup } from '../../utils/Setup';
-import { createCacheUpdaterLambdaFunction, invokeTheCacheUpdatingFunction } from './resources/CacheUpdaterLambdaFunction';
+import {
+    createCacheUpdaterLambdaFunction,
+    invokeTheCacheUpdatingFunction,
+} from './resources/CacheUpdaterLambdaFunction';
 import {
     createCloudFrontDistribution,
     createEdgeCacheInvalidation,
@@ -8,7 +11,7 @@ import {
 } from './resources/CloudFront';
 import createLambdaAtEdgeFunction from './resources/LambdaAtEdge';
 import createS3Bucket, { createS3BucketPermissions, uploadAssetsToBucket } from './resources/S3Bucket';
-import { createStandardLogsBucket } from "./resources/standardLogsBucket";
+import { createStandardLogsBucket } from './resources/standardLogsBucket';
 
 const setup = getSetup();
 const originAccessIdentity = createOriginAccessIdentity(setup);
@@ -27,7 +30,7 @@ const cloudFrontDistribution = createCloudFrontDistribution(
     edgeLambdaPackage.lambdaAtEdgeFunction,
     standardLogsBucket
 );
-uploadAssetsToBucket(s3bucketSetup.bucket);
+uploadAssetsToBucket(setup, s3bucketSetup.bucket);
 
 invokeTheCacheUpdatingFunction(setup, cacheUpdaterPackage.lambdaFunction); // Regenerate external resources cache
 createEdgeCacheInvalidation(setup, cloudFrontDistribution); // Invalidate the edge-cache of cloudfront
@@ -39,6 +42,6 @@ export const lambdaId = pulumi.interpolate`${edgeLambdaPackage.lambdaAtEdgeFunct
 export const cloudFrontDistributionId = cloudFrontDistribution.id;
 export const standardLogsBucketDetails = {
     arn: standardLogsBucket.arn,
-    id: standardLogsBucket.id
-}
+    id: standardLogsBucket.id,
+};
 export const cacheUpdaterFunctionArn = cacheUpdaterPackage.lambdaFunction.arn;
