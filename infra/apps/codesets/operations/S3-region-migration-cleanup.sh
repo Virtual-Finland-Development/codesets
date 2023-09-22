@@ -2,6 +2,11 @@
 # This script is used to clean up the pulumi stack of migrated s3 assets
 # as of pulumi issue: https://github.com/pulumi/pulumi-aws/issues/879
 # Clear the s3 assets manually from the origin region after the migration
+
+# Navigate to the pulumi stack directory
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd ${SCRIPT_DIR}/..
+
 IFS=$'\n'
 
 STAGE_WITHOUT_ORG=$1
