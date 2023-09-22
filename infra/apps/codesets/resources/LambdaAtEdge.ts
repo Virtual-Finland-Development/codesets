@@ -71,7 +71,7 @@ export default function createLambdaAtEdgeFunction(
         { provider: setup.edgeRegion }
     );
 
-    const initialInvokeCommand = invokeInitialExecution(setup, lambdaAtEdgeFunction);
+    const initialInvokeCommand = invokeInitialExecution(setup, lambdaAtEdgeFunction, setup.edgeRegion);
 
     return {
         lambdaAtEdgeFunction,
@@ -86,14 +86,12 @@ export default function createLambdaAtEdgeFunction(
  * @param setup
  * @param lambdaFunction
  */
-function invokeInitialExecution(setup: ISetup, lambdaFunction: aws.lambda.Function) {
+function invokeInitialExecution(setup: ISetup, lambdaFunction: aws.lambda.Function, regionProvider: aws.Provider) {
     const invokeConfig = setup.getResourceConfig('LambdaAtEdgeInitialInvoke');
-    const awsConfig = new pulumi.Config('aws');
-    const region = awsConfig.require('region');
     return new local.Command(
         invokeConfig.name,
         {
-            create: pulumi.interpolate`aws lambda invoke --payload '{"action": "ping"}' --cli-binary-format raw-in-base64-out --function-name ${lambdaFunction.name} --region ${region} /dev/null`,
+            create: pulumi.interpolate`aws lambda invoke --payload '{"action": "ping"}' --cli-binary-format raw-in-base64-out --function-name ${lambdaFunction.name} --region ${regionProvider.region} /dev/null`,
         },
         { dependsOn: [lambdaFunction] }
     );
