@@ -97,7 +97,7 @@ export function createCloudFrontDistribution(
             principal: 'edgelambda.amazonaws.com',
             sourceArn: cloudFrontDistribution.arn,
         },
-        { provider: setup.edgeRegion }
+        { provider: setup.edgeRegion.provider }
     );
 
     return cloudFrontDistribution;
