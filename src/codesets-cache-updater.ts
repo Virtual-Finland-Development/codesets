@@ -1,12 +1,12 @@
 import RequestLogger from './app/RequestLogger';
 import { getResources } from './utils/data/repositories/ResourceRepository';
-import { RuntimeFlags } from './utils/runtime';
+import { RuntimeFlags, pingEventMiddleware } from './utils/runtime';
 import ExternalResourceCache from './utils/services/ExternalResourceCache';
 import S3BucketStorage from './utils/services/S3BucketStorage';
 
-export async function handler() {
+export const handler = pingEventMiddleware(async () => {
     RuntimeFlags.isSystemTask = true; // Flag the resources system to skip existing cache usage
-    
+
     const externalResources = getResources('external');
     const appStorage = new S3BucketStorage({
         region: 'us-east-1', // Codesets bucket must be stored in us-east-1 for CloudFront to access it
@@ -15,7 +15,7 @@ export async function handler() {
 
     for (const resourceName in externalResources) {
         const resource = externalResources[resourceName];
-        console.log("Updating resource..", resourceName);
+        console.log('Updating resource..', resourceName);
 
         try {
             // Fetch data response string
@@ -23,13 +23,12 @@ export async function handler() {
 
             // Validate input/output by parsing
             await resource.parseRawData(dataPackage.data, dataPackage.mime);
-            
+
             // Store data in cache
             await externalResourceCache.store(resource.name, dataPackage);
-            
         } catch (error) {
             console.error(resourceName, RequestLogger.formatError(error));
             // @TODO: alerts to admin
         }
     }
-}
+});

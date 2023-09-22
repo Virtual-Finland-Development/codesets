@@ -2,14 +2,14 @@ import {
     APIGatewayProxyEventV2,
     APIGatewayProxyStructuredResultV2,
     CloudFrontRequestEvent,
-    CloudFrontRequestResult
+    CloudFrontRequestResult,
 } from 'aws-lambda';
 import RequestApp from './app/RequestApp';
 import { engageResourcesAction } from './app/resources-controller-actions';
 import { InternalResources } from './resources/index';
 import { resolveErrorResponse, resolveUri } from './utils/api';
 import { decodeBase64, parseRequestInputParams } from './utils/helpers';
-import { getStorageBucketInfo } from './utils/runtime';
+import { getStorageBucketInfo, pingEventMiddleware } from './utils/runtime';
 import S3BucketStorage from './utils/services/S3BucketStorage';
 
 const loggerSettings = {
@@ -24,18 +24,18 @@ const loggerSettings = {
  * @param event
  * @returns
  */
-export async function handler(event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
+export const handler = pingEventMiddleware(async (event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> => {
     const app = new RequestApp(event, {
         loggerSettings: loggerSettings,
         storage: new S3BucketStorage({
             region: 'us-east-1', // Codesets bucket must be stored in us-east-1 for CloudFront to access it
-        })
+        }),
     });
-    
+
     const response = await handleLiveRequest(app, event);
     app.logger.log(response);
     return response;
-}
+});
 
 async function handleLiveRequest(app: RequestApp, event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
     try {
@@ -107,14 +107,13 @@ async function handleLiveRequest(app: RequestApp, event: CloudFrontRequestEvent)
  * @returns
  */
 export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
-    
     const app = new RequestApp(event, {
         loggerSettings: loggerSettings,
         runtimeFlags: {
             isLocal: true,
-        }
+        },
     });
-    
+
     const response = await handleLocalEvent(app, event);
     app.logger.log(response);
     return response;
@@ -126,7 +125,10 @@ export async function offlineHandler(event: APIGatewayProxyEventV2): Promise<API
  * @param event
  * @returns
  */
-async function handleLocalEvent(app: RequestApp,event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
+async function handleLocalEvent(
+    app: RequestApp,
+    event: APIGatewayProxyEventV2
+): Promise<APIGatewayProxyStructuredResultV2> {
     try {
         const handle = async (event: APIGatewayProxyEventV2) => {
             let uri = resolveUri(event.rawPath);

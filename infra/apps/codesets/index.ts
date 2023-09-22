@@ -19,7 +19,7 @@ const originAccessIdentity = createOriginAccessIdentity(setup);
 const s3bucketSetup = createS3Bucket(setup);
 const edgeLambdaPackage = createLambdaAtEdgeFunction(setup, s3bucketSetup);
 createS3BucketPermissions(setup, s3bucketSetup.bucket, originAccessIdentity, edgeLambdaPackage.lambdaAtEdgeRole);
-const cacheUpdaterFunction = createCacheUpdaterLambdaFunction(setup, s3bucketSetup.name);
+const cacheUpdaterPackage = createCacheUpdaterLambdaFunction(setup, s3bucketSetup.name);
 
 const standardLogsBucket = createStandardLogsBucket(setup);
 
@@ -32,7 +32,7 @@ const cloudFrontDistribution = createCloudFrontDistribution(
 );
 uploadAssetsToBucket(setup, s3bucketSetup.bucket);
 
-invokeTheCacheUpdatingFunction(setup, cacheUpdaterFunction); // Regenerate external resources cache
+invokeTheCacheUpdatingFunction(setup, cacheUpdaterPackage.lambdaFunction); // Regenerate external resources cache
 createEdgeCacheInvalidation(setup, cloudFrontDistribution); // Invalidate the edge-cache of cloudfront
 
 // Outputs
@@ -44,4 +44,4 @@ export const standardLogsBucketDetails = {
     arn: standardLogsBucket.arn,
     id: standardLogsBucket.id,
 };
-export const cacheUpdaterFunctionArn = cacheUpdaterFunction.arn;
+export const cacheUpdaterFunctionArn = cacheUpdaterPackage.lambdaFunction.arn;

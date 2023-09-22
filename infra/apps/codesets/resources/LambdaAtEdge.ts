@@ -1,4 +1,5 @@
 import * as aws from '@pulumi/aws';
+import { local } from '@pulumi/command';
 import * as pulumi from '@pulumi/pulumi';
 import * as fs from 'fs';
 import { ISetup } from '../../../utils/Setup';
@@ -70,8 +71,30 @@ export default function createLambdaAtEdgeFunction(
         { provider: setup.edgeRegion }
     );
 
+    const initialInvokeCommand = invokeInitialExecution(setup, lambdaAtEdgeFunction);
+
     return {
         lambdaAtEdgeFunction,
         lambdaAtEdgeRole,
+        initialInvokeCommand,
     };
+}
+
+/**
+ * Invokes the function once to ensure the creation of the log group
+ *
+ * @param setup
+ * @param lambdaFunction
+ */
+function invokeInitialExecution(setup: ISetup, lambdaFunction: aws.lambda.Function) {
+    const invokeConfig = setup.getResourceConfig('LambdaAtEdgeInitialInvoke');
+    const awsConfig = new pulumi.Config('aws');
+    const region = awsConfig.require('region');
+    return new local.Command(
+        invokeConfig.name,
+        {
+            create: pulumi.interpolate`aws lambda invoke --payload '{"action": "ping"}' --cli-binary-format raw-in-base64-out --function-name ${lambdaFunction.name} --region ${region} /dev/null`,
+        },
+        { dependsOn: [lambdaFunction] }
+    );
 }
