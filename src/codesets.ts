@@ -26,7 +26,6 @@ const loggerSettings = {
  */
 export const handler = pingEventMiddleware(async (event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> => {
     const bucketInfo = getStorageBucketInfo();
-    console.log('Bucket info', bucketInfo);
     const app = new RequestApp(event, {
         loggerSettings: loggerSettings,
         storage: new S3BucketStorage({
