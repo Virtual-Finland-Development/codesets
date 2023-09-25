@@ -2,9 +2,6 @@ import { CloudWatchLogsEvent } from 'aws-lambda';
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 import { gunzipSync } from 'node:zlib';
 
-/* SNS_TOPIC_EMAI_ARN: snsTopicForEmail.arn,
-SNS_TOPIC_CHATBOT_ARN: snsTopicForChatbot.arn, */
-
 const snsTopicEmailArn = process.env.SNS_TOPIC_EMAIL_ARN;
 const snsTopicChatbotArn = process.env.SNS_TOPIC_CHATBOT_ARN;
 const snsClient = new SNSClient({ region: 'eu-north-1' });
