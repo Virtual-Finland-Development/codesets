@@ -4,7 +4,7 @@ import * as pulumi from '@pulumi/pulumi';
 import { ISetup } from '../../../utils/Setup';
 
 export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: string) {
-    const execRoleConfig = setup.getResourceConfig('CacheUpdaterLambdaFunctionExecRole');
+    const execRoleConfig = setup.getResourceConfig('CacheUpdaterFunctionExecRole');
     const functionExecRole = new aws.iam.Role(execRoleConfig.name, {
         assumeRolePolicy: JSON.stringify({
             Version: '2012-10-17',
@@ -22,7 +22,7 @@ export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: stri
     });
 
     // Attach S3 read-write policy to exec role
-    new aws.iam.RolePolicy(setup.getResourceName('CacheUpdaterLambdaFunctionExecRoleS3RwPolicy'), {
+    new aws.iam.RolePolicy(setup.getResourceName('CacheUpdaterFunctionExecRoleS3RwPolicy'), {
         role: functionExecRole,
         policy: JSON.stringify({
             Version: '2012-10-17',
@@ -37,12 +37,12 @@ export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: stri
     });
 
     // Attach basic lambda execution policy
-    new aws.iam.RolePolicyAttachment(setup.getResourceName('CacheUpdaterLambdaFunctionExecRolePolicyAttachment'), {
+    new aws.iam.RolePolicyAttachment(setup.getResourceName('CacheUpdaterFunctionExecRolePolicyAttachment'), {
         role: functionExecRole,
         policyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
     });
 
-    const functionConfig = setup.getResourceConfig('CacheUpdaterLambdaFunction');
+    const functionConfig = setup.getResourceConfig('CacheUpdaterFunction');
     const lambdaFunction = new aws.lambda.Function(functionConfig.name, {
         role: functionExecRole.arn,
         runtime: 'nodejs18.x',
@@ -81,7 +81,7 @@ function invokeInitialExecution(setup: ISetup, lambdaFunction: aws.lambda.Functi
 }
 
 export function invokeTheCacheUpdatingFunction(setup: ISetup, lambdaFunction: aws.lambda.Function) {
-    const invokeConfig = setup.getResourceConfig('CacheUpdaterLambdaFunctionInvoke');
+    const invokeConfig = setup.getResourceConfig('CacheUpdaterFunctionInvoke');
     const triggerToken = new Date().getTime().toString(); // Trigger always
     const awsConfig = new pulumi.Config('aws');
     const region = awsConfig.require('region');

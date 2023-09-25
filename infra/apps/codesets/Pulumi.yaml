@@ -2,5 +2,5 @@ name: codesets
 description: Codesets infra builder
 runtime: nodejs
 config:
-    aws:region: us-east-1 # // Lambda@Edge functions must be deployed in us-east-1
-    aws-native:region: eu-north-1 # // region needs to be set for aws-native
+    aws:region: eu-north-1
+    codesets:edgeRegion: us-east-1 # Lambda@Edge functions must be deployed in us-east-1

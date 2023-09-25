@@ -1,6 +1,6 @@
 import bucketInfo from '../build/bucket-info.json';
 
-export function getStorageBucketInfo(): { name: string } {
+export function getStorageBucketInfo(): { name: string; region: string } {
     return bucketInfo;
 }
 

@@ -34,7 +34,7 @@ const cloudFrontDistribution = createCloudFrontDistribution(
     edgeLambdaPackage.lambdaAtEdgeFunction,
     standardLogsBucket
 );
-uploadAssetsToBucket(s3bucketSetup.bucket);
+uploadAssetsToBucket(setup, s3bucketSetup.bucket);
 
 invokeTheCacheUpdatingFunction(setup, cacheUpdaterPackage.lambdaFunction); // Regenerate external resources cache
 createEdgeCacheInvalidation(setup, cloudFrontDistribution); // Invalidate the edge-cache of cloudfront

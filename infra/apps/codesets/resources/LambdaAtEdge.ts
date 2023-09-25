@@ -8,58 +8,71 @@ export default function createLambdaAtEdgeFunction(
     s3BucketSetup: { name: string; bucket: aws.s3.Bucket }
 ) {
     const lambdaAtEdgeRoleConfig = setup.getResourceConfig('LambdaAtEdgeRole');
-    const lambdaAtEdgeRole = new aws.iam.Role(lambdaAtEdgeRoleConfig.name, {
-        assumeRolePolicy: JSON.stringify({
-            Version: '2012-10-17',
-            Statement: [
-                {
-                    Action: 'sts:AssumeRole',
-                    Principal: {
-                        Service: ['lambda.amazonaws.com', 'edgelambda.amazonaws.com'],
+    const lambdaAtEdgeRole = new aws.iam.Role(
+        lambdaAtEdgeRoleConfig.name,
+        {
+            assumeRolePolicy: JSON.stringify({
+                Version: '2012-10-17',
+                Statement: [
+                    {
+                        Action: 'sts:AssumeRole',
+                        Principal: {
+                            Service: ['lambda.amazonaws.com', 'edgelambda.amazonaws.com'],
+                        },
+                        Effect: 'Allow',
                     },
-                    Effect: 'Allow',
-                },
-            ],
-        }),
-        tags: lambdaAtEdgeRoleConfig.tags,
-    });
+                ],
+            }),
+            tags: lambdaAtEdgeRoleConfig.tags,
+        },
+        { provider: setup.edgeRegion.provider }
+    );
 
     const lambdaAtEdgeRolePolicyConfig = setup.getResourceConfig('LambdaAtEdgeRolePolicy');
-    new aws.iam.RolePolicy(lambdaAtEdgeRolePolicyConfig.name, {
-        role: lambdaAtEdgeRole.id,
-        policy: JSON.stringify({
-            Version: '2012-10-17',
-            Statement: [
-                {
-                    Action: ['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],
-                    Resource: 'arn:aws:logs:*:*:*',
-                    Effect: 'Allow',
-                },
-            ],
-        }),
-    });
+    new aws.iam.RolePolicy(
+        lambdaAtEdgeRolePolicyConfig.name,
+        {
+            role: lambdaAtEdgeRole.id,
+            policy: JSON.stringify({
+                Version: '2012-10-17',
+                Statement: [
+                    {
+                        Action: ['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents'],
+                        Resource: 'arn:aws:logs:*:*:*',
+                        Effect: 'Allow',
+                    },
+                ],
+            }),
+        },
+        { provider: setup.edgeRegion.provider }
+    );
 
     // pass the bucket name to the lambda function dist folder
     fs.writeFileSync(
         './dist/codesets/build/bucket-info.json',
         JSON.stringify({
             name: s3BucketSetup.name,
+            region: setup.resourcesRegion.region,
         })
     );
 
     const lambdaAtEdgeFunctionConfig = setup.getResourceConfig('LambdaAtEdge');
-    const lambdaAtEdgeFunction = new aws.lambda.Function(lambdaAtEdgeFunctionConfig.name, {
-        code: new pulumi.asset.FileArchive('./dist/codesets'),
-        handler: 'codesets.handler',
-        runtime: 'nodejs18.x',
-        memorySize: 256,
-        timeout: 30,
-        role: lambdaAtEdgeRole.arn,
-        tags: lambdaAtEdgeFunctionConfig.tags,
-        publish: true,
-    });
+    const lambdaAtEdgeFunction = new aws.lambda.Function(
+        lambdaAtEdgeFunctionConfig.name,
+        {
+            code: new pulumi.asset.FileArchive('./dist/codesets'),
+            handler: 'codesets.handler',
+            runtime: 'nodejs18.x',
+            memorySize: 256,
+            timeout: 30,
+            role: lambdaAtEdgeRole.arn,
+            tags: lambdaAtEdgeFunctionConfig.tags,
+            publish: true,
+        },
+        { provider: setup.edgeRegion.provider }
+    );
 
-    const initialInvokeCommand = invokeInitialExecution(setup, lambdaAtEdgeFunction);
+    const initialInvokeCommand = invokeInitialExecution(setup, lambdaAtEdgeFunction, setup.edgeRegion.region);
 
     return {
         lambdaAtEdgeFunction,
@@ -74,10 +87,8 @@ export default function createLambdaAtEdgeFunction(
  * @param setup
  * @param lambdaFunction
  */
-function invokeInitialExecution(setup: ISetup, lambdaFunction: aws.lambda.Function) {
+function invokeInitialExecution(setup: ISetup, lambdaFunction: aws.lambda.Function, region: string) {
     const invokeConfig = setup.getResourceConfig('LambdaAtEdgeInitialInvoke');
-    const awsConfig = new pulumi.Config('aws');
-    const region = awsConfig.require('region');
     return new local.Command(
         invokeConfig.name,
         {
