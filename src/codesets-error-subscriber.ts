@@ -2,10 +2,24 @@ import { CloudWatchLogsEvent } from 'aws-lambda';
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 import { gunzipSync } from 'node:zlib';
 
-const snsTopicArn = process.env.SNS_TOPIC_ARN;
+/* SNS_TOPIC_EMAI_ARN: snsTopicForEmail.arn,
+SNS_TOPIC_CHATBOT_ARN: snsTopicForChatbot.arn, */
+
+const snsTopicEmailArn = process.env.SNS_TOPIC_EMAIL_ARN;
+const snsTopicChatbotArn = process.env.SNS_TOPIC_CHATBOT_ARN;
 const snsClient = new SNSClient({ region: 'eu-north-1' });
 const isHandlingTimeout = 1000 * 60; // 1 minute
 let isHandlingEvent = false;
+
+function publishSnsMessage(topicArn: string, message: string) {
+    return snsClient.send(
+        new PublishCommand({
+            TopicArn: topicArn,
+            Subject: 'Codesets Error!',
+            Message: message,
+        })
+    );
+}
 
 // Logs that are sent to a receiving service through a subscription filter are base64 encoded and compressed with the gzip format.
 // https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/SubscriptionFilters.html#LambdaFunctionExample
@@ -17,8 +31,8 @@ export const handler = async (event: CloudWatchLogsEvent) => {
         isHandlingEvent = true;
 
         try {
-            if (!snsTopicArn) {
-                throw new Error('SNS topic arn could not be read from env.');
+            if (!snsTopicEmailArn || !snsTopicChatbotArn) {
+                throw new Error('SNS topic arns could not be read from env.');
             }
 
             const buffer = Buffer.from(event.awslogs.data, 'base64');
@@ -35,22 +49,24 @@ export const handler = async (event: CloudWatchLogsEvent) => {
                 version: '1.0',
                 source: 'custom',
                 content: {
-                    title: 'Codesets Error!',
+                    title: ':boom: Codesets Error! :boom:',
                     description: messageString,
                 },
             };
 
-            // publish to sns topic
-            await snsClient.send(
-                new PublishCommand({
-                    TopicArn: snsTopicArn,
-                    Subject: 'Codesets Error',
-                    Message: JSON.stringify(chatbotCustomFormat),
-                })
-            );
+            // publish to sns topics
+            await Promise.all([
+                publishSnsMessage(snsTopicEmailArn, messageString),
+                publishSnsMessage(snsTopicChatbotArn, JSON.stringify(chatbotCustomFormat)),
+            ]);
 
             // clear flag after timeout
             setTimeout(() => (isHandlingEvent = false), isHandlingTimeout);
+
+            return {
+                statusCode: 200,
+                body: JSON.stringify({ message: 'Codesets error passed to SNS topics' }),
+            };
         } catch (err) {
             isHandlingEvent = false;
             console.error('Error:', err);

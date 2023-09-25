@@ -5,18 +5,21 @@ import { ISetup } from '../../../utils/Setup';
 const config = new pulumi.Config();
 
 export function createSnsTopicAndSubscriptions(setup: ISetup) {
-    // SNS topic
-    const SnSTopic = new aws.sns.Topic(setup.getResourceName('SnsTopic'));
+    // SNS topic for email subs
+    const snSTopicForEmail = new aws.sns.Topic(setup.getResourceName('SnsTopicForEmail'));
+
+    // SNS topic for chatbot
+    const snsTopicForChatbot = new aws.sns.Topic(setup.getResourceName('SnsTopicForChatbot'));
 
     // email subscribers
-    const emailEndpoints = [''];
+    const emailEndpoints = ['lauri.saarela@gofore.com'];
 
     // create sub for each subscriber
     emailEndpoints.forEach((email, i) => {
         new aws.sns.TopicSubscription(setup.getResourceName(`SnsEmailSub-${i + 1}`), {
             protocol: 'email',
             endpoint: email,
-            topic: SnSTopic.arn,
+            topic: snSTopicForEmail.arn,
         });
     });
 
@@ -27,5 +30,8 @@ export function createSnsTopicAndSubscriptions(setup: ISetup) {
         topic: SnSTopic.arn,
     }); */
 
-    return SnSTopic;
+    return {
+        snSTopicForEmail,
+        snsTopicForChatbot,
+    };
 }

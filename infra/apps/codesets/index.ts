@@ -39,15 +39,15 @@ uploadAssetsToBucket(setup, s3bucketSetup.bucket);
 invokeTheCacheUpdatingFunction(setup, cacheUpdaterPackage.lambdaFunction); // Regenerate external resources cache
 createEdgeCacheInvalidation(setup, cloudFrontDistribution); // Invalidate the edge-cache of cloudfront
 
-const snsTopic = createSnsTopicAndSubscriptions(setup); // Create SNS topic and subscriptions
-const errorSubLambdaFunction = createErrorSubLambdaFunction(setup, snsTopic); // Create Lambda function that will handle errors coming from codesets lambda
+const { snSTopicForEmail, snsTopicForChatbot } = createSnsTopicAndSubscriptions(setup); // Create SNS topic and subscriptions
+const errorSubLambdaFunction = createErrorSubLambdaFunction(setup, snSTopicForEmail, snsTopicForChatbot); // Create Lambda function that will handle errors coming from codesets lambda
 const lambdaPermission = grantLambdaPermissionForCloudWatch(
     setup,
     edgeLambdaPackage.lambdaAtEdgeFunction,
     errorSubLambdaFunction
 ); // Grant Lambda permission for CloudWatch
 createCloudWatchLogSubFilter(setup, edgeLambdaPackage.lambdaAtEdgeFunction, errorSubLambdaFunction, lambdaPermission); // Create CloudWatch log subscription filter for errorSubLambdaFunction
-createChatbotSlackConfig(setup, snsTopic); // Create AWS Chatbot Slack configuration for alerting
+createChatbotSlackConfig(setup, snsTopicForChatbot); // Create AWS Chatbot Slack configuration for alerting
 
 // Outputs
 export const url = pulumi.interpolate`https://${cloudFrontDistribution.domainName}`;

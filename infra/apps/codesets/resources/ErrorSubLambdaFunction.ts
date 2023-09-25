@@ -2,39 +2,55 @@ import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 import { ISetup } from '../../../utils/Setup';
 
-export function createErrorSubLambdaFunction(setup: ISetup, snsTopic: aws.sns.Topic) {
+export function createErrorSubLambdaFunction(
+    setup: ISetup,
+    snsTopicForEmail: aws.sns.Topic,
+    snsTopicForChatbot: aws.sns.Topic
+) {
     const execRoleConfig = setup.getResourceConfig('ErrorSubLambdaFunctionExecRole');
 
-    const functionExecRole = new aws.iam.Role(execRoleConfig.name, {
-        assumeRolePolicy: JSON.stringify({
-            Version: '2012-10-17',
-            Statement: [
-                {
-                    Action: 'sts:AssumeRole',
-                    Principal: {
-                        Service: ['lambda.amazonaws.com'],
+    const functionExecRole = new aws.iam.Role(
+        execRoleConfig.name,
+        {
+            assumeRolePolicy: JSON.stringify({
+                Version: '2012-10-17',
+                Statement: [
+                    {
+                        Action: 'sts:AssumeRole',
+                        Principal: {
+                            Service: ['lambda.amazonaws.com'],
+                        },
+                        Effect: 'Allow',
                     },
-                    Effect: 'Allow',
-                },
-            ],
-        }),
-        tags: execRoleConfig.tags,
-    });
+                ],
+            }),
+            tags: execRoleConfig.tags,
+        },
+        {
+            provider: setup.edgeRegion.provider,
+        }
+    );
 
     // Assign SNS publish policy
-    new aws.iam.RolePolicy(setup.getResourceName('ErrorSubLambdaSnsPublishPolicy'), {
-        role: functionExecRole.id,
-        policy: pulumi.output({
-            Version: '2012-10-17',
-            Statement: [
-                {
-                    Effect: 'Allow',
-                    Action: 'sns:Publish',
-                    Resource: snsTopic.arn,
-                },
-            ],
-        }),
-    });
+    new aws.iam.RolePolicy(
+        setup.getResourceName('ErrorSubLambdaSnsPublishPolicy'),
+        {
+            role: functionExecRole.id,
+            policy: pulumi.output({
+                Version: '2012-10-17',
+                Statement: [
+                    {
+                        Effect: 'Allow',
+                        Action: 'sns:Publish',
+                        Resource: [snsTopicForEmail.arn, snsTopicForChatbot.arn],
+                    },
+                ],
+            }),
+        },
+        {
+            provider: setup.edgeRegion.provider,
+        }
+    );
 
     // Attach basic lambda execution policy
     new aws.iam.RolePolicyAttachment(setup.getResourceName('ErrorSubLambdaFunctionExecRolePolicyAttachment'), {
@@ -44,20 +60,27 @@ export function createErrorSubLambdaFunction(setup: ISetup, snsTopic: aws.sns.To
 
     const functionConfig = setup.getResourceConfig('ErrorSubLambdaFunction');
 
-    const lambdaFunction = new aws.lambda.Function(functionConfig.name, {
-        role: functionExecRole.arn,
-        runtime: 'nodejs18.x',
-        handler: 'codesets-error-subscriber.handler',
-        timeout: 900, // 15 minutes
-        memorySize: 512, // how much needed?
-        code: new pulumi.asset.FileArchive('./dist/codesets'),
-        tags: functionConfig.tags,
-        environment: {
-            variables: {
-                SNS_TOPIC_ARN: snsTopic.arn,
+    const lambdaFunction = new aws.lambda.Function(
+        functionConfig.name,
+        {
+            role: functionExecRole.arn,
+            runtime: 'nodejs18.x',
+            handler: 'codesets-error-subscriber.handler',
+            timeout: 900, // 15 minutes
+            memorySize: 512, // how much needed?
+            code: new pulumi.asset.FileArchive('./dist/codesets'),
+            tags: functionConfig.tags,
+            environment: {
+                variables: {
+                    SNS_TOPIC_EMAIL_ARN: snsTopicForEmail.arn,
+                    SNS_TOPIC_CHATBOT_ARN: snsTopicForChatbot.arn,
+                },
             },
         },
-    });
+        {
+            provider: setup.edgeRegion.provider,
+        }
+    );
 
     return lambdaFunction;
 }
@@ -72,17 +95,23 @@ export function grantLambdaPermissionForCloudWatch(
      * The ARN of an IAM role that grants Amazon CloudWatch Logs permissions to deliver ingested log events to the destination.
      * If you use Lambda as a destination, you should skip this argument and use aws.lambda.Permission resource for granting access from CloudWatch logs to the destination Lambda function.
      */
-    const codesetsLambdaLogGroupName = pulumi.interpolate`/aws/lambda/${codesetsLambda.name}`; // us-east-1.
+    const codesetsLambdaLogGroupName = pulumi.interpolate`/aws/lambda/${codesetsLambda.name}`;
     const logGroupSourceArn = codesetsLambdaLogGroupName.apply((name) =>
-        aws.cloudwatch.getLogGroup({ name }).then((logGroup) => logGroup.arn)
+        aws.cloudwatch.getLogGroup({ name }, { provider: setup.edgeRegion.provider }).then((logGroup) => logGroup.arn)
     );
 
-    const lambdaPermission = new aws.lambda.Permission(setup.getResourceName('ErrorSubLambdaFunctionPermission'), {
-        action: 'lambda:InvokeFunction',
-        function: errorSubLambda.name,
-        principal: 'logs.us-east-1.amazonaws.com',
-        sourceArn: pulumi.interpolate`${logGroupSourceArn}:*`,
-    });
+    const lambdaPermission = new aws.lambda.Permission(
+        setup.getResourceName('ErrorSubLambdaFunctionPermission'),
+        {
+            action: 'lambda:InvokeFunction',
+            function: errorSubLambda.name,
+            principal: 'logs.us-east-1.amazonaws.com',
+            sourceArn: pulumi.interpolate`${logGroupSourceArn}:*`,
+        },
+        {
+            provider: setup.edgeRegion.provider,
+        }
+    );
 
     return lambdaPermission;
 }

@@ -8,7 +8,7 @@ export async function createCloudWatchLogSubFilter(
     errorSubLambda: aws.lambda.Function,
     lambdaPermission: aws.lambda.Permission
 ) {
-    const edgeLambdaLogGroupName = pulumi.interpolate`/aws/lambda/${codesetsLambda.name}`; // us-east-1.
+    const edgeLambdaLogGroupName = pulumi.interpolate`/aws/lambda/${codesetsLambda.name}`;
 
     const logSubFilter = new aws.cloudwatch.LogSubscriptionFilter(
         setup.getResourceName('CloudWatchLogSubFilter'),
@@ -19,6 +19,7 @@ export async function createCloudWatchLogSubFilter(
         },
         {
             dependsOn: [lambdaPermission],
+            provider: setup.edgeRegion.provider,
         }
     );
 
