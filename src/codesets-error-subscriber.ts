@@ -72,8 +72,9 @@ export const handler = async (event: CloudWatchLogsEvent) => {
                     title: ':boom: Codesets Error! :boom:',
                     description: messageString,
                     nextSteps: [
-                        ...(awsConsoleUrl ? [`View in AWS console: ${awsConsoleUrl}`] : []),
-                        `View dashboard: ${getCodesetsDashboardUrl()}`,
+                        // https://api.slack.com/reference/surfaces/formatting#links-in-retrieved-messages
+                        ...(awsConsoleUrl ? [`<${awsConsoleUrl}|View in AWS console>`] : []),
+                        `<${getCodesetsDashboardUrl()}|View dashboard>`,
                     ],
                 },
             };

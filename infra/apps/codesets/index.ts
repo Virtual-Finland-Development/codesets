@@ -40,7 +40,7 @@ invokeTheCacheUpdatingFunction(setup, cacheUpdaterPackage.lambdaFunction); // Re
 createEdgeCacheInvalidation(setup, cloudFrontDistribution); // Invalidate the edge-cache of cloudfront
 
 const { snSTopicForEmail, snsTopicForChatbot } = createSnsTopicAndSubscriptions(setup); // Create SNS topic and subscriptions
-const errorSubLambdaFunction = createErrorSubLambdaFunction(setup, snSTopicForEmail, snsTopicForChatbot); // Create Lambda function that will handle errors coming from codesets lambda
+const errorSubLambdaFunction = createErrorSubLambdaFunction(setup, snSTopicForEmail, snsTopicForChatbot); // Lambda function that will pass codesets errors to SNS
 const lambdaPermission = grantLambdaPermissionForCloudWatch(
     setup,
     edgeLambdaPackage.lambdaAtEdgeFunction,
