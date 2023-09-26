@@ -72,6 +72,8 @@ export function createErrorSubLambdaFunction(
             tags: functionConfig.tags,
             environment: {
                 variables: {
+                    STAGE: setup.stage,
+                    LOG_GROUPS_REGION: pulumi.interpolate`${setup.edgeRegion.provider.region}`,
                     SNS_TOPIC_EMAIL_ARN: snsTopicForEmail.arn,
                     SNS_TOPIC_CHATBOT_ARN: snsTopicForChatbot.arn,
                 },

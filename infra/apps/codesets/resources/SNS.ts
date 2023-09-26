@@ -12,7 +12,7 @@ export function createSnsTopicAndSubscriptions(setup: ISetup) {
     const snsTopicForChatbot = new aws.sns.Topic(setup.getResourceName('SnsTopicForChatbot'));
 
     // email subscribers
-    const emailEndpoints = ['lauri.saarela@gofore.com'];
+    const emailEndpoints = [''];
 
     // create sub for each subscriber
     emailEndpoints.forEach((email, i) => {
