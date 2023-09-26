@@ -55,8 +55,9 @@ export const handler = async (event: CloudWatchLogsEvent) => {
             const logGroup = parsed?.logGroup;
             const logStream = parsed?.logStream;
 
+            const codesetsDashboardUrl = getCodesetsDashboardUrl();
             let logEventsUrl = undefined;
-            let emailMessage = `${messageString}\n\nView dashboard: ${getCodesetsDashboardUrl()}`;
+            let emailMessage = `${messageString}\n\nView dashboard: ${codesetsDashboardUrl}`;
 
             if (logGroup && logStream) {
                 logEventsUrl = getLogEventsUrl(logGroup, logStream);
@@ -74,7 +75,7 @@ export const handler = async (event: CloudWatchLogsEvent) => {
                     nextSteps: [
                         // https://api.slack.com/reference/surfaces/formatting#links-in-retrieved-messages
                         ...(logEventsUrl ? [`<${logEventsUrl}|View in AWS console>`] : []),
-                        `<${getCodesetsDashboardUrl()}|View dashboard>`,
+                        `<${codesetsDashboardUrl}|View dashboard>`,
                     ],
                 },
             };
