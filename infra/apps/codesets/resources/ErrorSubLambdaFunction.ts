@@ -66,8 +66,8 @@ export function createErrorSubLambdaFunction(
             role: functionExecRole.arn,
             runtime: 'nodejs18.x',
             handler: 'codesets-error-subscriber.handler',
-            timeout: 900, // 15 minutes
-            memorySize: 512, // how much needed?
+            timeout: 60,
+            memorySize: 256,
             code: new pulumi.asset.FileArchive('./dist/codesets'),
             tags: functionConfig.tags,
             environment: {
