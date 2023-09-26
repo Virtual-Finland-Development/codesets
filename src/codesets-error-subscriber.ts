@@ -55,12 +55,12 @@ export const handler = async (event: CloudWatchLogsEvent) => {
             const logGroup = parsed?.logGroup;
             const logStream = parsed?.logStream;
 
-            let awsConsoleUrl = undefined;
+            let logEventsUrl = undefined;
             let emailMessage = `${messageString}\n\nView dashboard: ${getCodesetsDashboardUrl()}`;
 
             if (logGroup && logStream) {
-                awsConsoleUrl = getLogEventsUrl(logGroup, logStream);
-                emailMessage = `${emailMessage}\n\nView in AWS console: ${awsConsoleUrl}}`;
+                logEventsUrl = getLogEventsUrl(logGroup, logStream);
+                emailMessage = `${emailMessage}\n\nView in AWS console: ${logEventsUrl}}`;
             }
 
             // for chatbot / slack integration, custom format needed
@@ -73,7 +73,7 @@ export const handler = async (event: CloudWatchLogsEvent) => {
                     description: messageString,
                     nextSteps: [
                         // https://api.slack.com/reference/surfaces/formatting#links-in-retrieved-messages
-                        ...(awsConsoleUrl ? [`<${awsConsoleUrl}|View in AWS console>`] : []),
+                        ...(logEventsUrl ? [`<${logEventsUrl}|View in AWS console>`] : []),
                         `<${getCodesetsDashboardUrl()}|View dashboard>`,
                     ],
                 },
