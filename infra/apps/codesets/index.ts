@@ -54,4 +54,4 @@ export const standardLogsBucketDetails = {
     id: standardLogsBucket.id,
 };
 export const cacheUpdaterFunctionArn = cacheUpdaterPackage.lambdaFunction.arn;
-export const errorSubLambdaFunctionId = pulumi.interpolate`${errorSubLambdaFunction.name}:${errorSubLambdaFunction.version}`;
+export const errorSubLambdaFunctionArn = errorSubLambdaFunction.arn;
