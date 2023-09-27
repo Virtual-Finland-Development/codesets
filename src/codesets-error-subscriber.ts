@@ -48,11 +48,11 @@ function publishSnsMessage(topicArn: string, message: string) {
 function transformTextToMarkdown(text: string) {
     // Newlines of the form \\n are escaped to \n
     text = text.replace(/\\\n/g, '\n');
-    // Newlines of the form \n are escaped to \\n
+    // Newlines of the form \\n are escaped to \n
     text = text.replace(/\\n/g, '\n');
-    // Tabs of the form \t are escaped to \\t
+    // Tabs of the form \\t are escaped to \t
     text = text.replace(/\\t/g, '\t');
-    // Quotes of the form \" are escaped to \\"
+    // Quotes of the form \\" are escaped to \"
     text = text.replace(/\\"/g, '"');
     // The first and last quote are removed
     text = text.replace(/^"/, '').replace(/"$/, '');
