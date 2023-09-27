@@ -33,18 +33,18 @@ const resourcesRegionProvider = new aws.Provider('resourses-region', {
     region: resourcesRegion as pulumi.Input<aws.Region> | undefined,
 });
 
-async function getProviders() {
+async function getAllRegions() {
     const edgeRegions = await aws.getRegions({});
-    const providers = [];
+    const regions = [];
     for (const region of edgeRegions.names) {
-        providers.push({
+        regions.push({
             name: region,
             provider: new aws.Provider(getResourceName(`region-${region}`), {
                 region: region as pulumi.Input<aws.Region> | undefined,
             }),
         });
     }
-    return providers;
+    return regions;
 }
 
 const setup = {
@@ -55,7 +55,7 @@ const setup = {
     getResourceName,
     isProductionLikeEnvironment,
     regions: {
-        getProviders: getProviders,
+        getAllRegions: getAllRegions,
         edgeRegion: {
             region: edgeRegion,
             provider: edgeRegionProvider,

@@ -9,9 +9,9 @@ export async function createCloudWatchLogSubFilter(
 ) {
     const edgeLambdaLogGroupName = pulumi.interpolate`/aws/lambda/${codesetsLambda.name}`;
     edgeLambdaLogGroupName.apply(async (logGroupName) => {
-        const providers = await setup.regions.getProviders();
-        for (const provider of providers) {
-            const logGroupConfig = setup.getResourceConfig(`edgeRegion-${provider.name}-logGroup`);
+        const regions = await setup.regions.getAllRegions();
+        for (const region of regions) {
+            const logGroupConfig = setup.getResourceConfig(`edgeRegion-${region.name}-logGroup`);
             const logGroup = new aws.cloudwatch.LogGroup(logGroupConfig.name, {
                 name: logGroupName,
                 retentionInDays: 30,
@@ -19,7 +19,7 @@ export async function createCloudWatchLogSubFilter(
             });
 
             const lambdaPermission = new aws.lambda.Permission(
-                setup.getResourceName(`ErrorSubLambdaFunctionPermission-${provider.name}`),
+                setup.getResourceName(`ErrorSubLambdaFunctionPermission-${region.name}`),
                 {
                     action: 'lambda:InvokeFunction',
                     function: errorSubLambda.name,
@@ -27,12 +27,12 @@ export async function createCloudWatchLogSubFilter(
                     sourceArn: pulumi.interpolate`${logGroup.arn}:*`,
                 },
                 {
-                    provider: provider.provider,
+                    provider: region.provider,
                 }
             );
 
             new aws.cloudwatch.LogSubscriptionFilter(
-                setup.getResourceName(`CloudWatchLogSubFilter-${provider.name}`),
+                setup.getResourceName(`CloudWatchLogSubFilter-${region.name}`),
                 {
                     logGroup: edgeLambdaLogGroupName,
                     filterPattern: 'ERROR',
@@ -40,7 +40,7 @@ export async function createCloudWatchLogSubFilter(
                 },
                 {
                     dependsOn: [logGroup, lambdaPermission],
-                    provider: provider.provider,
+                    provider: region.provider,
                 }
             );
         }
