@@ -51,7 +51,7 @@ export default function createLambdaAtEdgeFunction(
         './dist/codesets/build/bucket-info.json',
         JSON.stringify({
             name: s3BucketSetup.name,
-            region: setup.regions.resourcesRegion.region,
+            region: setup.regions.resourcesRegion.name,
         })
     );
 
