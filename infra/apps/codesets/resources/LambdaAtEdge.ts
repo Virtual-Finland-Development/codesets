@@ -1,5 +1,4 @@
 import * as aws from '@pulumi/aws';
-import { local } from '@pulumi/command';
 import * as pulumi from '@pulumi/pulumi';
 import * as fs from 'fs';
 import { ISetup } from '../../../utils/Setup';
@@ -25,7 +24,7 @@ export default function createLambdaAtEdgeFunction(
             }),
             tags: lambdaAtEdgeRoleConfig.tags,
         },
-        { provider: setup.edgeRegion.provider }
+        { provider: setup.regions.edgeRegion.provider }
     );
 
     const lambdaAtEdgeRolePolicyConfig = setup.getResourceConfig('LambdaAtEdgeRolePolicy');
@@ -44,7 +43,7 @@ export default function createLambdaAtEdgeFunction(
                 ],
             }),
         },
-        { provider: setup.edgeRegion.provider }
+        { provider: setup.regions.edgeRegion.provider }
     );
 
     // pass the bucket name to the lambda function dist folder
@@ -52,7 +51,7 @@ export default function createLambdaAtEdgeFunction(
         './dist/codesets/build/bucket-info.json',
         JSON.stringify({
             name: s3BucketSetup.name,
-            region: setup.resourcesRegion.region,
+            region: setup.regions.resourcesRegion.region,
         })
     );
 
@@ -69,31 +68,11 @@ export default function createLambdaAtEdgeFunction(
             tags: lambdaAtEdgeFunctionConfig.tags,
             publish: true,
         },
-        { provider: setup.edgeRegion.provider }
+        { provider: setup.regions.edgeRegion.provider }
     );
-
-    const initialInvokeCommand = invokeInitialExecution(setup, lambdaAtEdgeFunction, setup.edgeRegion.region);
 
     return {
         lambdaAtEdgeFunction,
         lambdaAtEdgeRole,
-        initialInvokeCommand,
     };
-}
-
-/**
- * Invokes the function once to ensure the creation of the log group
- *
- * @param setup
- * @param lambdaFunction
- */
-function invokeInitialExecution(setup: ISetup, lambdaFunction: aws.lambda.Function, region: string) {
-    const invokeConfig = setup.getResourceConfig('LambdaAtEdgeInitialInvoke');
-    return new local.Command(
-        invokeConfig.name,
-        {
-            create: pulumi.interpolate`aws lambda invoke --payload '{"action": "ping"}' --cli-binary-format raw-in-base64-out --function-name ${lambdaFunction.name} --region ${region} /dev/null`,
-        },
-        { dependsOn: [lambdaFunction] }
-    );
 }

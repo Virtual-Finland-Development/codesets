@@ -53,31 +53,9 @@ export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: stri
         tags: functionConfig.tags,
     });
 
-    const initialInvokeCommand = invokeInitialExecution(setup, lambdaFunction);
-
     return {
         lambdaFunction,
-        initialInvokeCommand,
     };
-}
-
-/**
- * Invokes the function once to ensure the creation of the log group
- *
- * @param setup
- * @param lambdaFunction
- */
-function invokeInitialExecution(setup: ISetup, lambdaFunction: aws.lambda.Function) {
-    const invokeConfig = setup.getResourceConfig('CacheUpdaterInitialExecution');
-    const awsConfig = new pulumi.Config('aws');
-    const region = awsConfig.require('region');
-    return new local.Command(
-        invokeConfig.name,
-        {
-            create: pulumi.interpolate`aws lambda invoke --payload '{"action": "ping"}' --cli-binary-format raw-in-base64-out --function-name ${lambdaFunction.name} --region ${region} /dev/null`,
-        },
-        { dependsOn: [lambdaFunction] }
-    );
 }
 
 export function invokeTheCacheUpdatingFunction(setup: ISetup, lambdaFunction: aws.lambda.Function) {

@@ -4,18 +4,18 @@ import {
     createCacheUpdaterLambdaFunction,
     invokeTheCacheUpdatingFunction,
 } from './resources/CacheUpdaterLambdaFunction';
+import { createChatbotSlackConfig } from './resources/Chatbot';
 import {
     createCloudFrontDistribution,
     createEdgeCacheInvalidation,
     createOriginAccessIdentity,
 } from './resources/CloudFront';
+import { createCloudWatchLogSubFilter } from './resources/CloudWatch';
+import { createErrorSubLambdaFunction } from './resources/ErrorSubLambdaFunction';
 import createLambdaAtEdgeFunction from './resources/LambdaAtEdge';
 import createS3Bucket, { createS3BucketPermissions, uploadAssetsToBucket } from './resources/S3Bucket';
-import { createStandardLogsBucket } from './resources/standardLogsBucket';
 import { createSnsTopicAndSubscriptions } from './resources/SNS';
-import { createErrorSubLambdaFunction, grantLambdaPermissionForCloudWatch } from './resources/ErrorSubLambdaFunction';
-import { createCloudWatchLogSubFilter } from './resources/CloudWatch';
-import { createChatbotSlackConfig } from './resources/Chatbot';
+import { createStandardLogsBucket } from './resources/standardLogsBucket';
 
 const setup = getSetup();
 const originAccessIdentity = createOriginAccessIdentity(setup);
@@ -41,12 +41,7 @@ createEdgeCacheInvalidation(setup, cloudFrontDistribution); // Invalidate the ed
 
 const { snSTopicForEmail, snsTopicForChatbot } = createSnsTopicAndSubscriptions(setup); // Create SNS topic and subscriptions
 const errorSubLambdaFunction = createErrorSubLambdaFunction(setup, snSTopicForEmail, snsTopicForChatbot); // Lambda function that will pass codesets errors to SNS
-const lambdaPermission = grantLambdaPermissionForCloudWatch(
-    setup,
-    edgeLambdaPackage.lambdaAtEdgeFunction,
-    errorSubLambdaFunction
-); // Grant Lambda permission for CloudWatch
-createCloudWatchLogSubFilter(setup, edgeLambdaPackage.lambdaAtEdgeFunction, errorSubLambdaFunction, lambdaPermission); // Create CloudWatch log subscription filter for errorSubLambdaFunction
+createCloudWatchLogSubFilter(setup, edgeLambdaPackage.lambdaAtEdgeFunction, errorSubLambdaFunction); // Create CloudWatch log subscription filter for errorSubLambdaFunction
 createChatbotSlackConfig(setup, snsTopicForChatbot); // Create AWS Chatbot Slack configuration for alerting
 
 // Outputs

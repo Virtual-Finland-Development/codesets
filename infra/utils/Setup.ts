@@ -1,6 +1,28 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
+const stage = pulumi.getStack();
+const projectName = pulumi.getProject();
+const organizationName = pulumi.getOrganization();
+
+function getResourceConfig(name: string) {
+    return {
+        name: getResourceName(name),
+        tags: {
+            'vfd:stack': stage,
+            'vfd:project': projectName,
+        },
+    };
+}
+
+function getResourceName(name: string) {
+    return `${projectName}-${name}-${stage}`;
+}
+
+function isProductionLikeEnvironment() {
+    return stage.endsWith('production') || stage.endsWith('staging');
+}
+
 const edgeRegion = new pulumi.Config('codesets').require('edgeRegion');
 const edgeRegionProvider = new aws.Provider('edge-region', {
     region: edgeRegion as pulumi.Input<aws.Region> | undefined,
@@ -11,32 +33,37 @@ const resourcesRegionProvider = new aws.Provider('resourses-region', {
     region: resourcesRegion as pulumi.Input<aws.Region> | undefined,
 });
 
+async function getProviders() {
+    const edgeRegions = await aws.getRegions({});
+    const providers = [];
+    for (const region of edgeRegions.names) {
+        providers.push({
+            name: region,
+            provider: new aws.Provider(getResourceName(`region-${region}`), {
+                region: region as pulumi.Input<aws.Region> | undefined,
+            }),
+        });
+    }
+    return providers;
+}
+
 const setup = {
-    stage: pulumi.getStack(),
-    projectName: pulumi.getProject(),
-    organizationName: pulumi.getOrganization(),
-    getResourceConfig(name: string) {
-        return {
-            name: this.getResourceName(name),
-            tags: {
-                'vfd:stack': this.stage,
-                'vfd:project': this.projectName,
-            },
-        };
-    },
-    getResourceName(name: string) {
-        return `${this.projectName}-${name}-${this.stage}`;
-    },
-    isProductionLikeEnvironment() {
-        return this.stage.endsWith('production') || this.stage.endsWith('staging');
-    },
-    edgeRegion: {
-        region: edgeRegion,
-        provider: edgeRegionProvider,
-    },
-    resourcesRegion: {
-        region: resourcesRegion,
-        provider: resourcesRegionProvider,
+    stage,
+    projectName,
+    organizationName,
+    getResourceConfig,
+    getResourceName,
+    isProductionLikeEnvironment,
+    regions: {
+        getProviders: getProviders,
+        edgeRegion: {
+            region: edgeRegion,
+            provider: edgeRegionProvider,
+        },
+        resourcesRegion: {
+            region: resourcesRegion,
+            provider: resourcesRegionProvider,
+        },
     },
 };
 
