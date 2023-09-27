@@ -45,7 +45,21 @@ function publishSnsMessage(topicArn: string, message: string) {
     );
 }
 
-const snsClient = new SNSClient({ region: 'eu-north-1' });
+function transformTextToMarkdown(text: string) {
+    // Newlines of the form \\n are escaped to \n
+    text = text.replace(/\\\n/g, '\n');
+    // Newlines of the form \n are escaped to \\n
+    text = text.replace(/\\n/g, '\n');
+    // Tabs of the form \t are escaped to \\t
+    text = text.replace(/\\t/g, '\t');
+    // Quotes of the form \" are escaped to \\"
+    text = text.replace(/\\"/g, '"');
+    // The first and last quote are removed
+    text = text.replace(/^"/, '').replace(/"$/, '');
+    return text;
+}
+
+const snsClient = new SNSClient({ region: primaryRegion });
 const isHandlingTimeout = 1000 * 60; // 1 minute
 let isHandlingEvent = false;
 
@@ -91,7 +105,7 @@ export const handler = async (event: CloudWatchLogsEvent) => {
                 source: 'custom',
                 content: {
                     title: ':boom: Codesets Error! :boom:',
-                    description: messageString,
+                    description: transformTextToMarkdown(messageString),
                     nextSteps: [
                         // https://api.slack.com/reference/surfaces/formatting#links-in-retrieved-messages
                         ...(logEventsUrl ? [`<${logEventsUrl}|View in AWS console>`] : []),
