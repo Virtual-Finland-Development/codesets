@@ -23,7 +23,7 @@ export async function createCloudWatchLogSubFilter(
                 {
                     action: 'lambda:InvokeFunction',
                     function: errorSubLambda.name,
-                    principal: 'logs.us-east-1.amazonaws.com',
+                    principal: 'logs.amazonaws.com',
                     sourceArn: pulumi.interpolate`${logGroup.arn}:*`,
                 },
                 {
