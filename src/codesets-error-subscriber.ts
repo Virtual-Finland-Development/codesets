@@ -1,19 +1,38 @@
+import { PublishCommand, SNSClient } from '@aws-sdk/client-sns';
 import { CloudWatchLogsEvent } from 'aws-lambda';
-import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 import { gunzipSync } from 'node:zlib';
 
 const stage = process.env.STAGE;
-const logGroupsRegion = process.env.LOG_GROUPS_REGION;
+const primaryRegion = process.env.PRIMARY_AWS_REGION;
 const snsTopicEmailArn = process.env.SNS_TOPIC_EMAIL_ARN;
 const snsTopicChatbotArn = process.env.SNS_TOPIC_CHATBOT_ARN;
 
 // https://stackoverflow.com/questions/60796991/is-there-a-way-to-generate-the-aws-console-urls-for-cloudwatch-log-group-filters
-function getLogEventsUrl(logGroup: string, logStream: string) {
-    return `https://console.aws.amazon.com/cloudwatch/home?region=${logGroupsRegion}#logEventViewer:group=${logGroup};stream=${logStream}`;
+function getLogEventsUrl(logGroupRegion: string, logGroup: string, logStream: string) {
+    return `https://console.aws.amazon.com/cloudwatch/home?region=${logGroupRegion}#logEventViewer:group=${logGroup};stream=${logStream}`;
+}
+
+// from lambda@edge cloudwatch log subscription filter events, there's no way to get the region from the event itself,
+// so we parse it from the subscription filter name as the format is in *our* control and does include the region in the name
+function resolveEventRegion(subscriptionFilters: string[] | undefined): string {
+    let region = primaryRegion; // default to primary region
+    if (subscriptionFilters?.length) {
+        // Match the region from the subscription filter name, which is defined in the pulumi cloudwatch related definitions
+        // Eg. codesets-CloudWatchLogSubFilter-eu-central-1-dev-c1c1724 -> eu-central-1
+        const regexp = new RegExp(`codesets-CloudWatchLogSubFilter-(.*)-${stage}-(.*)`);
+        const subscriptionFilter = subscriptionFilters[0];
+        const match = subscriptionFilter.match(regexp);
+        if (match?.length) {
+            region = match[1];
+        }
+    }
+
+    if (!region) throw new Error('Could not resolve event region.');
+    return region;
 }
 
 function getCodesetsDashboardUrl() {
-    return `https://${logGroupsRegion}.console.aws.amazon.com/cloudwatch/home?region=${logGroupsRegion}#dashboards/dashboard/codesets-dashboard-${stage}`;
+    return `https://${primaryRegion}.console.aws.amazon.com/cloudwatch/home?region=${primaryRegion}#dashboards/dashboard/codesets-dashboard-${stage}`;
 }
 
 function publishSnsMessage(topicArn: string, message: string) {
@@ -40,7 +59,7 @@ export const handler = async (event: CloudWatchLogsEvent) => {
         isHandlingEvent = true;
 
         try {
-            if (!stage || !logGroupsRegion || !snsTopicEmailArn || !snsTopicChatbotArn) {
+            if (!stage || !primaryRegion || !snsTopicEmailArn || !snsTopicChatbotArn) {
                 throw new Error('Required environment variables are missing.');
             }
 
@@ -60,7 +79,8 @@ export const handler = async (event: CloudWatchLogsEvent) => {
             let emailMessage = `${messageString}\n\nView dashboard: ${codesetsDashboardUrl}`;
 
             if (logGroup && logStream) {
-                logEventsUrl = getLogEventsUrl(logGroup, logStream);
+                const logGroupRegion = resolveEventRegion(parsed?.subscriptionFilters);
+                logEventsUrl = getLogEventsUrl(logGroupRegion, logGroup, logStream);
                 emailMessage = `${emailMessage}\n\nView in AWS console: ${logEventsUrl}}`;
             }
 
