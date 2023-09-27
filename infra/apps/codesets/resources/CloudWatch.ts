@@ -7,27 +7,33 @@ export async function createCloudWatchLogSubFilter(
     codesetsLambda: aws.lambda.Function,
     errorSubLambda: aws.lambda.Function
 ) {
-    const edgeLambdaLogGroupName = pulumi.interpolate`/aws/lambda/${codesetsLambda.name}`;
+    const edgeLambdaLogGroupName = pulumi.interpolate`/aws/lambda/us-east-1.${codesetsLambda.name}`;
     edgeLambdaLogGroupName.apply(async (logGroupName) => {
         const regions = await setup.regions.getAllRegions();
         for (const region of regions) {
             const logGroupConfig = setup.getResourceConfig(`edgeRegion-${region.name}-logGroup`);
-            const logGroup = new aws.cloudwatch.LogGroup(logGroupConfig.name, {
-                name: logGroupName,
-                retentionInDays: 30,
-                tags: logGroupConfig.tags,
-            });
+            const logGroup = new aws.cloudwatch.LogGroup(
+                logGroupConfig.name,
+                {
+                    name: logGroupName,
+                    retentionInDays: 30,
+                    tags: logGroupConfig.tags,
+                },
+                {
+                    provider: region.provider,
+                }
+            );
 
             const lambdaPermission = new aws.lambda.Permission(
                 setup.getResourceName(`ErrorSubLambdaFunctionPermission-${region.name}`),
                 {
                     action: 'lambda:InvokeFunction',
-                    function: errorSubLambda.name,
+                    function: errorSubLambda.arn,
                     principal: 'logs.amazonaws.com',
                     sourceArn: pulumi.interpolate`${logGroup.arn}:*`,
                 },
                 {
-                    provider: region.provider,
+                    provider: setup.regions.edgeRegion.provider,
                 }
             );
 
