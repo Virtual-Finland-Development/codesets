@@ -2,7 +2,7 @@ import { ValiError } from 'valibot';
 import { NotFoundError } from './exceptions';
 
 export const UriRedirects: Record<string, string> = {
-    '/productizer/draft/Employment/EscoOccupations': '/resources/BusinessFinlandEscoOccupations',
+    '/Employment/EscoOccupations_v1.0': '/resources/BusinessFinlandEscoOccupations',
     '/Employment/EscoOccupations_v0.1': '/resources/BusinessFinlandEscoOccupations',
 };
 
