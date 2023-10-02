@@ -9,7 +9,7 @@
     "build:escoApi": "ncc build src/escoApi.ts -o dist/escoApi --minify",
     "build:infra": "npm -C infra install && npm -C infra run build",
     "clean": "rimraf dist",
-    "deploy": "npm run deploy:codesets && npm run deploy:escoApi",
+    "deploy": "npm run prebuild && npm run deploy:codesets && npm run deploy:escoApi",
     "deploy:codesets": "npm run build:codesets && npm run -C infra deploy:codesets",
     "deploy:escoApi": "npm run build:escoApi && npm run -C infra deploy:escoApi",
     "dev": "npm run-all --parallel dev:codesets dev:escoApi",
