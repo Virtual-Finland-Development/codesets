@@ -27,7 +27,7 @@ export function createErrorSubLambdaFunction(
             tags: execRoleConfig.tags,
         },
         {
-            provider: setup.edgeRegion.provider,
+            provider: setup.regions.edgeRegion.provider,
         }
     );
 
@@ -48,7 +48,7 @@ export function createErrorSubLambdaFunction(
             }),
         },
         {
-            provider: setup.edgeRegion.provider,
+            provider: setup.regions.edgeRegion.provider,
         }
     );
 
@@ -73,47 +73,16 @@ export function createErrorSubLambdaFunction(
             environment: {
                 variables: {
                     STAGE: setup.stage,
-                    LOG_GROUPS_REGION: pulumi.interpolate`${setup.edgeRegion.provider.region}`,
+                    PRIMARY_AWS_REGION: pulumi.interpolate`${setup.regions.resourcesRegion.name}`,
                     SNS_TOPIC_EMAIL_ARN: snsTopicForEmail.arn,
                     SNS_TOPIC_CHATBOT_ARN: snsTopicForChatbot.arn,
                 },
             },
         },
         {
-            provider: setup.edgeRegion.provider,
+            provider: setup.regions.edgeRegion.provider,
         }
     );
 
     return lambdaFunction;
-}
-
-export function grantLambdaPermissionForCloudWatch(
-    setup: ISetup,
-    codesetsLambda: aws.lambda.Function,
-    errorSubLambda: aws.lambda.Function
-) {
-    /**
-     * FROM aws.cloudwatch.LogSubscriptionFilter.roleArn
-     * The ARN of an IAM role that grants Amazon CloudWatch Logs permissions to deliver ingested log events to the destination.
-     * If you use Lambda as a destination, you should skip this argument and use aws.lambda.Permission resource for granting access from CloudWatch logs to the destination Lambda function.
-     */
-    const codesetsLambdaLogGroupName = pulumi.interpolate`/aws/lambda/${codesetsLambda.name}`;
-    const logGroupSourceArn = codesetsLambdaLogGroupName.apply((name) =>
-        aws.cloudwatch.getLogGroup({ name }, { provider: setup.edgeRegion.provider }).then((logGroup) => logGroup.arn)
-    );
-
-    const lambdaPermission = new aws.lambda.Permission(
-        setup.getResourceName('ErrorSubLambdaFunctionPermission'),
-        {
-            action: 'lambda:InvokeFunction',
-            function: errorSubLambda.name,
-            principal: 'logs.us-east-1.amazonaws.com',
-            sourceArn: pulumi.interpolate`${logGroupSourceArn}:*`,
-        },
-        {
-            provider: setup.edgeRegion.provider,
-        }
-    );
-
-    return lambdaPermission;
 }
