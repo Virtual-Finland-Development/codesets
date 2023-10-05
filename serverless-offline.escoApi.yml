@@ -3,24 +3,24 @@ service: escoApi
 configValidationMode: off
 
 plugins:
-    - serverless-offline
+- serverless-offline
 
 custom:
-    serverless-offline:
-        host: 0.0.0.0
-        httpPort: 3580
+  serverless-offline:
+    host: 0.0.0.0
+    httpPort: 3580
 
 provider:
-    name: 'offline'
-    stage: offline
-    timeout: 30
+  name: 'offline'
+  stage: offline
+  timeout: 30
 
 functions:
-    codesets:
-        handler: dist/escoApi/index.handler
-        events:
-            - httpApi:
-                  method: any
-                  path: /productizer/{proxy+}
-        environment:
-            CODESETS_API_ENDPOINT: ${env:CODESETS_API_ENDPOINT, http://localhost:3166}
+  esciApi:
+    handler: dist/escoApi/index.handler
+    events:
+      - httpApi:
+        method: any
+        path: /productizer/{proxy+}
+    environment:
+      CODESETS_API_ENDPOINT: ${env:CODESETS_API_ENDPOINT, http://localhost:3166}
