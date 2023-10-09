@@ -54,7 +54,7 @@ export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: stri
             code: new pulumi.asset.FileArchive('./dist/codesets'),
             tags: functionConfig.tags,
         },
-        { provider: setup.edgeRegion.provider }
+        { provider: setup.regions.edgeRegion.provider }
     );
 
     return {
