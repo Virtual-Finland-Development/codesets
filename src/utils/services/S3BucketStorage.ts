@@ -1,5 +1,6 @@
 import { GetObjectCommand, HeadObjectCommand, NotFound, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
+import { StorageError } from '../exceptions';
 import { leftTrimSlash } from '../helpers';
 import { IStorage } from './IStorage';
 
@@ -20,8 +21,7 @@ export default class S3BucketStorage implements IStorage {
 
             await this.s3Client.send(new PutObjectCommand(params));
         } catch (error: any) {
-            console.error(error?.message, error?.stack);
-            throw new Error('An error occurred while storing to S3');
+            throw new StorageError('An error occurred while storing to S3', error);
         }
     }
 
@@ -34,15 +34,14 @@ export default class S3BucketStorage implements IStorage {
 
             const data = await this.s3Client.send(new GetObjectCommand(params));
 
-            if (!data.Body) throw new Error('No data found in S3');
+            if (!data.Body) throw new StorageError('No data found in S3');
 
             return {
                 data: await this.retrieveBodyStreamAsString(data.Body as Readable),
                 mime: data.ContentType || 'application/json',
             };
         } catch (error: any) {
-            console.error(error?.message, error?.stack);
-            throw new Error('An error occurred while retrieving from S3');
+            throw new StorageError('An error occurred while retrieving from S3', error);
         }
     }
 
@@ -79,7 +78,7 @@ export default class S3BucketStorage implements IStorage {
             };
 
             const data = await this.s3Client.send(new HeadObjectCommand(params));
-            if (typeof data?.LastModified === 'undefined') throw new Error('Invalid data returned from S3');
+            if (typeof data?.LastModified === 'undefined') throw new StorageError('Invalid data returned from S3');
 
             const lastModified = data.LastModified.getTime();
             const now = new Date().getTime();

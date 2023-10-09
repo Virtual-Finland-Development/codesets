@@ -1,5 +1,6 @@
 import { BaseSchema, parse } from 'valibot';
 import RequestApp from '../../../../app/RequestApp';
+import { ResourceRetrievalError } from '../../../exceptions';
 import IDataPackage from './IDataPackage';
 import IResource from './IResource';
 
@@ -23,7 +24,6 @@ export interface IResourceParserParams<I = any, O = any> {
     rawOutput?: (data: O) => string;
 }
 
-
 export default abstract class BaseResource<I = any, O = any> implements IResource {
     public name: string;
     public uri: string;
@@ -37,15 +37,7 @@ export default abstract class BaseResource<I = any, O = any> implements IResourc
 
     protected requestApp?: RequestApp;
 
-    constructor({
-        name,
-        uri,
-        mime,
-        type,
-        dataGetter,
-        parsers,
-        settings,
-    }: IResourceConstructorParams) {
+    constructor({ name, uri, mime, type, dataGetter, parsers, settings }: IResourceConstructorParams) {
         this.name = name;
         this.uri = uri || '';
         this.type = type || this.type;
@@ -55,7 +47,10 @@ export default abstract class BaseResource<I = any, O = any> implements IResourc
         this._settings = settings || {};
     }
 
-    public async retrieve(requestApp: RequestApp, params: Record<string, string>): Promise<{
+    public async retrieve(
+        requestApp: RequestApp,
+        params: Record<string, string>
+    ): Promise<{
         data: string;
         mime: string;
         size: number;
@@ -79,21 +74,25 @@ export default abstract class BaseResource<I = any, O = any> implements IResourc
 
     /**
      * The retriever
-     * 
-     * @param params 
-     * @returns 
+     *
+     * @param params
+     * @returns
      */
     public async retrieveDataPackage(params?: Record<string, string>): Promise<IDataPackage> {
-        if (typeof this._dataGetter === 'function') {
-            return await this._dataGetter(params);
-        }
+        try {
+            if (typeof this._dataGetter === 'function') {
+                return await this._dataGetter(params);
+            }
 
-        const response = await this._fetchData();
-        const rawData = await this._parseResponseRawData(response.data);
-        return {
-            data: rawData,
-            mime: this._mime || response.mime,
-        };
+            const response = await this._fetchData();
+            const rawData = await this._parseResponseRawData(response.data);
+            return {
+                data: rawData,
+                mime: this._mime || response.mime,
+            };
+        } catch (error: any) {
+            throw new ResourceRetrievalError(error);
+        }
     }
 
     protected async _fetchData(): Promise<{ data: ResourceData; mime: string }> {
@@ -118,11 +117,11 @@ export default abstract class BaseResource<I = any, O = any> implements IResourc
 
     /**
      * The data parser / transformer
-     * 
-     * @param data 
-     * @param mime 
-     * @param params 
-     * @returns 
+     *
+     * @param data
+     * @param mime
+     * @param params
+     * @returns
      */
     public async parseRawData(rawData: string, mime: string, params?: Record<string, string>): Promise<string> {
         let parsedData = this._parseRawData_input(rawData, mime);
@@ -142,9 +141,10 @@ export default abstract class BaseResource<I = any, O = any> implements IResourc
     }
 
     protected _parseRawData_parseInputSchema(rawData: unknown): I {
-        if (typeof this._parsers.input === "object" && typeof this._parsers.input.parse === "function") { // Identify BaseSchema type
+        if (typeof this._parsers.input === 'object' && typeof this._parsers.input.parse === 'function') {
+            // Identify BaseSchema type
             rawData = parse(this._parsers.input, rawData);
-        } else if (typeof this._parsers.input === "function") {
+        } else if (typeof this._parsers.input === 'function') {
             rawData = this._parsers.input(rawData);
         }
         return rawData as I;
@@ -158,9 +158,10 @@ export default abstract class BaseResource<I = any, O = any> implements IResourc
     }
 
     protected _parseRawData_parseOutputSchema(data: O): O {
-        if (typeof this._parsers.output === "object" && typeof this._parsers.output.parse === "function") { // Identify BaseSchema type
+        if (typeof this._parsers.output === 'object' && typeof this._parsers.output.parse === 'function') {
+            // Identify BaseSchema type
             data = parse(this._parsers.output, data);
-        } else if (typeof this._parsers.output === "function") {
+        } else if (typeof this._parsers.output === 'function') {
             data = this._parsers.output(data);
         }
         return data;

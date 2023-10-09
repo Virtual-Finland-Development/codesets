@@ -1,5 +1,7 @@
+import { ValiError } from 'valibot';
 import RequestLogger from './app/RequestLogger';
 import { getResources } from './utils/data/repositories/ResourceRepository';
+import { ResourceRetrievalError } from './utils/exceptions';
 import { RuntimeFlags, pingEventMiddleware } from './utils/runtime';
 import ExternalResourceCache from './utils/services/ExternalResourceCache';
 import S3BucketStorage from './utils/services/S3BucketStorage';
@@ -27,8 +29,10 @@ export const handler = pingEventMiddleware(async () => {
             // Store data in cache
             await externalResourceCache.store(resource.name, dataPackage);
         } catch (error) {
+            if (!(error instanceof ResourceRetrievalError || error instanceof ValiError)) {
+                throw error; // Fail the task
+            }
             console.error(resourceName, RequestLogger.formatError(error));
-            // @TODO: alerts to admin
         }
     }
 });
