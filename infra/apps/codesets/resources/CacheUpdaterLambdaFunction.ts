@@ -21,8 +21,7 @@ export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: stri
                 ],
             }),
             tags: execRoleConfig.tags,
-        },
-        { provider: setup.regions.edgeRegion.provider }
+        }
     );
 
     // Attach S3 read-write policy to exec role
@@ -40,8 +39,7 @@ export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: stri
                     },
                 ],
             }),
-        },
-        { provider: setup.regions.edgeRegion.provider }
+        }
     );
 
     // Attach basic lambda execution policy
@@ -50,8 +48,7 @@ export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: stri
         {
             role: functionExecRole,
             policyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
-        },
-        { provider: setup.regions.edgeRegion.provider }
+        }
     );
 
     const functionConfig = setup.getResourceConfig('CacheUpdaterFunction');
@@ -65,8 +62,12 @@ export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: stri
             memorySize: 1024,
             code: new pulumi.asset.FileArchive('./dist/codesets'),
             tags: functionConfig.tags,
-        },
-        { provider: setup.regions.edgeRegion.provider }
+            environment: {
+                variables: {
+                    AWS_S3_BUCKET_REGION: setup.regions.resourcesRegion.name,
+                },
+            }
+        }
     );
 
     return {
@@ -77,7 +78,7 @@ export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: stri
 export function invokeTheCacheUpdatingFunction(setup: ISetup, lambdaFunction: aws.lambda.Function) {
     const invokeConfig = setup.getResourceConfig('CacheUpdaterFunctionInvoke');
     const triggerToken = new Date().getTime().toString(); // Trigger always
-    const region = setup.regions.edgeRegion.name;
+    const region = setup.regions.resourcesRegion.name;
     new local.Command(invokeConfig.name, {
         create: pulumi.interpolate`aws lambda invoke --function-name ${lambdaFunction.name} --region ${region} /dev/null`,
         triggers: [triggerToken],
