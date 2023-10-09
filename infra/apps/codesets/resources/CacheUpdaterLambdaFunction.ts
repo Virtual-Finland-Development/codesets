@@ -43,15 +43,19 @@ export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: stri
     });
 
     const functionConfig = setup.getResourceConfig('CacheUpdaterFunction');
-    const lambdaFunction = new aws.lambda.Function(functionConfig.name, {
-        role: functionExecRole.arn,
-        runtime: 'nodejs18.x',
-        handler: 'codesets-cache-updater.handler',
-        timeout: 900, // 15 minutes
-        memorySize: 1024,
-        code: new pulumi.asset.FileArchive('./dist/codesets'),
-        tags: functionConfig.tags,
-    });
+    const lambdaFunction = new aws.lambda.Function(
+        functionConfig.name,
+        {
+            role: functionExecRole.arn,
+            runtime: 'nodejs18.x',
+            handler: 'codesets-cache-updater.handler',
+            timeout: 900, // 15 minutes
+            memorySize: 1024,
+            code: new pulumi.asset.FileArchive('./dist/codesets'),
+            tags: functionConfig.tags,
+        },
+        { provider: setup.edgeRegion.provider }
+    );
 
     const initialInvokeCommand = invokeInitialExecution(setup, lambdaFunction);
 
