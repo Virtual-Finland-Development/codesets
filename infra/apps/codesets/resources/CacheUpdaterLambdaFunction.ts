@@ -5,42 +5,54 @@ import { ISetup } from '../../../utils/Setup';
 
 export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: string) {
     const execRoleConfig = setup.getResourceConfig('CacheUpdaterFunctionExecRole');
-    const functionExecRole = new aws.iam.Role(execRoleConfig.name, {
-        assumeRolePolicy: JSON.stringify({
-            Version: '2012-10-17',
-            Statement: [
-                {
-                    Action: 'sts:AssumeRole',
-                    Principal: {
-                        Service: ['lambda.amazonaws.com'],
+    const functionExecRole = new aws.iam.Role(
+        execRoleConfig.name,
+        {
+            assumeRolePolicy: JSON.stringify({
+                Version: '2012-10-17',
+                Statement: [
+                    {
+                        Action: 'sts:AssumeRole',
+                        Principal: {
+                            Service: ['lambda.amazonaws.com'],
+                        },
+                        Effect: 'Allow',
                     },
-                    Effect: 'Allow',
-                },
-            ],
-        }),
-        tags: execRoleConfig.tags,
-    });
+                ],
+            }),
+            tags: execRoleConfig.tags,
+        },
+        { provider: setup.edgeRegion.provider }
+    );
 
     // Attach S3 read-write policy to exec role
-    new aws.iam.RolePolicy(setup.getResourceName('CacheUpdaterFunctionExecRoleS3RwPolicy'), {
-        role: functionExecRole,
-        policy: JSON.stringify({
-            Version: '2012-10-17',
-            Statement: [
-                {
-                    Action: ['s3:GetObject', 's3:PutObject'],
-                    Resource: `arn:aws:s3:::${bucketName}/*`,
-                    Effect: 'Allow',
-                },
-            ],
-        }),
-    });
+    new aws.iam.RolePolicy(
+        setup.getResourceName('CacheUpdaterFunctionExecRoleS3RwPolicy'),
+        {
+            role: functionExecRole,
+            policy: JSON.stringify({
+                Version: '2012-10-17',
+                Statement: [
+                    {
+                        Action: ['s3:GetObject', 's3:PutObject'],
+                        Resource: `arn:aws:s3:::${bucketName}/*`,
+                        Effect: 'Allow',
+                    },
+                ],
+            }),
+        },
+        { provider: setup.edgeRegion.provider }
+    );
 
     // Attach basic lambda execution policy
-    new aws.iam.RolePolicyAttachment(setup.getResourceName('CacheUpdaterFunctionExecRolePolicyAttachment'), {
-        role: functionExecRole,
-        policyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
-    });
+    new aws.iam.RolePolicyAttachment(
+        setup.getResourceName('CacheUpdaterFunctionExecRolePolicyAttachment'),
+        {
+            role: functionExecRole,
+            policyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
+        },
+        { provider: setup.edgeRegion.provider }
+    );
 
     const functionConfig = setup.getResourceConfig('CacheUpdaterFunction');
     const lambdaFunction = new aws.lambda.Function(
@@ -73,8 +85,7 @@ export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: stri
  */
 function invokeInitialExecution(setup: ISetup, lambdaFunction: aws.lambda.Function) {
     const invokeConfig = setup.getResourceConfig('CacheUpdaterInitialExecution');
-    const awsConfig = new pulumi.Config('aws');
-    const region = awsConfig.require('region');
+    const region = setup.edgeRegion.region;
     return new local.Command(
         invokeConfig.name,
         {
@@ -87,8 +98,7 @@ function invokeInitialExecution(setup: ISetup, lambdaFunction: aws.lambda.Functi
 export function invokeTheCacheUpdatingFunction(setup: ISetup, lambdaFunction: aws.lambda.Function) {
     const invokeConfig = setup.getResourceConfig('CacheUpdaterFunctionInvoke');
     const triggerToken = new Date().getTime().toString(); // Trigger always
-    const awsConfig = new pulumi.Config('aws');
-    const region = awsConfig.require('region');
+    const region = setup.edgeRegion.region;
     new local.Command(invokeConfig.name, {
         create: pulumi.interpolate`aws lambda invoke --function-name ${lambdaFunction.name} --region ${region} /dev/null`,
         triggers: [triggerToken],
