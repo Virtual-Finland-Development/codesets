@@ -3,18 +3,17 @@ import * as pulumi from '@pulumi/pulumi';
 import { ISetup } from '../../../utils/Setup';
 
 interface LogSubFilterConfig {
-    isEdge?: boolean;
     logGroupName: string;
     lambdaPermissionName: string;
     logSubFilterName: string;
-    region?: {
+    region: {
         name: string;
         provider: aws.Provider;
     };
 }
 
 function create(setup: ISetup, lambdaLogGroupName: pulumi.Output<string>, logSubFilterConfig: LogSubFilterConfig) {
-    const { isEdge, logGroupName, lambdaPermissionName, logSubFilterName, region } = logSubFilterConfig;
+    const { logGroupName, lambdaPermissionName, logSubFilterName, region } = logSubFilterConfig;
 
     const logGroupConfig = setup.getResourceConfig(logGroupName);
 
@@ -26,7 +25,7 @@ function create(setup: ISetup, lambdaLogGroupName: pulumi.Output<string>, logSub
             tags: logGroupConfig.tags,
         },
         {
-            ...(isEdge && region && { provider: region.provider }), // for edge, log group needs to be created in edge region
+            provider: region.provider,
         }
     );
 
@@ -39,7 +38,7 @@ function create(setup: ISetup, lambdaLogGroupName: pulumi.Output<string>, logSub
             sourceArn: pulumi.interpolate`${logGroup.arn}:*`,
         },
         {
-            ...(isEdge && { provider: setup.regions.resourcesRegion.provider }), // error sub lambda located in eu-north-1, for edge lambda specific target needed
+            provider: setup.regions.resourcesRegion.provider, // error sub lambda located in eu-north-1, for edge lambda specific target needed
         }
     );
 
@@ -52,7 +51,7 @@ function create(setup: ISetup, lambdaLogGroupName: pulumi.Output<string>, logSub
         },
         {
             dependsOn: [logGroup, lambdaPermission],
-            ...(isEdge && region && { provider: region.provider }), // for edge, log subscription filter needs to be created in edge region
+            provider: region.provider,
         }
     );
 }
@@ -69,7 +68,6 @@ export async function createCloudWatchLogSubFilter(
 
         for (const region of regions) {
             create(setup, lambdaLogGroupName, {
-                isEdge: true,
                 logGroupName: `edgeRegion-${region.name}-logGroup`,
                 lambdaPermissionName: `ErrorSubLambdaFunctionPermission-${region.name}`,
                 logSubFilterName: `CloudWatchLogSubFilter-${region.name}`,
@@ -81,6 +79,10 @@ export async function createCloudWatchLogSubFilter(
             logGroupName: 'CacheUpdaterLogGroup',
             lambdaPermissionName: 'ErrorSubLambdaFunctionPermission-CacheUpdater',
             logSubFilterName: 'CloudWatchLogSubFilter-CacheUpdater',
+            region: {
+                name: setup.regions.edgeRegion.name,
+                provider: setup.regions.edgeRegion.provider,
+            },
         });
     }
 }
