@@ -16,7 +16,7 @@ provider:
     timeout: 30
 
 functions:
-    codesets:
+    escoApi:
         handler: dist/escoApi/index.handler
         events:
             - httpApi:
