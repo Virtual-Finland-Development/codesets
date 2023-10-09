@@ -1,23 +1,22 @@
-import { ValiError } from "valibot";
+import { ValiError } from 'valibot';
 
 export class ValidationError extends ValiError {
     constructor(message: string) {
         super([
             {
-                reason: "unknown",
-                validation: "",
-                origin: "value",
+                reason: 'unknown',
+                validation: '',
+                origin: 'value',
                 message: message,
                 input: {},
-            }
+            },
         ]);
-        this.name = "ValidationError";
+        this.name = 'ValidationError';
     }
 }
 
-export class NotFoundError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = "NotFoundError";
-    }
-}
+export class NotFoundError extends Error {}
+
+export class ResourceRetrievalError extends Error {}
+
+export class StorageError extends Error {}

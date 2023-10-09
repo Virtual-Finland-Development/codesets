@@ -5,21 +5,25 @@ import { ISetup } from '../../../utils/Setup';
 
 export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: string) {
     const execRoleConfig = setup.getResourceConfig('CacheUpdaterFunctionExecRole');
-    const functionExecRole = new aws.iam.Role(execRoleConfig.name, {
-        assumeRolePolicy: JSON.stringify({
-            Version: '2012-10-17',
-            Statement: [
-                {
-                    Action: 'sts:AssumeRole',
-                    Principal: {
-                        Service: ['lambda.amazonaws.com'],
+    const functionExecRole = new aws.iam.Role(
+        execRoleConfig.name,
+        {
+            assumeRolePolicy: JSON.stringify({
+                Version: '2012-10-17',
+                Statement: [
+                    {
+                        Action: 'sts:AssumeRole',
+                        Principal: {
+                            Service: ['lambda.amazonaws.com'],
+                        },
+                        Effect: 'Allow',
                     },
-                    Effect: 'Allow',
-                },
-            ],
-        }),
-        tags: execRoleConfig.tags,
-    });
+                ],
+            }),
+            tags: execRoleConfig.tags,
+        },
+        { provider: setup.regions.edgeRegion.provider }
+    );
 
     // Attach S3 read-write policy to exec role
     new aws.iam.RolePolicy(setup.getResourceName('CacheUpdaterFunctionExecRoleS3RwPolicy'), {
@@ -37,21 +41,29 @@ export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: stri
     });
 
     // Attach basic lambda execution policy
-    new aws.iam.RolePolicyAttachment(setup.getResourceName('CacheUpdaterFunctionExecRolePolicyAttachment'), {
-        role: functionExecRole,
-        policyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
-    });
+    new aws.iam.RolePolicyAttachment(
+        setup.getResourceName('CacheUpdaterFunctionExecRolePolicyAttachment'),
+        {
+            role: functionExecRole,
+            policyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
+        },
+        { provider: setup.regions.edgeRegion.provider }
+    );
 
     const functionConfig = setup.getResourceConfig('CacheUpdaterFunction');
-    const lambdaFunction = new aws.lambda.Function(functionConfig.name, {
-        role: functionExecRole.arn,
-        runtime: 'nodejs18.x',
-        handler: 'codesets-cache-updater.handler',
-        timeout: 900, // 15 minutes
-        memorySize: 1024,
-        code: new pulumi.asset.FileArchive('./dist/codesets'),
-        tags: functionConfig.tags,
-    });
+    const lambdaFunction = new aws.lambda.Function(
+        functionConfig.name,
+        {
+            role: functionExecRole.arn,
+            runtime: 'nodejs18.x',
+            handler: 'codesets-cache-updater.handler',
+            timeout: 900, // 15 minutes
+            memorySize: 1024,
+            code: new pulumi.asset.FileArchive('./dist/codesets'),
+            tags: functionConfig.tags,
+        },
+        { provider: setup.regions.edgeRegion.provider }
+    );
 
     return {
         lambdaFunction,
