@@ -80,8 +80,8 @@ export async function createCloudWatchLogSubFilter(
             lambdaPermissionName: 'ErrorSubLambdaFunctionPermission-CacheUpdater',
             logSubFilterName: 'CloudWatchLogSubFilter-CacheUpdater',
             region: {
-                name: setup.regions.edgeRegion.name,
-                provider: setup.regions.edgeRegion.provider,
+                name: setup.regions.resourcesRegion.name,
+                provider: setup.regions.resourcesRegion.provider,
             },
         });
     }
