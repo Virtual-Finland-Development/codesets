@@ -5,70 +5,58 @@ import { ISetup } from '../../../utils/Setup';
 
 export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: string) {
     const execRoleConfig = setup.getResourceConfig('CacheUpdaterFunctionExecRole');
-    const functionExecRole = new aws.iam.Role(
-        execRoleConfig.name,
-        {
-            assumeRolePolicy: JSON.stringify({
-                Version: '2012-10-17',
-                Statement: [
-                    {
-                        Action: 'sts:AssumeRole',
-                        Principal: {
-                            Service: ['lambda.amazonaws.com'],
-                        },
-                        Effect: 'Allow',
+    const functionExecRole = new aws.iam.Role(execRoleConfig.name, {
+        assumeRolePolicy: JSON.stringify({
+            Version: '2012-10-17',
+            Statement: [
+                {
+                    Action: 'sts:AssumeRole',
+                    Principal: {
+                        Service: ['lambda.amazonaws.com'],
                     },
-                ],
-            }),
-            tags: execRoleConfig.tags,
-        }
-    );
+                    Effect: 'Allow',
+                },
+            ],
+        }),
+        tags: execRoleConfig.tags,
+    });
 
     // Attach S3 read-write policy to exec role
-    new aws.iam.RolePolicy(
-        setup.getResourceName('CacheUpdaterFunctionExecRoleS3RwPolicy'),
-        {
-            role: functionExecRole,
-            policy: JSON.stringify({
-                Version: '2012-10-17',
-                Statement: [
-                    {
-                        Action: ['s3:GetObject', 's3:PutObject'],
-                        Resource: `arn:aws:s3:::${bucketName}/*`,
-                        Effect: 'Allow',
-                    },
-                ],
-            }),
-        }
-    );
+    new aws.iam.RolePolicy(setup.getResourceName('CacheUpdaterFunctionExecRoleS3RwPolicy'), {
+        role: functionExecRole,
+        policy: JSON.stringify({
+            Version: '2012-10-17',
+            Statement: [
+                {
+                    Action: ['s3:GetObject', 's3:PutObject'],
+                    Resource: `arn:aws:s3:::${bucketName}/*`,
+                    Effect: 'Allow',
+                },
+            ],
+        }),
+    });
 
     // Attach basic lambda execution policy
-    new aws.iam.RolePolicyAttachment(
-        setup.getResourceName('CacheUpdaterFunctionExecRolePolicyAttachment'),
-        {
-            role: functionExecRole,
-            policyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
-        }
-    );
+    new aws.iam.RolePolicyAttachment(setup.getResourceName('CacheUpdaterFunctionExecRolePolicyAttachment'), {
+        role: functionExecRole,
+        policyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
+    });
 
     const functionConfig = setup.getResourceConfig('CacheUpdaterFunction');
-    const lambdaFunction = new aws.lambda.Function(
-        functionConfig.name,
-        {
-            role: functionExecRole.arn,
-            runtime: 'nodejs18.x',
-            handler: 'codesets-cache-updater.handler',
-            timeout: 900, // 15 minutes
-            memorySize: 1024,
-            code: new pulumi.asset.FileArchive('./dist/codesets'),
-            tags: functionConfig.tags,
-            environment: {
-                variables: {
-                    AWS_S3_BUCKET_REGION: setup.regions.resourcesRegion.name,
-                },
-            }
-        }
-    );
+    const lambdaFunction = new aws.lambda.Function(functionConfig.name, {
+        role: functionExecRole.arn,
+        runtime: 'nodejs18.x',
+        handler: 'codesets-cache-updater.handler',
+        timeout: 900, // 15 minutes
+        memorySize: 1024,
+        code: new pulumi.asset.FileArchive('./dist/codesets'),
+        tags: functionConfig.tags,
+        environment: {
+            variables: {
+                AWS_S3_BUCKET_REGION: setup.regions.resourcesRegion.name,
+            },
+        },
+    });
 
     return {
         lambdaFunction,

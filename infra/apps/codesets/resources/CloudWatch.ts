@@ -68,17 +68,17 @@ export async function createCloudWatchLogSubFilter(
 
         for (const region of regions) {
             create(setup, lambdaLogGroupName, {
-                logGroupName: `edgeRegion-${region.name}-logGroup`,
+                logGroupName: `EdgeRegion-${region.name}-logGroup`,
                 lambdaPermissionName: `ErrorSubLambdaFunctionPermission-${region.name}`,
-                logSubFilterName: `CloudWatchLogSubFilter-${region.name}`,
+                logSubFilterName: `EdgeRegion-CloudWatchLogSubFilter-${region.name}`,
                 region,
             });
         }
     } else {
         create(setup, pulumi.interpolate`/aws/lambda/${lambda.name}`, {
             logGroupName: 'CacheUpdaterLogGroup',
-            lambdaPermissionName: 'ErrorSubLambdaFunctionPermission-CacheUpdater',
-            logSubFilterName: 'CloudWatchLogSubFilter-CacheUpdater',
+            lambdaPermissionName: 'CacheUpdater-ErrorSubLambdaFunctionPermission',
+            logSubFilterName: 'CacheUpdater-CloudWatchLogSubFilter',
             region: {
                 name: setup.regions.resourcesRegion.name,
                 provider: setup.regions.resourcesRegion.provider,
