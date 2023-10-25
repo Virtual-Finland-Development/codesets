@@ -9,6 +9,7 @@ import {
     createEdgeCacheInvalidation,
     createOriginAccessIdentity,
 } from './resources/CloudFront';
+import { createCloudWatchLogSubFilter } from './resources/CloudWatch';
 import createLambdaAtEdgeFunction from './resources/LambdaAtEdge';
 import createS3Bucket, { createS3BucketPermissions, uploadAssetsToBucket } from './resources/S3Bucket';
 import { createStandardLogsBucket } from './resources/standardLogsBucket';
@@ -34,6 +35,9 @@ uploadAssetsToBucket(setup, s3bucketSetup.bucket);
 
 invokeTheCacheUpdatingFunction(setup, cacheUpdaterPackage.lambdaFunction); // Regenerate external resources cache
 createEdgeCacheInvalidation(setup, cloudFrontDistribution); // Invalidate the edge-cache of cloudfront
+
+createCloudWatchLogSubFilter(setup, edgeLambdaPackage.lambdaAtEdgeFunction, 'codesets'); // Create CloudWatch log subscription filter for errorSubLambdaFunction (codesets edge lambda)
+createCloudWatchLogSubFilter(setup, cacheUpdaterPackage.lambdaFunction, 'cache-updater'); // Create CloudWatch log subscription filter for errorSubLambdaFunction (cache updater "standard" lambda)
 
 // Outputs
 export const url = pulumi.interpolate`https://${cloudFrontDistribution.domainName}`;

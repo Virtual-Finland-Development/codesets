@@ -53,41 +53,20 @@ export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: stri
         tags: functionConfig.tags,
         environment: {
             variables: {
-                AWS_S3_BUCKET_REGION: setup.resourcesRegion.region,
+                AWS_S3_BUCKET_REGION: setup.regions.resourcesRegion.name,
             },
         },
     });
 
-    const initialInvokeCommand = invokeInitialExecution(setup, lambdaFunction);
-
     return {
         lambdaFunction,
-        initialInvokeCommand,
     };
-}
-
-/**
- * Invokes the function once to ensure the creation of the log group
- *
- * @param setup
- * @param lambdaFunction
- */
-function invokeInitialExecution(setup: ISetup, lambdaFunction: aws.lambda.Function) {
-    const invokeConfig = setup.getResourceConfig('CacheUpdaterInitialExecution');
-    const region = setup.edgeRegion.region;
-    return new local.Command(
-        invokeConfig.name,
-        {
-            create: pulumi.interpolate`aws lambda invoke --payload '{"action": "ping"}' --cli-binary-format raw-in-base64-out --function-name ${lambdaFunction.name} --region ${region} /dev/null`,
-        },
-        { dependsOn: [lambdaFunction] }
-    );
 }
 
 export function invokeTheCacheUpdatingFunction(setup: ISetup, lambdaFunction: aws.lambda.Function) {
     const invokeConfig = setup.getResourceConfig('CacheUpdaterFunctionInvoke');
     const triggerToken = new Date().getTime().toString(); // Trigger always
-    const region = setup.resourcesRegion.region;
+    const region = setup.regions.resourcesRegion.name;
     new local.Command(invokeConfig.name, {
         create: pulumi.interpolate`aws lambda invoke --function-name ${lambdaFunction.name} --region ${region} /dev/null`,
         triggers: [triggerToken],
