@@ -1,6 +1,13 @@
-import { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2, CloudFrontHeaders, CloudFrontRequestEvent, CloudFrontRequestResult, CloudFrontResultResponse } from "aws-lambda";
-import { ValiError } from "valibot";
-import { cutTooLongString } from "../utils/helpers";
+import {
+    APIGatewayProxyEventV2,
+    APIGatewayProxyStructuredResultV2,
+    CloudFrontHeaders,
+    CloudFrontRequestEvent,
+    CloudFrontRequestResult,
+    CloudFrontResultResponse,
+} from 'aws-lambda';
+import { ValiError } from 'valibot';
+import { cutTooLongString } from '../utils/helpers';
 
 export type LogPackage = {
     trace: {
@@ -18,13 +25,13 @@ export type LogPackage = {
         statusCode: number;
         contentLength: number;
     };
-    errors?: any[],
+    errors?: any[];
 };
 
 export type RequestLoggerSettings = {
     disable?: {
         sourceIp?: boolean;
-    }
+    };
 };
 
 export default class RequestLogger {
@@ -44,7 +51,7 @@ export default class RequestLogger {
             log.trace.sourceIp = undefined;
         }
 
-        if (typeof log.response.statusCode !== "number" || log.response.statusCode >= 400) {
+        if (typeof log.response.statusCode !== 'number' || log.response.statusCode >= 404) {
             console.error(JSON.stringify(log, null, 4));
         } else {
             console.log(JSON.stringify(log));
@@ -56,48 +63,55 @@ export default class RequestLogger {
     }
 
     static formatError(error: Error | ValiError | any): any {
-        if (error instanceof ValiError)  {
+        if (error instanceof ValiError) {
             // Cleanup the vali error to make it more accessible: only show the first issue and remove the input
-            return (
-                error.issues.slice(0, 1).map(i => {
-                    return {
-                        ...i,
-                        input: cutTooLongString(JSON.stringify(i.input), 500),
-                        path: i.path?.map(p => {
-                            return {
-                                ...p,
-                                input: cutTooLongString(JSON.stringify(p.input), 500) 
-                            }
-                        })
-                    }
-                }           
-            ));
-        } else if (error instanceof Error)  {
-            return ({
+            return error.issues.slice(0, 1).map((i) => {
+                return {
+                    ...i,
+                    input: cutTooLongString(JSON.stringify(i.input), 500),
+                    path: i.path?.map((p) => {
+                        return {
+                            ...p,
+                            input: cutTooLongString(JSON.stringify(p.input), 500),
+                        };
+                    }),
+                };
+            });
+        } else if (error instanceof Error) {
+            return {
                 message: error.message,
                 stack: error.stack,
-            });
+            };
         } else {
             try {
-                return (JSON.stringify(error));
+                return JSON.stringify(error);
             } catch (e) {
-                return (error);
+                return error;
             }
         }
     }
 
-    private parseLogPackage(request: APIGatewayProxyEventV2 | CloudFrontRequestEvent, response: APIGatewayProxyStructuredResultV2 | CloudFrontRequestResult): LogPackage {
+    private parseLogPackage(
+        request: APIGatewayProxyEventV2 | CloudFrontRequestEvent,
+        response: APIGatewayProxyStructuredResultV2 | CloudFrontRequestResult
+    ): LogPackage {
         // identify if event is APIGatewayProxyEventV2 or CloudFrontRequestEvent
-        if (typeof (request as any).requestContext !== "undefined") {
-            return this.parseApiGatewayEvent(request as APIGatewayProxyEventV2, response as APIGatewayProxyStructuredResultV2);
+        if (typeof (request as any).requestContext !== 'undefined') {
+            return this.parseApiGatewayEvent(
+                request as APIGatewayProxyEventV2,
+                response as APIGatewayProxyStructuredResultV2
+            );
         }
         return this.parseCloudFrontEvent(request as CloudFrontRequestEvent, response as CloudFrontRequestResult);
     }
 
-    private parseApiGatewayEvent(request: APIGatewayProxyEventV2, response: APIGatewayProxyStructuredResultV2): LogPackage {
+    private parseApiGatewayEvent(
+        request: APIGatewayProxyEventV2,
+        response: APIGatewayProxyStructuredResultV2
+    ): LogPackage {
         const { rawPath, rawQueryString, requestContext, headers } = request;
         const { statusCode, body } = response;
-        
+
         return {
             trace: {
                 id: requestContext.requestId,
@@ -126,7 +140,7 @@ export default class RequestLogger {
 
         return {
             trace: {
-                id: cloudFrontEvent.config.requestId,   
+                id: cloudFrontEvent.config.requestId,
                 amazonTraceId: eventRequestHeaders['x-amzn-trace-id'],
                 userAgent: eventRequestHeaders['user-agent'],
                 sourceIp: eventRequest.clientIp,
@@ -149,22 +163,26 @@ export default class RequestLogger {
         return parsedHeaders;
     }
 
-    private parseCloudFrontRequestResult(response: CloudFrontRequestResult): LogPackage["response"] {
-        const parsedResponse: LogPackage["response"] = {
+    private parseCloudFrontRequestResult(response: CloudFrontRequestResult): LogPackage['response'] {
+        const parsedResponse: LogPackage['response'] = {
             statusCode: 500,
             contentLength: 0,
         };
 
-        if (typeof response === "object" && response !== null) {
-            if (typeof (response as CloudFrontResultResponse).status === "string") {
+        if (typeof response === 'object' && response !== null) {
+            if (typeof (response as CloudFrontResultResponse).status === 'string') {
                 parsedResponse.statusCode = parseInt((response as CloudFrontResultResponse).status);
                 parsedResponse.contentLength = (response as CloudFrontResultResponse).body?.length || 0;
-            } else if (typeof response.body === "object" && response.body !== null && typeof response.body.data === "string") {
+            } else if (
+                typeof response.body === 'object' &&
+                response.body !== null &&
+                typeof response.body.data === 'string'
+            ) {
                 parsedResponse.statusCode = 200; // Pass-through response code
                 parsedResponse.contentLength = response.body.data.length;
             }
         }
-        
+
         return parsedResponse;
     }
 }
