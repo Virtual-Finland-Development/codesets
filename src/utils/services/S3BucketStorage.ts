@@ -7,7 +7,7 @@ import { IStorage } from './IStorage';
 export default class S3BucketStorage implements IStorage {
     private readonly s3Client: S3Client;
     public constructor({ region }: { region?: string } = {}) {
-        this.s3Client = new S3Client({ region: region || process.env.AWS_REGION });
+        this.s3Client = new S3Client({ region: region || process.env.AWS_S3_BUCKET_REGION || process.env.AWS_REGION });
     }
 
     public async store(bucketName: string, key: string, data: string, mime: string) {
@@ -21,7 +21,7 @@ export default class S3BucketStorage implements IStorage {
 
             await this.s3Client.send(new PutObjectCommand(params));
         } catch (error: any) {
-            throw new StorageError('An error occurred while storing to S3', error);
+            throw new StorageError('An error occurred while storing to S3', { cause: error });
         }
     }
 
@@ -41,7 +41,7 @@ export default class S3BucketStorage implements IStorage {
                 mime: data.ContentType || 'application/json',
             };
         } catch (error: any) {
-            throw new StorageError('An error occurred while retrieving from S3', error);
+            throw new StorageError('An error occurred while retrieving from S3', { cause: error });
         }
     }
 

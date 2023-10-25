@@ -62,6 +62,10 @@ async function getAllRegions() {
     return regions;
 }
 
+const errorSubLambdaArn = new pulumi.StackReference(`${organizationName}/cloudwatch-logs-alerts/${stage}`).getOutput(
+    'errorSubLambdaFunctionArn'
+);
+
 const setup = {
     stage,
     projectName,
@@ -69,6 +73,7 @@ const setup = {
     getResourceConfig,
     getResourceName,
     isProductionLikeEnvironment,
+    errorSubLambdaArn,
     regions: {
         getAllRegions: getAllRegions,
         edgeRegion: {

@@ -10,9 +10,7 @@ export const handler = pingEventMiddleware(async () => {
     RuntimeFlags.isSystemTask = true; // Flag the resources system to skip existing cache usage
 
     const externalResources = getResources('external');
-    const appStorage = new S3BucketStorage({
-        region: 'us-east-1', // Codesets bucket must be stored in us-east-1 for CloudFront to access it
-    });
+    const appStorage = new S3BucketStorage();
     const externalResourceCache = new ExternalResourceCache(appStorage);
 
     for (const resourceName in externalResources) {
