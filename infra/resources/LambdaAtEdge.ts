@@ -1,14 +1,11 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 import * as fs from 'fs';
-import { ISetup } from '../../../utils/Setup';
-export default function createLambdaAtEdgeFunction(
-    setup: ISetup,
-    s3BucketSetup: { name: string; bucket: aws.s3.Bucket }
-) {
-    const lambdaAtEdgeRoleConfig = setup.getResourceConfig('LambdaAtEdgeRole');
+import { getResourceName, getTags, regions } from '../setup';
+
+export default function createLambdaAtEdgeFunction(s3BucketSetup: { name: string; bucket: aws.s3.Bucket }) {
     const lambdaAtEdgeRole = new aws.iam.Role(
-        lambdaAtEdgeRoleConfig.name,
+        getResourceName('LambdaAtEdgeRole'),
         {
             assumeRolePolicy: JSON.stringify({
                 Version: '2012-10-17',
@@ -22,14 +19,13 @@ export default function createLambdaAtEdgeFunction(
                     },
                 ],
             }),
-            tags: lambdaAtEdgeRoleConfig.tags,
+            tags: getTags(),
         },
-        { provider: setup.regions.edgeRegion.provider }
+        { provider: regions.edgeRegion.provider }
     );
 
-    const lambdaAtEdgeRolePolicyConfig = setup.getResourceConfig('LambdaAtEdgeRolePolicy');
     new aws.iam.RolePolicy(
-        lambdaAtEdgeRolePolicyConfig.name,
+        getResourceName('LambdaAtEdgeRolePolicy'),
         {
             role: lambdaAtEdgeRole.id,
             policy: JSON.stringify({
@@ -43,32 +39,31 @@ export default function createLambdaAtEdgeFunction(
                 ],
             }),
         },
-        { provider: setup.regions.edgeRegion.provider }
+        { provider: regions.edgeRegion.provider }
     );
 
     // pass the bucket name to the lambda function dist folder
     fs.writeFileSync(
-        './dist/codesets/build/bucket-info.json',
+        './dist/build/bucket-info.json',
         JSON.stringify({
             name: s3BucketSetup.name,
-            region: setup.regions.resourcesRegion.name,
+            region: regions.resourcesRegion.name,
         })
     );
 
-    const lambdaAtEdgeFunctionConfig = setup.getResourceConfig('LambdaAtEdge');
     const lambdaAtEdgeFunction = new aws.lambda.Function(
-        lambdaAtEdgeFunctionConfig.name,
+        getResourceName('LambdaAtEdge'),
         {
-            code: new pulumi.asset.FileArchive('./dist/codesets'),
+            code: new pulumi.asset.FileArchive('./dist'),
             handler: 'codesets.handler',
             runtime: 'nodejs18.x',
             memorySize: 256,
             timeout: 30,
             role: lambdaAtEdgeRole.arn,
-            tags: lambdaAtEdgeFunctionConfig.tags,
+            tags: getTags(),
             publish: true,
         },
-        { provider: setup.regions.edgeRegion.provider }
+        { provider: regions.edgeRegion.provider }
     );
 
     return {

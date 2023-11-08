@@ -1,25 +1,29 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 
-const stage = pulumi.getStack();
-const projectName = pulumi.getProject();
-const organizationName = pulumi.getOrganization();
+export const stage = pulumi.getStack();
+export const projectName = pulumi.getProject();
+export const organizationName = pulumi.getOrganization();
 
-function getResourceConfig(name: string) {
+export function getResourceConfig(name: string) {
     return {
         name: getResourceName(name),
-        tags: {
-            'vfd:stack': stage,
-            'vfd:project': projectName,
-        },
+        tags: getTags(),
     };
 }
 
-function getResourceName(name: string) {
+export function getResourceName(name: string) {
     return `${projectName}-${name}-${stage}`;
 }
 
-function isProductionLikeEnvironment() {
+export function getTags() {
+    return {
+        'vfd:stack': stage,
+        'vfd:project': projectName,
+    };
+}
+
+export function isProductionLikeEnvironment() {
     return stage.endsWith('production') || stage.endsWith('staging');
 }
 
@@ -62,34 +66,18 @@ async function getAllRegions() {
     return regions;
 }
 
-const errorSubLambdaArn = new pulumi.StackReference(`${organizationName}/cloudwatch-logs-alerts/${stage}`).getOutput(
-    'errorSubLambdaFunctionArn'
-);
-
-const setup = {
-    stage,
-    projectName,
-    organizationName,
-    getResourceConfig,
-    getResourceName,
-    isProductionLikeEnvironment,
-    errorSubLambdaArn,
-    regions: {
-        getAllRegions: getAllRegions,
-        edgeRegion: {
-            name: edgeRegion,
-            provider: edgeRegionProvider,
-        },
-        resourcesRegion: {
-            name: resourcesRegion,
-            provider: resourcesRegionProvider,
-        },
+export const regions = {
+    getAllRegions: getAllRegions,
+    edgeRegion: {
+        name: edgeRegion,
+        provider: edgeRegionProvider,
+    },
+    resourcesRegion: {
+        name: resourcesRegion,
+        provider: resourcesRegionProvider,
     },
 };
 
-type ISetup = typeof setup;
-function getSetup() {
-    return setup;
-}
-
-export { ISetup, getSetup };
+export const errorSubLambdaArn = new pulumi.StackReference(
+    `${organizationName}/cloudwatch-logs-alerts/${stage}`
+).getOutput('errorSubLambdaFunctionArn');

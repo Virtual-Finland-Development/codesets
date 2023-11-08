@@ -1,11 +1,10 @@
 import * as aws from '@pulumi/aws';
 import { local } from '@pulumi/command';
 import * as pulumi from '@pulumi/pulumi';
-import { ISetup } from '../../../utils/Setup';
+import { getResourceName, getTags, regions } from '../setup';
 
-export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: string) {
-    const execRoleConfig = setup.getResourceConfig('CacheUpdaterFunctionExecRole');
-    const functionExecRole = new aws.iam.Role(execRoleConfig.name, {
+export function createCacheUpdaterLambdaFunction(bucketName: string) {
+    const functionExecRole = new aws.iam.Role(getResourceName('CacheUpdaterFunctionExecRole'), {
         assumeRolePolicy: JSON.stringify({
             Version: '2012-10-17',
             Statement: [
@@ -18,11 +17,11 @@ export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: stri
                 },
             ],
         }),
-        tags: execRoleConfig.tags,
+        tags: getTags(),
     });
 
     // Attach S3 read-write policy to exec role
-    new aws.iam.RolePolicy(setup.getResourceName('CacheUpdaterFunctionExecRoleS3RwPolicy'), {
+    new aws.iam.RolePolicy(getResourceName('CacheUpdaterFunctionExecRoleS3RwPolicy'), {
         role: functionExecRole,
         policy: JSON.stringify({
             Version: '2012-10-17',
@@ -37,23 +36,22 @@ export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: stri
     });
 
     // Attach basic lambda execution policy
-    new aws.iam.RolePolicyAttachment(setup.getResourceName('CacheUpdaterFunctionExecRolePolicyAttachment'), {
+    new aws.iam.RolePolicyAttachment(getResourceName('CacheUpdaterFunctionExecRolePolicyAttachment'), {
         role: functionExecRole,
         policyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
     });
 
-    const functionConfig = setup.getResourceConfig('CacheUpdaterFunction');
-    const lambdaFunction = new aws.lambda.Function(functionConfig.name, {
+    const lambdaFunction = new aws.lambda.Function(getResourceName('CacheUpdaterFunction'), {
         role: functionExecRole.arn,
         runtime: 'nodejs18.x',
         handler: 'codesets-cache-updater.handler',
         timeout: 900, // 15 minutes
         memorySize: 1024,
-        code: new pulumi.asset.FileArchive('./dist/codesets'),
-        tags: functionConfig.tags,
+        code: new pulumi.asset.FileArchive('./dist'),
+        tags: getTags(),
         environment: {
             variables: {
-                AWS_S3_BUCKET_REGION: setup.regions.resourcesRegion.name,
+                AWS_S3_BUCKET_REGION: regions.resourcesRegion.name,
             },
         },
     });
@@ -63,11 +61,10 @@ export function createCacheUpdaterLambdaFunction(setup: ISetup, bucketName: stri
     };
 }
 
-export function invokeTheCacheUpdatingFunction(setup: ISetup, lambdaFunction: aws.lambda.Function) {
-    const invokeConfig = setup.getResourceConfig('CacheUpdaterFunctionInvoke');
+export function invokeTheCacheUpdatingFunction(lambdaFunction: aws.lambda.Function) {
     const triggerToken = new Date().getTime().toString(); // Trigger always
-    const region = setup.regions.resourcesRegion.name;
-    new local.Command(invokeConfig.name, {
+    const region = regions.resourcesRegion.name;
+    new local.Command(getResourceName('CacheUpdaterFunctionInvoke'), {
         create: pulumi.interpolate`aws lambda invoke --function-name ${lambdaFunction.name} --region ${region} /dev/null`,
         triggers: [triggerToken],
     });

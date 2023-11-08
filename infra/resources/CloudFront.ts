@@ -1,25 +1,21 @@
 import * as aws from '@pulumi/aws';
 import { local } from '@pulumi/command';
 import * as pulumi from '@pulumi/pulumi';
-import { ISetup } from '../../../utils/Setup';
+import { getResourceName, getTags, regions } from '../setup';
 
-export function createOriginAccessIdentity(setup: ISetup) {
-    const originAccessIdentityConfig = setup.getResourceConfig('OriginAccessIdentity');
-    return new aws.cloudfront.OriginAccessIdentity(originAccessIdentityConfig.name, {
+export function createOriginAccessIdentity() {
+    return new aws.cloudfront.OriginAccessIdentity(getResourceName('OriginAccessIdentity'), {
         comment: 'Access Identity',
     });
 }
 
 export function createCloudFrontDistribution(
-    setup: ISetup,
     bucket: aws.s3.Bucket,
     originAccessIdentity: aws.cloudfront.OriginAccessIdentity,
     lambdaAtEdgeFunction: aws.lambda.Function,
     standardLogsBucket: aws.s3.Bucket
 ) {
-    const cloudFrontDistributionConfig = setup.getResourceConfig('CloudFrontDistribution');
-
-    const cloudFrontDistribution = new aws.cloudfront.Distribution(cloudFrontDistributionConfig.name, {
+    const cloudFrontDistribution = new aws.cloudfront.Distribution(getResourceName('CloudFrontDistribution'), {
         origins: [
             {
                 domainName: bucket.bucketRegionalDomainName,
@@ -69,7 +65,7 @@ export function createCloudFrontDistribution(
         waitForDeployment: true,
         enabled: true,
         retainOnDelete: false,
-        tags: cloudFrontDistributionConfig.tags,
+        tags: getTags(),
         loggingConfig: {
             bucket: standardLogsBucket.bucketDomainName,
             prefix: 'std-cf-logs',
@@ -78,8 +74,7 @@ export function createCloudFrontDistribution(
     });
 
     // Extended monitoring
-    const cloudFrontDistributionMonitoringConfig = setup.getResourceConfig('CloudFrontDistributionMonitoring');
-    new aws.cloudfront.MonitoringSubscription(cloudFrontDistributionMonitoringConfig.name, {
+    new aws.cloudfront.MonitoringSubscription(getResourceName('CloudFrontDistributionMonitoring'), {
         distributionId: cloudFrontDistribution.id,
         monitoringSubscription: {
             realtimeMetricsSubscriptionConfig: {
@@ -90,24 +85,23 @@ export function createCloudFrontDistribution(
 
     // Permissions for Lambda@Edge
     new aws.lambda.Permission(
-        setup.getResourceName('LambdaAtEdgePermission'),
+        getResourceName('LambdaAtEdgePermission'),
         {
             action: 'lambda:GetFunction',
             function: lambdaAtEdgeFunction.name,
             principal: 'edgelambda.amazonaws.com',
             sourceArn: cloudFrontDistribution.arn,
         },
-        { provider: setup.regions.edgeRegion.provider }
+        { provider: regions.edgeRegion.provider }
     );
 
     return cloudFrontDistribution;
 }
 
-export function createEdgeCacheInvalidation(setup: ISetup, distribution: aws.cloudfront.Distribution) {
-    const cacheInvalidationConfig = setup.getResourceConfig('CacheInvalidation');
+export function createEdgeCacheInvalidation(distribution: aws.cloudfront.Distribution) {
     const triggerToken = new Date().getTime().toString();
     new local.Command(
-        cacheInvalidationConfig.name,
+        getResourceName('CacheInvalidation'),
         {
             create: pulumi.interpolate`aws cloudfront create-invalidation --distribution-id ${distribution.id} --paths "/*"`,
             triggers: [triggerToken],

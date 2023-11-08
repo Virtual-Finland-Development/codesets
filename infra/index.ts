@@ -1,5 +1,4 @@
 import * as pulumi from '@pulumi/pulumi';
-import { getSetup } from '../../utils/Setup';
 import {
     createCacheUpdaterLambdaFunction,
     invokeTheCacheUpdatingFunction,
@@ -14,30 +13,28 @@ import createLambdaAtEdgeFunction from './resources/LambdaAtEdge';
 import createS3Bucket, { createS3BucketPermissions, uploadAssetsToBucket } from './resources/S3Bucket';
 import { createStandardLogsBucket } from './resources/standardLogsBucket';
 
-const setup = getSetup();
-const originAccessIdentity = createOriginAccessIdentity(setup);
+const originAccessIdentity = createOriginAccessIdentity();
 
-const s3bucketSetup = createS3Bucket(setup);
-const edgeLambdaPackage = createLambdaAtEdgeFunction(setup, s3bucketSetup);
-createS3BucketPermissions(setup, s3bucketSetup.bucket, originAccessIdentity, edgeLambdaPackage.lambdaAtEdgeRole);
-const cacheUpdaterPackage = createCacheUpdaterLambdaFunction(setup, s3bucketSetup.name);
+const s3bucketSetup = createS3Bucket();
+const edgeLambdaPackage = createLambdaAtEdgeFunction(s3bucketSetup);
+createS3BucketPermissions(s3bucketSetup.bucket, originAccessIdentity, edgeLambdaPackage.lambdaAtEdgeRole);
+const cacheUpdaterPackage = createCacheUpdaterLambdaFunction(s3bucketSetup.name);
 
-const standardLogsBucket = createStandardLogsBucket(setup);
+const standardLogsBucket = createStandardLogsBucket();
 
 const cloudFrontDistribution = createCloudFrontDistribution(
-    setup,
     s3bucketSetup.bucket,
     originAccessIdentity,
     edgeLambdaPackage.lambdaAtEdgeFunction,
     standardLogsBucket
 );
-uploadAssetsToBucket(setup, s3bucketSetup.bucket);
+uploadAssetsToBucket(s3bucketSetup.bucket);
 
-invokeTheCacheUpdatingFunction(setup, cacheUpdaterPackage.lambdaFunction); // Regenerate external resources cache
-createEdgeCacheInvalidation(setup, cloudFrontDistribution); // Invalidate the edge-cache of cloudfront
+invokeTheCacheUpdatingFunction(cacheUpdaterPackage.lambdaFunction); // Regenerate external resources cache
+createEdgeCacheInvalidation(cloudFrontDistribution); // Invalidate the edge-cache of cloudfront
 
-createCloudWatchLogSubFilter(setup, edgeLambdaPackage.lambdaAtEdgeFunction, 'codesets'); // Create CloudWatch log subscription filter for errorSubLambdaFunction (codesets edge lambda)
-createCloudWatchLogSubFilter(setup, cacheUpdaterPackage.lambdaFunction, 'cache-updater'); // Create CloudWatch log subscription filter for errorSubLambdaFunction (cache updater "standard" lambda)
+createCloudWatchLogSubFilter(edgeLambdaPackage.lambdaAtEdgeFunction, 'codesets'); // Create CloudWatch log subscription filter for errorSubLambdaFunction (codesets edge lambda)
+createCloudWatchLogSubFilter(cacheUpdaterPackage.lambdaFunction, 'cache-updater'); // Create CloudWatch log subscription filter for errorSubLambdaFunction (cache updater "standard" lambda)
 
 // Outputs
 export const url = pulumi.interpolate`https://${cloudFrontDistribution.domainName}`;
