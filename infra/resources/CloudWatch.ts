@@ -1,6 +1,6 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
-import { errorSubLambdaArn, getResourceName, getTags, regions } from '../setup';
+import { getResourceName, getTags, organizationName, regions, stage } from '../setup';
 
 interface LogSubFilterConfig {
     logGroupName: string;
@@ -13,6 +13,7 @@ interface LogSubFilterConfig {
 }
 
 function createLogSubscriptionFilter(
+    errorSubLambdaArn: pulumi.Output<any>,
     lambdaLogGroupName: pulumi.Output<string>,
     logSubFilterConfig: LogSubFilterConfig
 ) {
@@ -61,13 +62,17 @@ export async function createCloudWatchLogSubFilter(
     lambda: aws.lambda.Function,
     lambdaType: 'codesets' | 'cache-updater'
 ) {
+    const errorSubLambdaArn = new pulumi.StackReference(
+        `${organizationName}/cloudwatch-logs-alerts/${stage}`
+    ).getOutput('errorSubLambdaFunctionArn');
+
     // for codesets lambda, we need to create the log subscription filter in all edge regions with region specific provider settings
     if (lambdaType === 'codesets') {
         const lambdaLogGroupName = pulumi.interpolate`/aws/lambda/us-east-1.${lambda.name}`;
         const allRegions = await regions.getAllRegions();
 
         for (const region of allRegions) {
-            createLogSubscriptionFilter(lambdaLogGroupName, {
+            createLogSubscriptionFilter(errorSubLambdaArn, lambdaLogGroupName, {
                 logGroupName: `EdgeRegion-${region.name}-logGroup`,
                 lambdaPermissionName: `ErrorSubLambdaFunctionPermission-${region.name}`,
                 logSubFilterName: `EdgeRegion-CloudWatchLogSubFilter-${region.name}`,
@@ -75,7 +80,7 @@ export async function createCloudWatchLogSubFilter(
             });
         }
     } else {
-        createLogSubscriptionFilter(pulumi.interpolate`/aws/lambda/${lambda.name}`, {
+        createLogSubscriptionFilter(errorSubLambdaArn, pulumi.interpolate`/aws/lambda/${lambda.name}`, {
             logGroupName: 'CacheUpdaterLogGroup',
             lambdaPermissionName: 'CacheUpdater-ErrorSubLambdaFunctionPermission',
             logSubFilterName: 'CacheUpdater-CloudWatchLogSubFilter',
