@@ -5,7 +5,7 @@
   "scripts": {
     "prebuild": "npm i && npm run clean",
     "build": "tsc && ts-node src/build/finalize-build.ts",
-    "build:infra": "npm -C infra install && npm -C infra run build",
+    "build:infra": "npm -C infra run build",
     "clean": "rimraf dist",
     "deploy": "npm run build && npm run -C infra deploy",
     "dev": "nodemon --delay 80ms --watch 'src' -e 'ts' --exec \"npm run build && npm run serve\"",

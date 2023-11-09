@@ -72,7 +72,7 @@ function publicReadPolicyForBucket(bucketName: string, originAccessArn: string, 
     });
 }
 export function uploadAssetsToBucket(bucketResource: aws.s3.Bucket) {
-    process.chdir('../../../'); // navigate to project root folder
+    process.chdir('../'); // navigate to project root folder
     uploadDirToS3(`${process.cwd()}/src/resources/internal`, bucketResource, '', 'resources', ['ts', 'js']);
     uploadDirToS3(`${process.cwd()}/src/build/webroot`, bucketResource);
 }

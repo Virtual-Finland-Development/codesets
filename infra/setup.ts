@@ -77,3 +77,7 @@ export const regions = {
         provider: resourcesRegionProvider,
     },
 };
+
+export const errorSubLambdaArn = new pulumi.StackReference(
+    `${organizationName}/cloudwatch-logs-alerts/${stage}`
+).getOutput('errorSubLambdaFunctionArn');

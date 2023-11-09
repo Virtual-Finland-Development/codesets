@@ -1,6 +1,6 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
-import { getResourceName, getTags, organizationName, regions, stage } from '../setup';
+import { errorSubLambdaArn, getResourceName, getTags, regions } from '../setup';
 
 interface LogSubFilterConfig {
     logGroupName: string;
@@ -62,10 +62,6 @@ export async function createCloudWatchLogSubFilter(
     lambda: aws.lambda.Function,
     lambdaType: 'codesets' | 'cache-updater'
 ) {
-    const errorSubLambdaArn = new pulumi.StackReference(
-        `${organizationName}/cloudwatch-logs-alerts/${stage}`
-    ).getOutput('errorSubLambdaFunctionArn');
-
     // for codesets lambda, we need to create the log subscription filter in all edge regions with region specific provider settings
     if (lambdaType === 'codesets') {
         const lambdaLogGroupName = pulumi.interpolate`/aws/lambda/us-east-1.${lambda.name}`;
