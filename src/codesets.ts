@@ -7,7 +7,7 @@ import {
 import RequestApp from './app/RequestApp';
 import { engageResourcesAction } from './app/resources-controller-actions';
 import { InternalResources } from './resources/index';
-import { resolveErrorResponse, resolveUri } from './utils/api';
+import { resolveErrorResponse } from './utils/api';
 import { decodeBase64, parseRequestInputParams } from './utils/helpers';
 import { getStorageBucketInfo, pingEventMiddleware } from './utils/runtime';
 import S3BucketStorage from './utils/services/S3BucketStorage';
@@ -41,7 +41,7 @@ export const handler = pingEventMiddleware(async (event: CloudFrontRequestEvent)
 async function handleLiveRequest(app: RequestApp, event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
     try {
         const request = event.Records[0].cf.request;
-        let uri = resolveUri(request.uri);
+        let uri = request.uri;
         const params = Object.fromEntries(new URLSearchParams(request.querystring || ''));
         if (request.method === 'POST' && typeof request.body?.data === 'string') {
             try {
@@ -132,7 +132,7 @@ async function handleLocalEvent(
 ): Promise<APIGatewayProxyStructuredResultV2> {
     try {
         const handle = async (event: APIGatewayProxyEventV2) => {
-            let uri = resolveUri(event.rawPath);
+            let uri = event.rawPath;
             const params = Object.fromEntries(new URLSearchParams(event.rawQueryString || ''));
             if (event.requestContext.http.method === 'POST') {
                 try {

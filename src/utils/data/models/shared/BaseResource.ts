@@ -9,6 +9,7 @@ export type ResourceData = Response | string | ReadableStream<Uint8Array> | null
 export interface IResourceConstructorParams<I = any, O = any> {
     name: string;
     type?: 'external' | 'library' | 'internal';
+    httpMethod?: 'GET' | 'POST';
     uri?: string;
     mime?: string;
     dataGetter?: (params?: Record<string, string>) => Promise<{ data: string; mime: string }>;
@@ -28,6 +29,8 @@ export default abstract class BaseResource<I = any, O = any> implements IResourc
     public name: string;
     public uri: string;
     public type = 'external';
+    public httpMethod = 'GET';
+
     protected _mime: string | undefined;
 
     protected _parsers: IResourceParserParams;
@@ -37,10 +40,11 @@ export default abstract class BaseResource<I = any, O = any> implements IResourc
 
     protected requestApp?: RequestApp;
 
-    constructor({ name, uri, mime, type, dataGetter, parsers, settings }: IResourceConstructorParams) {
+    constructor({ name, uri, mime, type, dataGetter, parsers, settings, httpMethod }: IResourceConstructorParams) {
         this.name = name;
         this.uri = uri || '';
         this.type = type || this.type;
+        this.httpMethod = httpMethod || this.httpMethod;
         this._mime = mime;
         this._dataGetter = dataGetter;
         this._parsers = parsers || {};
@@ -96,7 +100,9 @@ export default abstract class BaseResource<I = any, O = any> implements IResourc
     }
 
     protected async _fetchData(): Promise<{ data: ResourceData; mime: string }> {
-        const response = await fetch(this.uri);
+        const response = await fetch(this.uri, {
+            method: this.httpMethod,
+        });
         if (response.status !== 200) {
             throw new Error(`Failed to fetch resource: ${response.status} ${response.statusText}`);
         }
