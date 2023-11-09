@@ -1,6 +1,6 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
-import { ISetup } from '../../../utils/Setup';
+import { errorSubLambdaArn, getResourceName, getTags, regions } from '../setup';
 
 interface LogSubFilterConfig {
     logGroupName: string;
@@ -12,17 +12,19 @@ interface LogSubFilterConfig {
     };
 }
 
-function create(setup: ISetup, lambdaLogGroupName: pulumi.Output<string>, logSubFilterConfig: LogSubFilterConfig) {
+function createLogSubscriptionFilter(
+    errorSubLambdaArn: pulumi.Output<any>,
+    lambdaLogGroupName: pulumi.Output<string>,
+    logSubFilterConfig: LogSubFilterConfig
+) {
     const { logGroupName, lambdaPermissionName, logSubFilterName, region } = logSubFilterConfig;
 
-    const logGroupConfig = setup.getResourceConfig(logGroupName);
-
     const logGroup = new aws.cloudwatch.LogGroup(
-        logGroupConfig.name,
+        getResourceName(logGroupName),
         {
             name: lambdaLogGroupName,
             retentionInDays: 30,
-            tags: logGroupConfig.tags,
+            tags: getTags(),
         },
         {
             provider: region.provider,
@@ -30,24 +32,24 @@ function create(setup: ISetup, lambdaLogGroupName: pulumi.Output<string>, logSub
     );
 
     const lambdaPermission = new aws.lambda.Permission(
-        setup.getResourceName(lambdaPermissionName),
+        getResourceName(lambdaPermissionName),
         {
             action: 'lambda:InvokeFunction',
-            function: setup.errorSubLambdaArn,
+            function: errorSubLambdaArn,
             principal: 'logs.amazonaws.com',
             sourceArn: pulumi.interpolate`${logGroup.arn}:*`,
         },
         {
-            provider: setup.regions.resourcesRegion.provider, // error sub lambda located in eu-north-1, for edge lambda specific target needed
+            provider: regions.resourcesRegion.provider, // error sub lambda located in eu-north-1, for edge lambda specific target needed
         }
     );
 
     new aws.cloudwatch.LogSubscriptionFilter(
-        setup.getResourceName(logSubFilterName),
+        getResourceName(logSubFilterName),
         {
             logGroup: lambdaLogGroupName,
             filterPattern: 'ERROR',
-            destinationArn: setup.errorSubLambdaArn,
+            destinationArn: errorSubLambdaArn,
         },
         {
             dependsOn: [logGroup, lambdaPermission],
@@ -57,17 +59,16 @@ function create(setup: ISetup, lambdaLogGroupName: pulumi.Output<string>, logSub
 }
 
 export async function createCloudWatchLogSubFilter(
-    setup: ISetup,
     lambda: aws.lambda.Function,
     lambdaType: 'codesets' | 'cache-updater'
 ) {
     // for codesets lambda, we need to create the log subscription filter in all edge regions with region specific provider settings
     if (lambdaType === 'codesets') {
         const lambdaLogGroupName = pulumi.interpolate`/aws/lambda/us-east-1.${lambda.name}`;
-        const regions = await setup.regions.getAllRegions();
+        const allRegions = await regions.getAllRegions();
 
-        for (const region of regions) {
-            create(setup, lambdaLogGroupName, {
+        for (const region of allRegions) {
+            createLogSubscriptionFilter(errorSubLambdaArn, lambdaLogGroupName, {
                 logGroupName: `EdgeRegion-${region.name}-logGroup`,
                 lambdaPermissionName: `ErrorSubLambdaFunctionPermission-${region.name}`,
                 logSubFilterName: `EdgeRegion-CloudWatchLogSubFilter-${region.name}`,
@@ -75,13 +76,13 @@ export async function createCloudWatchLogSubFilter(
             });
         }
     } else {
-        create(setup, pulumi.interpolate`/aws/lambda/${lambda.name}`, {
+        createLogSubscriptionFilter(errorSubLambdaArn, pulumi.interpolate`/aws/lambda/${lambda.name}`, {
             logGroupName: 'CacheUpdaterLogGroup',
             lambdaPermissionName: 'CacheUpdater-ErrorSubLambdaFunctionPermission',
             logSubFilterName: 'CacheUpdater-CloudWatchLogSubFilter',
             region: {
-                name: setup.regions.resourcesRegion.name,
-                provider: setup.regions.resourcesRegion.provider,
+                name: regions.resourcesRegion.name,
+                provider: regions.resourcesRegion.provider,
             },
         });
     }

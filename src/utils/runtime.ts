@@ -1,7 +1,11 @@
-import bucketInfo from '../build/bucket-info.json';
+import Environment from '../build/environment.json';
 
-export function getStorageBucketInfo(): { name: string; region: string } {
-    return bucketInfo;
+export function getEscoAPIEndpoint() {
+    return Environment.escoApi.endpoint;
+}
+
+export function getStorageBucketInfo() {
+    return Environment.s3bucket;
 }
 
 // Lambda@edge does not have access to environment variables, so we mock them here to separate local and live environments

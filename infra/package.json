@@ -1,15 +1,23 @@
 {
-  "name": "infra",
+  "name": "codesets-infra",
+  "main": "index.ts",
   "dependencies": {
     "@pulumi/aws": "^5.41.0",
-    "@pulumi/pulumi": "^3.69.0"
+    "@pulumi/aws-native": "^0.73.1",
+    "@pulumi/awsx": "^1.0.4",
+    "@pulumi/command": "^0.7.2",
+    "@pulumi/pulumi": "^3.69.0",
+    "mime": "^3.0.0"
   },
   "scripts": {
-    "prebuild": "npm install",
-    "build": "npm run build:codesets && npm run build:escoApi",
-    "build:codesets": "npm run prebuild && npm -C apps/codesets install && npm -C apps/codesets run build",
-    "build:escoApi": "npm run prebuild && npm -C apps/escoApi install && npm -C apps/escoApi run build",
-    "deploy:codesets": "npm install && npm run build:codesets && pulumi -C apps/codesets up",
-    "deploy:escoApi": "npm install && npm run build:escoApi && pulumi -C apps/escoApi up"
+    "prebuild": "npm i && npm run clean",
+    "build": "mkdir -p ./dist && cp -r ../dist/* ./dist/ && cp ../package.json ./dist/ && cp ../package-lock.json ./dist/ && npm install --prefix ./dist --omit=dev",
+    "postbuild": "rm ./dist/build/*.js",
+    "clean": "rimraf ./dist",
+    "deploy": "npm run build && pulumi up"
+  },
+  "devDependencies": {
+    "@types/mime": "^3.0.1",
+    "rimraf": "^4.1.2"
   }
 }

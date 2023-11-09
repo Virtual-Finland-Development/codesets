@@ -1,10 +1,10 @@
-import { CloudFrontResultResponse } from "aws-lambda";
-import mime from "mime";
-import { InternalResources } from "../resources";
-import { getResource, listResources } from "../utils/data/repositories/ResourceRepository";
-import { NotFoundError } from "../utils/exceptions";
-import { generateSimpleHash } from "../utils/helpers";
-import RequestApp from "./RequestApp";
+import { CloudFrontResultResponse } from 'aws-lambda';
+import mime from 'mime';
+import { InternalResources } from '../resources';
+import { getResource, listResources } from '../utils/data/repositories/ResourceRepository';
+import { NotFoundError } from '../utils/exceptions';
+import { generateSimpleHash } from '../utils/helpers';
+import RequestApp from './RequestApp';
 
 export async function engageResourcesAction(
     app: RequestApp,
@@ -21,7 +21,7 @@ export async function engageResourcesAction(
             response: {
                 status: '200',
                 statusDescription: 'OK: list of resources',
-                body: JSON.stringify([...listResources(), ...InternalResources.listResources()]),
+                body: JSON.stringify(listResources()),
             },
         };
     }
@@ -67,5 +67,5 @@ export async function engageResourcesAction(
         };
     }
 
-    throw new NotFoundError("Resource not found");
+    throw new NotFoundError('Resource not found');
 }

@@ -18,7 +18,6 @@ export default class ExternalResource extends BaseResource {
         data: string;
         mime: string;
     }> {
-        
         if (!RuntimeFlags.isSystemTask) {
             const { exists, expired } = await this.getExternalResourceCache().getExistsAndExpiredInfo(this.name);
             if (exists) {

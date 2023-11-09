@@ -1,20 +1,20 @@
 import * as aws from '@pulumi/aws';
 import { Bucket } from '@pulumi/aws/s3';
-import { ISetup } from '../../../utils/Setup';
+import { getResourceName, getTags, stage } from '../setup';
 
-export function createStandardLogsBucket(setup: ISetup): Bucket {
-    const bucket = new aws.s3.Bucket(`${setup.projectName}-standard-logs-${setup.stage}`, {
+export function createStandardLogsBucket(): Bucket {
+    const bucket = new aws.s3.Bucket(getResourceName('standard-logs'), {
         lifecycleRules: [
             {
                 enabled: true,
                 expiration: {
                     days: 2,
                 },
-                id: `standard-logs-expiration-rule-${setup.stage}`,
+                id: `standard-logs-expiration-rule-${stage}`,
             },
         ],
         acl: 'private',
-        tags: setup.getResourceConfig('standard-logs-bucket').tags,
+        tags: getTags(),
     });
 
     new aws.s3.BucketOwnershipControls('controls', {
