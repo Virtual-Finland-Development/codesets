@@ -1,7 +1,7 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 import * as fs from 'fs';
-import { getResourceName, getTags, regions } from '../setup';
+import { getResourceName, getTags, organizationName, regions, stage } from '../setup';
 
 export default function createLambdaAtEdgeFunction(s3BucketSetup: { name: string; bucket: aws.s3.Bucket }) {
     const lambdaAtEdgeRole = new aws.iam.Role(
@@ -42,12 +42,21 @@ export default function createLambdaAtEdgeFunction(s3BucketSetup: { name: string
         { provider: regions.edgeRegion.provider }
     );
 
-    // pass the bucket name to the lambda function dist folder
+    // Esco API reference
+    const escoApiEndpoint = new pulumi.StackReference(`${organizationName}/esco-api/${stage}`).getOutput('escoApiUrl');
+
+    // pass the bucket name and other environment variables to the lambda function dist folder
+    // ..as lambda@edge does not support environment variables
     fs.writeFileSync(
-        './dist/build/bucket-info.json',
+        './dist/build/environment.json',
         JSON.stringify({
-            name: s3BucketSetup.name,
-            region: regions.resourcesRegion.name,
+            escoApi: {
+                endpoint: pulumi.interpolate`${escoApiEndpoint}`,
+            },
+            s3Bucket: {
+                name: s3BucketSetup.name,
+                region: regions.resourcesRegion.name,
+            },
         })
     );
 

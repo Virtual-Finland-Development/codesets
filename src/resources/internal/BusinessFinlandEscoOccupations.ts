@@ -1,8 +1,7 @@
 import { array, number, object, string } from 'valibot';
-import InternalResource from '../../utils/data/models/InternalResource';
+import ExternalResource from '../../utils/data/models/ExternalResource';
 import { transformOccupations as transform } from '../../utils/data/transformers';
-
-import BusinessFinlandDataSet from './business-finland-esco-v1_1_1-occupations.json';
+import { getEnvironment } from '../../utils/runtime';
 
 const OccupationSchema = object({
     escoCode: string(),
@@ -16,17 +15,11 @@ export const OccupationsResponseSchema = object({
     occupations: array(OccupationSchema),
 });
 
-export default new InternalResource({
+export default new ExternalResource({
     name: 'BusinessFinlandEscoOccupations',
-    uri: 'business-finland-esco-v1_1_1-occupations.json',
+    uri: `${getEnvironment().escoApi.endpoint}/Employment/EscoOccupations_v1.0`,
     parsers: {
         transform,
         output: OccupationsResponseSchema,
-    },
-    dataGetter() {
-        return Promise.resolve({
-            data: JSON.stringify(BusinessFinlandDataSet),
-            mime: 'application/json',
-        });
     },
 });

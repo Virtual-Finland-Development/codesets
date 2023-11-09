@@ -1,0 +1,9 @@
+{
+    "escoApi": {
+        "endpoint": "http://host.docker.internal:3560"
+    },
+    "s3bucket": {
+        "name": "",
+        "region": ""
+    }
+}
