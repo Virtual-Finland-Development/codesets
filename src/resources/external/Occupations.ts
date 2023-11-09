@@ -2,7 +2,7 @@ import { BaseSchema, Output, array, length, merge, object, optional, record, rec
 import ExternalResource from '../../utils/data/models/ExternalResource';
 import { filterCommonEscoDataSet } from '../../utils/esco';
 import { isEnabledFilter, isEnabledFormat } from '../../utils/filters';
-import { getEnvironment } from '../../utils/runtime';
+import { getEscoAPIEndpoint } from '../../utils/runtime';
 
 // Build a recursive object type with children of self-likes
 // @see: https://github.com/fabian-hiller/valibot/issues/72
@@ -29,7 +29,7 @@ type OccupationsResponse = Output<typeof OccupationsResponseSchema>;
 
 export default new ExternalResource({
     name: 'Occupations',
-    uri: `${getEnvironment().escoApi.endpoint}/occupations`,
+    uri: `${getEscoAPIEndpoint()}/occupations`,
     parsers: {
         async transform(occupations: OccupationsResponse, params?: Record<string, string>) {
             if (isEnabledFilter(params, 'isco') && !isEnabledFilter(params, 'esco')) {

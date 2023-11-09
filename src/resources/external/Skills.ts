@@ -1,7 +1,7 @@
 import { Output, array, length, object, record, string } from 'valibot';
 import ExternalResource from '../../utils/data/models/ExternalResource';
 import { filterCommonEscoDataSet } from '../../utils/esco';
-import { getEnvironment } from '../../utils/runtime';
+import { getEscoAPIEndpoint } from '../../utils/runtime';
 
 const SkillSchema = object({
     uri: string(),
@@ -14,7 +14,7 @@ type SkillsResponse = Output<typeof SkillsResponseSchema>;
 
 export default new ExternalResource({
     name: 'Skills',
-    uri: `${getEnvironment().escoApi.endpoint}/skills`,
+    uri: `${getEscoAPIEndpoint()}/skills`,
     parsers: {
         input: SkillsResponseSchema,
         async transform(skills: SkillsResponse, params?: Record<string, string>) {

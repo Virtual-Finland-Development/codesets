@@ -81,3 +81,8 @@ export const regions = {
 export const errorSubLambdaArn = new pulumi.StackReference(
     `${organizationName}/cloudwatch-logs-alerts/${stage}`
 ).getOutput('errorSubLambdaFunctionArn');
+
+// Esco API reference
+export const escoApiEndpoint = new pulumi.StackReference(`${organizationName}/esco-api/${stage}`).getOutput(
+    'escoApiUrl'
+);
