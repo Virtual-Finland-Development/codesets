@@ -36,6 +36,6 @@ describe('Basic router tests', () => {
 describe('Util tests', () => {
     test('Exception formatting', async () => {
         const error = RequestLogger.formatError(new Error('Test 1', { cause: new Error('Test 2') }));
-        expect(error.clause).toBeDefined();
+        expect(error.cause).toBeDefined();
     });
 });
