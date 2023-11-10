@@ -52,7 +52,7 @@ export default class RequestLogger {
         }
 
         if (typeof log.response.statusCode !== 'number' || log.response.statusCode >= 404) {
-            console.error(JSON.stringify(log, null, 4));
+            console.error(JSON.stringify(log));
         } else {
             console.log(JSON.stringify(log));
         }
@@ -81,6 +81,7 @@ export default class RequestLogger {
             return {
                 message: error.message,
                 stack: error.stack,
+                cause: RequestLogger.formatError(error.cause),
             };
         } else {
             try {
