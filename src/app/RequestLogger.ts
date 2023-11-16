@@ -12,7 +12,7 @@ import { cutTooLongString } from '../utils/helpers';
 export type LogPackage = {
     trace: {
         id: string;
-        amazonTraceId?: string;
+        traceId?: string;
         userAgent: string;
         sourceIp?: string;
     };
@@ -116,7 +116,7 @@ export default class RequestLogger {
         return {
             trace: {
                 id: requestContext.requestId,
-                amazonTraceId: headers['x-amzn-trace-id'],
+                traceId: headers['x-request-trace-id'] || headers['x-amzn-trace-id'],
                 userAgent: requestContext.http.userAgent,
                 sourceIp: requestContext.http.sourceIp,
             },
@@ -142,7 +142,7 @@ export default class RequestLogger {
         return {
             trace: {
                 id: cloudFrontEvent.config.requestId,
-                amazonTraceId: eventRequestHeaders['x-amzn-trace-id'],
+                traceId: eventRequestHeaders['x-request-trace-id'] || eventRequestHeaders['x-amzn-trace-id'],
                 userAgent: eventRequestHeaders['user-agent'],
                 sourceIp: eventRequest.clientIp,
             },
