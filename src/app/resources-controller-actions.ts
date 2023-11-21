@@ -56,6 +56,9 @@ export async function engageResourcesAction(
                 headers: {
                     'content-type': [{ key: 'Content-Type', value: resourceResponse.mime }],
                     'access-control-allow-origin': [{ key: 'Access-Control-Allow-Origin', value: '*' }],
+                    'access-control-allow-headers': [
+                        { key: 'Access-Control-Allow-Headers', value: 'X-Request-Trace-Id' },
+                    ],
                 },
             },
         };
