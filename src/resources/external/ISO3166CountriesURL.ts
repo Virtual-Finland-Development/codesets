@@ -1,6 +1,7 @@
 import { Output, array, length, object, string } from 'valibot';
 import ExternalResource from '../../utils/data/models/ExternalResource';
 import { isEnabledFilter } from '../../utils/filters';
+import { testbedCountryCodes } from '../../utils/data/testbed-country-codes';
 
 const CountriesInputDataSchema = array(
     object({
@@ -25,14 +26,6 @@ const CountrySchema = object({
 type Country = Output<typeof CountrySchema>;
 const CountriesResponseSchema = array(CountrySchema);
 
-async function fetchTestbedCountryIds(): Promise<string[]> {
-    const response = await fetch(
-        'https://raw.githubusercontent.com/Virtual-Finland/definitions/main/DataProducts/draft/NSG/Agent/LegalEntity/NonListedCompany/Establishment/Write.json'
-    );
-    const data = await response.json();
-    return data.components.schemas.ISO_3166_1_Alpha_3.enum;
-}
-
 export default new ExternalResource({
     name: 'ISO3166CountriesURL',
     uri: 'https://github.com/mledoze/countries/blob/master/countries.json?raw=true',
@@ -52,13 +45,12 @@ export default new ExternalResource({
             });
 
             if (isEnabledFilter(params, 'testbed')) {
-                const TestbedCountryIds = await fetchTestbedCountryIds();
                 return countries.filter((country: Country) =>
-                    TestbedCountryIds.includes(country.threeLetterISORegionName)
+                    testbedCountryCodes.includes(country.threeLetterISORegionName)
                 );
             }
             return countries;
         },
         output: CountriesResponseSchema,
-    }
+    },
 });
