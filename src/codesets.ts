@@ -41,6 +41,11 @@ export const handler = pingEventMiddleware(async (event: CloudFrontRequestEvent)
 async function handleLiveRequest(app: RequestApp, event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
     try {
         const request = event.Records[0].cf.request;
+
+        if (request.method === 'OPTIONS') {
+            return request;
+        }
+
         let uri = request.uri;
         const params = Object.fromEntries(new URLSearchParams(request.querystring || ''));
         if (request.method === 'POST' && typeof request.body?.data === 'string') {
