@@ -16,9 +16,21 @@ export const RuntimeFlags = {
 
 export function pingEventMiddleware(next: (event: any, context?: any) => Promise<any>) {
     return async function (event: any, context?: any) {
-        if (event.action === 'ping') {
+        if (event.action === 'ping' || event.Records?.[0]?.cf?.request?.uri === '/health-check') {
             console.log('pong');
-            return;
+            return {
+                status: 200,
+                statusDescription: 'OK',
+                body: 'OK',
+                headers: {
+                    'cache-control': [
+                        {
+                            key: 'Cache-Control',
+                            value: 'max-age=0',
+                        },
+                    ],
+                },
+            };
         }
         return next(event, context);
     };
