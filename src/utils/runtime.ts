@@ -14,7 +14,7 @@ export const RuntimeFlags = {
     isSystemTask: false,
 };
 
-export function pingEventMiddleware(next: (event: any, context?: any) => Promise<any>) {
+export function healthCheckEventMiddleware(next: (event: any, context?: any) => Promise<any>) {
     return async function (event: any, context?: any) {
         if (event.action === 'ping' || event.Records?.[0]?.cf?.request?.uri === '/health-check') {
             console.log('pong');

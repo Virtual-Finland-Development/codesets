@@ -9,7 +9,7 @@ import { engageResourcesAction } from './app/resources-controller-actions';
 import { InternalResources } from './resources/index';
 import { resolveErrorResponse } from './utils/api';
 import { decodeBase64, parseRequestInputParams } from './utils/helpers';
-import { getStorageBucketInfo, pingEventMiddleware } from './utils/runtime';
+import { getStorageBucketInfo, healthCheckEventMiddleware } from './utils/runtime';
 import S3BucketStorage from './utils/services/S3BucketStorage';
 
 const loggerSettings = {
@@ -24,19 +24,21 @@ const loggerSettings = {
  * @param event
  * @returns
  */
-export const handler = pingEventMiddleware(async (event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> => {
-    const bucketInfo = getStorageBucketInfo();
-    const app = new RequestApp(event, {
-        loggerSettings: loggerSettings,
-        storage: new S3BucketStorage({
-            region: bucketInfo.region,
-        }),
-    });
+export const handler = healthCheckEventMiddleware(
+    async (event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> => {
+        const bucketInfo = getStorageBucketInfo();
+        const app = new RequestApp(event, {
+            loggerSettings: loggerSettings,
+            storage: new S3BucketStorage({
+                region: bucketInfo.region,
+            }),
+        });
 
-    const response = await handleLiveRequest(app, event);
-    app.logger.log(response);
-    return response;
-});
+        const response = await handleLiveRequest(app, event);
+        app.logger.log(response);
+        return response;
+    }
+);
 
 async function handleLiveRequest(app: RequestApp, event: CloudFrontRequestEvent): Promise<CloudFrontRequestResult> {
     try {
