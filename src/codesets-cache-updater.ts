@@ -2,9 +2,10 @@ import { ValiError } from 'valibot';
 import RequestLogger from './app/RequestLogger';
 import { getResources } from './utils/data/repositories/ResourceRepository';
 import { ResourceRetrievalError } from './utils/exceptions';
-import { RuntimeFlags, healthCheckEventMiddleware } from './utils/runtime';
+import { RuntimeFlags } from './utils/runtime';
 import ExternalResourceCache from './utils/services/ExternalResourceCache';
 import S3BucketStorage from './utils/services/S3BucketStorage';
+import { healthCheckEventMiddleware } from './utils/middlewares';
 
 export const handler = healthCheckEventMiddleware(async () => {
     RuntimeFlags.isSystemTask = true; // Flag the resources system to skip existing cache usage

@@ -9,8 +9,9 @@ import { engageResourcesAction } from './app/resources-controller-actions';
 import { InternalResources } from './resources/index';
 import { resolveErrorResponse } from './utils/api';
 import { decodeBase64, parseRequestInputParams } from './utils/helpers';
-import { getStorageBucketInfo, healthCheckEventMiddleware } from './utils/runtime';
+import { getStorageBucketInfo } from './utils/runtime';
 import S3BucketStorage from './utils/services/S3BucketStorage';
+import { healthCheckEventMiddleware } from './utils/middlewares';
 
 const loggerSettings = {
     disable: {
