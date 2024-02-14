@@ -8,6 +8,7 @@ services:
     working_dir: /app
     volumes:
       - .:/app
+      - ./src/build/environment.docker-compose.json:/app/src/build/environment.json
     stdin_open: true
     tty: true
     ports:

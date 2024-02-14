@@ -1,6 +1,6 @@
 {
     "escoApi": {
-        "endpoint": "http://localhost:3560"
+        "endpoint": "http://host.docker.internal:3560"
     },
     "s3bucket": {
         "name": "",
